@@ -1,0 +1,258 @@
+{
+  "area": "canvas-nav",
+  "items": [
+    {
+      "id": "canvas-quick",
+      "title": "Quick access to canvases",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-quick.js",
+        "feature/canvas-quick.css"
+      ],
+      "summary": "Canvases are reachable without the big Open window. The + menu has an Open submenu, the Canvas page pill has a switcher, the left rail has a new order with matching Ctrl+number keys, and canvas controls moved into the canvas.",
+      "features": [
+        {
+          "name": "Plus menu with Open submenu",
+          "what": "Before: Open in the + menu always opened a big search window. Now: pointing at Open shows the 8 most recent canvases and Search all.... Clicking Open itself still opens the original window.",
+          "how": "Click +, then hover Open (or press Right Arrow on it). Pick a canvas, or use Up/Down, Enter, Left and Esc.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-quick--open-submenu.mp4",
+              "type": "video",
+              "caption": "Hovering Open in the + menu and picking a recent canvas (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--open-submenu.gif",
+              "type": "gif",
+              "caption": "Hovering Open in the + menu and picking a recent canvas (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--open-submenu.png",
+              "type": "image",
+              "caption": "Hovering Open in the + menu and picking a recent canvas (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Canvas switcher on the page pill",
+          "what": "Before: the floating Canvas page pill only showed the name. Now: a small chevron next to the name opens one Canvases list: canvases open in tabs (dot, current one checked), then other recent canvases of the project, then Open.... Picking one shows it in the same tab and pane, with no jump to another tab.",
+          "how": "Click the name or chevron on the Canvas page pill (top left of a canvas, shown while its left panel is closed), then choose a canvas.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-quick--pill-switcher.mp4",
+              "type": "video",
+              "caption": "Opening the pill switcher and picking another canvas in the same tab (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--pill-switcher.gif",
+              "type": "gif",
+              "caption": "Opening the pill switcher and picking another canvas in the same tab (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--pill-switcher.png",
+              "type": "image",
+              "caption": "Opening the pill switcher and picking another canvas in the same tab (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--pill-switcher-open.png",
+              "type": "image",
+              "caption": "The switcher list: open canvases, recents, Open... (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Left rail order and Ctrl+number keys",
+          "what": "Before: the left rail order was Chat, Docs, Design, Issues, Agents. Now: Design sits second (Chat, Design, Docs, Issues, Agents) and the number hints and Ctrl+1...9 follow what you see on screen. Tab inside the rail follows the same order.",
+          "how": "Hold Ctrl to see the numbers, then press Ctrl+1 to Ctrl+5.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-quick--rail-order.mp4",
+              "type": "video",
+              "caption": "Holding Ctrl shows the hints, then Ctrl+2, Ctrl+3 and Ctrl+1 jump to Design, Docs and Chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--rail-order.gif",
+              "type": "gif",
+              "caption": "Holding Ctrl shows the hints, then Ctrl+2, Ctrl+3 and Ctrl+1 jump to Design, Docs and Chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--rail-order.png",
+              "type": "image",
+              "caption": "Holding Ctrl shows the hints, then Ctrl+2, Ctrl+3 and Ctrl+1 jump to Design, Docs and Chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--rail-order-ctrl2.png",
+              "type": "image",
+              "caption": "After Ctrl+2 the second item (Design) is open (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Right sidebar toggle inside the canvas",
+          "what": "Before: the right sidebar toggle lived in the title bar and next to the zoom/Share toolbar. Now (pen.dev style): while the panel is open the toggle is at the end of the panel's tab row; while it is closed a small pill with the canvas name and the toggle floats under the zoom/Share toolbar. The Pop out canvas button (four arrows) is hidden.",
+          "how": "Click the toggle in the canvas. It presses the app's own hidden toggle.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-quick--right-toggle.mp4",
+              "type": "video",
+              "caption": "Closing the right panel turns the toggle into a floating pill; clicking it opens the panel again (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--right-toggle.gif",
+              "type": "gif",
+              "caption": "Closing the right panel turns the toggle into a floating pill; clicking it opens the panel again (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--right-toggle.png",
+              "type": "image",
+              "caption": "Closing the right panel turns the toggle into a floating pill; clicking it opens the panel again (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--right-toggle-open.png",
+              "type": "image",
+              "caption": "Panel open: the toggle sits at the end of the tab row (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Row actions in the switcher",
+          "what": "Before: canvases could not be renamed or deleted from a quick list. Now: each row shows a ... button on hover with Open in new tab, Rename... (inline, Enter saves, Esc cancels) and Delete... (asks for confirmation first). They use the app's own handlers.",
+          "how": "Hover a row in the switcher, click the ... button, and choose an action.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-quick--row-actions.mp4",
+              "type": "video",
+              "caption": "Rename a canvas inline, then open the delete confirmation and cancel (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--row-actions.gif",
+              "type": "gif",
+              "caption": "Rename a canvas inline, then open the delete confirmation and cancel (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--row-actions.png",
+              "type": "image",
+              "caption": "Rename a canvas inline, then open the delete confirmation and cancel (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-quick--row-actions-delete.png",
+              "type": "image",
+              "caption": "Delete confirmation dialog (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "canvas-autosetup",
+      "title": "Canvas setup starts by itself",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-autosetup.js",
+        "feature/canvas-autosetup.css"
+      ],
+      "summary": "When a workspace shows the Set up canvases empty state, the mod presses the app's own setup button once and sends the setup prompt, then shows a short toast.",
+      "features": [
+        {
+          "name": "Auto-start of canvas setup",
+          "what": "Before: you had to click Set up canvases, then press Send in the new chat. Now: after about 0.8 seconds on that screen the mod clicks the button for you, opens the new chat and (by default) sends the setup prompt. It runs once per workspace and shows a toast that says why a chat opened. This starts one AI agent run. Turn off with localStorage re-tempo:canvas-autosetup-off=1, or stop only the sending with re-tempo:canvas-autosetup-send=0.",
+          "how": "Automatic. Open the Design home of a workspace with no canvases.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-autosetup--auto-start.mp4",
+              "type": "video",
+              "caption": "The empty state, then the new chat with the prompt sent and the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-autosetup--auto-start.gif",
+              "type": "gif",
+              "caption": "The empty state, then the new chat with the prompt sent and the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-autosetup--auto-start.png",
+              "type": "image",
+              "caption": "The empty state, then the new chat with the prompt sent and the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-autosetup--empty-state.png",
+              "type": "image",
+              "caption": "The Set up canvases empty state before the mod acts (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "canvas-paste",
+      "title": "Paste image at the pointer",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-paste.js"
+      ],
+      "summary": "Pasting an image on a canvas puts its top-left corner at the mouse pointer, instead of a far-away default spot.",
+      "features": [
+        {
+          "name": "Image lands at the mouse pointer",
+          "what": "Before: Cmd+V with a screenshot dropped the image at a slot to the right of the other storyboards. Now: it lands exactly under the pointer, using the app's own Paste here code. Text, Tempo elements, Figma, links and pasting into inputs still use the original paste.",
+          "how": "Move the pointer over the canvas where you want the image and press Cmd+V.",
+          "media": [
+            {
+              "src": "media/canvas-nav/canvas-paste--image-at-pointer.mp4",
+              "type": "video",
+              "caption": "Original behaviour first (image goes far right), then the mod puts the image at the pointer (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-paste--image-at-pointer.gif",
+              "type": "gif",
+              "caption": "Original behaviour first (image goes far right), then the mod puts the image at the pointer (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-paste--image-at-pointer.png",
+              "type": "image",
+              "caption": "Original behaviour first (image goes far right), then the mod puts the image at the pointer (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-nav/canvas-paste--original-spot.png",
+              "type": "image",
+              "caption": "Original behaviour: the image lands far from the pointer (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    }
+  ]
+}

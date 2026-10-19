@@ -1,0 +1,44 @@
+/* RE-TEMPO · tab-close: close button on the primary chat tab (see tab-close.js). */
+
+/* The app gives closable tabs "pr-1.5" (HHe); the primary chat tab is not
+   closable for the app, so its padding comes from here while it has the button. */
+[role="tablist"] [role="tab"][data-testid="chat-tab"]:has(> [data-rtc-close]) {
+  padding-right: 0.375rem;
+}
+
+/* Nothing to close (no store, an archived workspace): a short nudge. */
+@keyframes rtc-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+@keyframes rtc-nudge-fade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+[role="tablist"] [role="tab"][data-rtc-nudge] {
+  animation: rtc-nudge 0.4s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  [role="tablist"] [role="tab"][data-rtc-nudge] {
+    animation: rtc-nudge-fade 0.4s ease;
+  }
+}

@@ -1,0 +1,1392 @@
+/*
+ * RE-TEMPO · canvas-shader — WebGL shader frames on the design canvas.
+ * Frames live inside the canvas world layer (world units, scaled with the
+ * canvas). Anything that keeps its screen size (name header, selection
+ * outline, handles, size label, badges) uses the app's --canvas-unzoom, like
+ * the storyboards and canvas-browser. The settings are sections of
+ * canvas-chrome's right panel (.rtsh-side; fields, sliders, switches and
+ * buttons below) and the GLSL editor a sheet docked left of it
+ * (.rtsh-sheet); without the chrome the view's own right panel takes the
+ * same sections (.rtsh-native), and with no panel open they float next to
+ * the selected frame (.rtsh-dock). Shader effects render inside the storyboard
+ * boxes; the Effects section in the canvas's right panel uses the app's own
+ * Tailwind classes. Motion: the shared language (out-expo 220 ms in, in-out
+ * 140 ms out, 40 ms stagger, transform / opacity only; reduce motion:
+ * opacity only).
+ * Colors: the app's tokens, with the dark theme values as fallbacks.
+ * Prefix: rtsh-.
+ */
+
+.rtsh-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.rtsh-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  pointer-events: auto;
+  font-family: var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ------------------------------------------------ name header (screen size) */
+.rtsh-head {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  width: calc(100% / var(--canvas-unzoom, 1));
+  transform-origin: 0 0;
+  transform: scale(var(--canvas-unzoom, 1)) translateY(-100%);
+  pointer-events: auto;
+  cursor: default;
+}
+.rtsh-head-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 24px;
+  padding: 0 0 8px;
+  color: var(--color-text-secondary, #bababa);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.rtsh-frame[data-selected] .rtsh-head-row,
+.rtsh-frame:hover .rtsh-head-row {
+  color: var(--blueberry-500, #67cffd);
+}
+.rtsh-head-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5;
+}
+.rtsh-head-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtsh-head-input {
+  display: none;
+  flex: 1 1 auto;
+  min-width: 60px;
+  max-width: 320px;
+  height: 16px;
+  margin: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--blueberry-500, #67cffd);
+  border-radius: 4px;
+  outline: none;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtsh-frame[data-editing] .rtsh-head-title {
+  display: none;
+}
+.rtsh-frame[data-editing] .rtsh-head-input {
+  display: block;
+}
+
+/* --------------------------------------------------------- body (world units) */
+.rtsh-body {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest, #080808);
+  box-shadow: 0 0 0 1px var(--color-border-secondary, #232323), 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: default;
+}
+.rtsh-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.rtsh-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--canvas-unzoom, 1) * 16px);
+  box-sizing: border-box;
+  background: var(--color-surface-container-lowest, #080808);
+  color: var(--color-text-secondary, #bababa);
+  font-size: calc(var(--canvas-unzoom, 1) * 12px);
+  line-height: 1.4;
+  text-align: center;
+}
+.rtsh-error[hidden],
+.rtsh-badge[hidden] {
+  display: none;
+}
+.rtsh-error-in {
+  max-width: calc(var(--canvas-unzoom, 1) * 360px);
+}
+.rtsh-error-title {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--canvas-unzoom, 1) * 6px);
+  margin-bottom: calc(var(--canvas-unzoom, 1) * 6px);
+  color: var(--color-text-error, #f87171);
+  font-weight: 500;
+}
+.rtsh-error-title .rtsh-ic {
+  width: calc(var(--canvas-unzoom, 1) * 14px);
+  height: calc(var(--canvas-unzoom, 1) * 14px);
+}
+.rtsh-error-msg {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break: break-word;
+}
+.rtsh-badge {
+  position: absolute;
+  top: calc(var(--canvas-unzoom, 1) * 8px);
+  right: calc(var(--canvas-unzoom, 1) * 8px);
+  padding: calc(var(--canvas-unzoom, 1) * 3px) calc(var(--canvas-unzoom, 1) * 8px);
+  border-radius: calc(var(--canvas-unzoom, 1) * 8px);
+  background: color-mix(in srgb, var(--color-text-error, #f87171) 22%, var(--color-surface-container-lowest, #080808));
+  color: var(--color-text-error, #f87171);
+  font-size: calc(var(--canvas-unzoom, 1) * 11px);
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ------------------------------------- selection (the storyboards' outline) */
+.rtsh-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 2px) solid rgba(0, 145, 255, 0.95);
+  pointer-events: none;
+}
+.rtsh-frame[data-selected] .rtsh-outline {
+  display: block;
+}
+.rtsh-frame:not([data-selected]):hover .rtsh-outline {
+  display: block;
+  border-width: calc(var(--canvas-unzoom, 1) * 1px);
+  border-color: rgba(0, 145, 255, 0.65);
+}
+html[data-rtsh-dragging] .rtsh-frame:not([data-selected]):hover .rtsh-outline,
+html[data-rtsh-armed] .rtsh-frame:not([data-selected]):hover .rtsh-outline {
+  display: none;
+}
+.rtsh-frame:not([data-selected]) .rtsh-edge,
+.rtsh-frame:not([data-selected]) .rtsh-corner {
+  display: none;
+}
+.rtsh-edge {
+  position: absolute;
+  pointer-events: auto;
+}
+.rtsh-edge-n,
+.rtsh-edge-s {
+  left: 0;
+  width: 100%;
+  height: calc(var(--canvas-unzoom, 1) * 4px);
+  transform: translateY(-50%);
+  cursor: ns-resize;
+}
+.rtsh-edge-n {
+  top: 0;
+}
+.rtsh-edge-s {
+  top: 100%;
+}
+.rtsh-edge-w,
+.rtsh-edge-e {
+  top: 0;
+  width: calc(var(--canvas-unzoom, 1) * 4px);
+  height: 100%;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+}
+.rtsh-edge-w {
+  left: 0;
+}
+.rtsh-edge-e {
+  left: 100%;
+}
+.rtsh-corner {
+  position: absolute;
+  width: calc(var(--canvas-unzoom, 1) * 14px);
+  height: calc(var(--canvas-unzoom, 1) * 14px);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.rtsh-corner-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.rtsh-corner-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.rtsh-corner-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.rtsh-corner-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.rtsh-corner-sq,
+.rtsh-draw-sq {
+  position: absolute;
+  width: calc(var(--canvas-unzoom, 1) * 10px);
+  height: calc(var(--canvas-unzoom, 1) * 10px);
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 1px) solid rgba(0, 145, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+.rtsh-corner-sq {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.rtsh-draw-sq {
+  transform: translate(-50%, -50%);
+}
+
+/* The app's resize label: blue monospace pill under the frame. */
+.rtsh-size {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 30;
+  display: none;
+  margin-top: calc(var(--canvas-unzoom, 1) * 8px);
+  padding: calc(var(--canvas-unzoom, 1) * 4px) calc(var(--canvas-unzoom, 1) * 8px);
+  transform: translateX(-50%);
+  border-radius: calc(var(--canvas-unzoom, 1) * 8px);
+  background: rgba(0, 145, 255, 0.95);
+  color: #fff;
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: calc(var(--canvas-unzoom, 1) * 11px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rtsh-frame[data-sizing] .rtsh-size,
+.rtsh-draw-preview .rtsh-size {
+  display: block;
+}
+
+/* ----------------------------------------------------------- shader tool */
+.rtsh-draw-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2600;
+  cursor: crosshair;
+  touch-action: none;
+}
+.rtsh-draw-preview {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 2px) solid rgba(0, 145, 255, 0.95);
+  background: rgba(0, 145, 255, 0.04);
+  pointer-events: none;
+}
+.rtsh-tool {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icons-primary, #f5f5f5);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.rtsh-tool:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtsh-tool:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtsh-tool[aria-pressed="true"] {
+  background: var(--color-accent-subtle, #2a2a2a);
+  color: var(--color-accent, #e0e0e0);
+}
+.rtsh-tool:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-tool .rtsh-ic {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+.rtsh-tool-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: var(--color-border-secondary, #232323);
+}
+html[data-rtsh-armed] [role="toolbar"][aria-label="Design tools"] button[aria-pressed="true"]:not(.rtsh-tool) {
+  background: transparent !important;
+  color: var(--color-icons-primary, #f5f5f5) !important;
+}
+
+.rtsh-tooltip {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 8px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font: 400 var(--text-label, 12px) / 16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.rtsh-tooltip[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtsh-kbd {
+  color: var(--color-text-tertiary, #787878);
+  font: inherit;
+}
+
+.rtsh-toast {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 24px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.rtsh-toast[data-plain] {
+  padding: 8px 12px;
+}
+.rtsh-toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.rtsh-toast-action {
+  height: 24px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rtsh-toast-action:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtsh-toast-action:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------- dock: panel + editor
+ * The shader's controls are parts (core, Parameters, Export). In
+ * canvas-chrome's right panel each part is a section (.rtsh-side, the
+ * chrome's .rcc-section anatomy: 40 px header, 0 8 12 16 body); without the
+ * chrome they stack in the floating panel (.rtsh-dock > .rtsh-panel) with
+ * the same anatomy. Fields follow pen.dev: 28 px filled boxes, the label
+ * inside on the left, the value on the right. */
+.rtsh-dock {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 4200;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  max-height: var(--rtsh-max-h, 80vh);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  opacity: 0;
+  transition: opacity 140ms ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.rtsh-dock[data-show] {
+  opacity: 1;
+}
+.rtsh-dock[data-side="left"],
+.rtsh-dock[data-side="inside"] {
+  flex-direction: row-reverse;
+}
+.rtsh-panel,
+.rtsh-editor {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: var(--rtsh-max-h, 80vh);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-surface-container, #191919);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+}
+.rtsh-panel {
+  flex: none;
+  width: 280px;
+}
+.rtsh-editor {
+  flex: none;
+  width: var(--rtsh-ed-w, 520px);
+  height: min(560px, var(--rtsh-max-h, 80vh));
+}
+/* a narrow view: the editor takes the floating panel's place */
+.rtsh-dock[data-narrow] > .rtsh-panel {
+  display: none;
+}
+.rtsh-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 8px 0 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+}
+.rtsh-panel-head > .rtsh-ic:first-child {
+  margin-right: 4px;
+}
+.rtsh-panel-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 510;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtsh-ic {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5;
+}
+.rtsh-icon-btn .rtsh-ic,
+.rtsh-sbtn .rtsh-ic {
+  width: 14px;
+  height: 14px;
+}
+.rtsh-ic-accent {
+  color: var(--blueberry-500, #67cffd);
+}
+.rtsh-icon-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-icons-secondary, #bababa);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.rtsh-icon-btn:hover:not(:disabled) {
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-icons-primary, #f5f5f5);
+}
+.rtsh-icon-btn:active:not(:disabled) {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtsh-icon-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.rtsh-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* floating panel parts: the right panel's section anatomy */
+.rtsh-part-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 8px 8px 8px 16px;
+}
+.rtsh-part-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 510;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtsh-part-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rtsh-part-body {
+  padding: 0 8px 12px 16px;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+}
+.rtsh-panel .rtsh-part[data-part="core"] > .rtsh-part-body {
+  padding-top: 12px;
+}
+.rtsh-panel .rtsh-part:last-child > .rtsh-part-body {
+  border-bottom: 0;
+}
+/* the view's own right panel (no chrome, or a view it does not lay out):
+   the same sections, in its design tab; a frame's first, like canvas-props */
+.rtsh-native {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+.rtsh-native[data-kind="frame"] {
+  order: -1;
+}
+.rtsh-native > .rtsh-part[hidden] {
+  display: none;
+}
+
+/* In the chrome's card the app's empty-selection block (Canvas, Variables)
+   grows to fill the column, and the Effects section comes after it: opening
+   an effect's sections would shrink that gap and jump the Effects list up.
+   Not grown while the Effects section is there: the spare room stays at the
+   bottom of the column. */
+[data-rcc-props]:has(> [data-rtsh-fx-section]) > [data-testid="design-selection-empty-state"] {
+  flex-grow: 0;
+}
+
+/* canvas-chrome sections: content in, header actions tight, and the
+   motion language (in 220 ms out-expo, 40 ms apart; out 140 ms; another
+   target's content crossfades in 140 ms) */
+.rtsh-side .rcc-section-actions {
+  gap: 2px;
+  margin-right: -2px;
+}
+.rtsh-side[data-rtsh-in] {
+  animation: rtsh-side-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--rtsh-i, 0) * 40ms);
+}
+.rtsh-side[data-rtsh-out],
+.rtsh-native[data-rtsh-out] {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 140ms cubic-bezier(0.65, 0, 0.35, 1), transform 140ms cubic-bezier(0.65, 0, 0.35, 1);
+  pointer-events: none;
+}
+.rtsh-side-body[data-rtsh-swap] > * {
+  animation: rtsh-swap 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes rtsh-side-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes rtsh-swap {
+  from {
+    opacity: 0.25;
+  }
+}
+
+/* rows */
+.rtsh-rows,
+.rtsh-params {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+.rtsh-empty {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtsh-note {
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-secondary, #bababa);
+  font-size: 11px;
+  line-height: 15px;
+}
+.rtsh-note[hidden],
+.rtsh-auto[hidden] {
+  display: none;
+}
+.rtsh-note[data-kind="error"] {
+  background: color-mix(in srgb, var(--color-text-error, #f87171) 12%, transparent);
+  color: var(--color-text-error, #f87171);
+}
+.rtsh-auto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.rtsh-auto-label {
+  margin-right: 2px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 11px;
+  line-height: 18px;
+}
+.rtsh-chip {
+  height: 18px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-tertiary, #787878);
+  font: 10.5px/18px ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+
+/* fields */
+.rtsh-f {
+  --rtsh-fill: color-mix(in srgb, var(--color-text-primary, #f5f5f5) 7%, transparent);
+  --rtsh-edge: color-mix(in srgb, var(--color-text-primary, #f5f5f5) 30%, transparent);
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #232323);
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  text-align: left;
+  transition: outline-color 140ms ease;
+}
+.rtsh-f:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtsh-f:has(:focus-visible),
+.rtsh-f.rtsh-f-bool:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-f[data-disabled] {
+  opacity: 0.45;
+}
+.rtsh-f[data-disabled]:hover {
+  outline-color: transparent;
+}
+.rtsh-f-label {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary, #bababa);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rtsh-f-val {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  box-sizing: border-box;
+  width: 56px;
+  height: 22px;
+  margin: 0 -4px 0 auto;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  outline: none;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+  transition: background-color 140ms ease;
+}
+.rtsh-f-val:hover {
+  background: color-mix(in srgb, var(--color-text-primary, #f5f5f5) 6%, transparent);
+}
+.rtsh-f-val:focus {
+  background: var(--color-surface-container, #191919);
+}
+.rtsh-f-val-wide {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+/* slider: the box fills up to the value, a hairline marks its end */
+.rtsh-f-slider {
+  --p: 0;
+  background: linear-gradient(90deg, var(--rtsh-fill) 0 calc(var(--p) * 100% - 1.5px), var(--rtsh-edge) 0 calc(var(--p) * 100%), transparent 0) no-repeat,
+    var(--color-surface-container-high, #232323);
+}
+.rtsh-f-slider:hover,
+.rtsh-f-slider:active {
+  --rtsh-fill: color-mix(in srgb, var(--color-text-primary, #f5f5f5) 10%, transparent);
+  --rtsh-edge: color-mix(in srgb, var(--color-text-primary, #f5f5f5) 55%, transparent);
+}
+.rtsh-f-range {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  background: transparent;
+  cursor: ew-resize;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rtsh-f-range::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+.rtsh-f-range::-webkit-slider-thumb {
+  width: 1px;
+  height: 28px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rtsh-f-range::-moz-range-thumb {
+  width: 1px;
+  height: 28px;
+  border: 0;
+}
+
+/* select: the native select covers the box, the choice shows on the right */
+.rtsh-f-sel {
+  cursor: pointer;
+}
+.rtsh-f-select {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rtsh-f-select:disabled {
+  cursor: default;
+}
+.rtsh-f-select option {
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtsh-f-shown {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtsh-f-chev {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 0 -2px 0 -4px;
+  color: var(--color-icons-secondary, #bababa);
+  stroke-width: 1.75;
+}
+
+/* colour: swatch (the native picker under it), label, hex, opacity */
+.rtsh-f-swatch {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: linear-gradient(var(--c, #fff), var(--c, #fff)), repeating-conic-gradient(#8a8a8a 0 25%, #d4d4d4 0 50%) 0 0 / 6px 6px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text-primary, #f5f5f5) 16%, transparent);
+  cursor: pointer;
+}
+.rtsh-f-pick {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rtsh-f-hex {
+  width: 68px;
+  text-transform: uppercase;
+}
+.rtsh-f-pct {
+  width: 44px;
+  margin-left: 0;
+}
+.rtsh-f-hex + .rtsh-f-pct {
+  margin-left: -4px;
+}
+
+/* boolean: the whole box is the switch */
+.rtsh-f-bool {
+  cursor: pointer;
+}
+.rtsh-sw {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 16px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--color-surface-container-highest, #3a3a3a);
+  transition: background-color 140ms ease;
+}
+.rtsh-sw-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms ease;
+}
+.rtsh-f-bool[aria-checked="true"] .rtsh-sw {
+  background: var(--color-accent, #e0e0e0);
+}
+.rtsh-f-bool[aria-checked="true"] .rtsh-sw-knob {
+  background: var(--color-surface-container-lowest, #080808);
+  transform: translateX(10px);
+}
+
+/* vectors */
+.rtsh-f-vec {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+  margin-right: -4px;
+}
+.rtsh-f-vecv {
+  flex: 0 1 44px;
+  width: 44px;
+  min-width: 0;
+  margin: 0;
+}
+
+/* effect mode: label + two segments */
+.rtsh-f-segs {
+  padding-right: 2px;
+}
+.rtsh-segs {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px;
+  margin-left: auto;
+}
+.rtsh-seg {
+  height: 24px;
+  margin: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-tertiary, #787878);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.rtsh-seg:hover {
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtsh-seg[aria-pressed="true"] {
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtsh-seg:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+
+/* buttons: filled, 28 px (the right panel's) */
+.rtsh-sbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.rtsh-sbtn > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtsh-sbtn .rtsh-ic {
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtsh-sbtn:hover:not(:disabled) {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtsh-sbtn[aria-pressed="true"] {
+  background: var(--color-accent-subtle, #2b2b2b);
+  box-shadow: inset 0 0 0 1px var(--color-border-primary, #3a3a3a);
+}
+.rtsh-sbtn[aria-pressed="true"] .rtsh-ic {
+  color: var(--blueberry-500, #67cffd);
+}
+.rtsh-sbtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.rtsh-sbtn:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  container-type: inline-size;
+}
+/* a narrow panel (the app's own, 243 px): labels only, never "We…" */
+@container (max-width: 236px) {
+  .rtsh-grid3 .rtsh-sbtn .rtsh-ic {
+    display: none;
+  }
+}
+
+/* GLSL sheet: docked left of canvas-chrome's right panel, its height */
+.rtsh-sheet {
+  position: fixed;
+  z-index: 4200;
+  display: flex;
+  box-sizing: border-box;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtsh-sheet[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtsh-sheet[data-closing] {
+  transition-duration: 140ms;
+  transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+.rtsh-sheet > .rtsh-editor {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+/* ---------------------------------------------------------------- editor */
+.rtsh-ed-target {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtsh-ed-status {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-tertiary, #787878);
+  font-size: 11px;
+  line-height: 16px;
+}
+.rtsh-ed-status[data-kind="ok"] {
+  background: color-mix(in srgb, var(--color-text-success, #4ade80) 12%, transparent);
+  color: var(--color-text-success, #4ade80);
+}
+.rtsh-ed-status[data-kind="error"] {
+  background: color-mix(in srgb, var(--color-text-error, #f87171) 14%, transparent);
+  color: var(--color-text-error, #f87171);
+}
+.rtsh-editor .rtsh-panel-name {
+  flex: none;
+}
+.rtsh-code-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  background: var(--color-surface-container-lowest, #080808);
+}
+.rtsh-gutter {
+  flex: none;
+  width: 48px;
+  padding: 12px 8px 12px 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border-secondary, #232323);
+  color: var(--color-text-tertiary, #5c5c5c);
+  font: 12px/18px ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-align: right;
+  white-space: pre;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.rtsh-ln[data-err] {
+  color: var(--color-text-error, #f87171);
+  font-weight: 500;
+}
+.rtsh-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 12px/18px ui-monospace, SFMono-Regular, Menlo, monospace;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  caret-color: var(--blueberry-500, #67cffd);
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtsh-code::selection {
+  background: color-mix(in srgb, var(--color-border-focus, #67cffd) 35%, transparent);
+}
+.rtsh-log {
+  flex: none;
+  max-height: 132px;
+  min-height: 32px;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border-top: 1px solid var(--color-border-secondary, #232323);
+  font: 12px/16px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.rtsh-log-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  color: var(--color-text-success, #4ade80);
+}
+.rtsh-log-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rtsh-log-item:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtsh-log-item:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-log-line {
+  flex: none;
+  min-width: 56px;
+  color: var(--color-text-error, #f87171);
+}
+.rtsh-log-item[data-kind="warning"] .rtsh-log-line {
+  color: #fbbf24;
+}
+.rtsh-log-msg {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.rtsh-copy-buffer {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  opacity: 0;
+}
+
+/* ------------------------------------------- effects on storyboards
+ * The storyboard box (div[data-storyboard-id]) is isolated while it has
+ * effects: a background effect (z-index -1) paints above the box and below
+ * all of its content; an overlay (z-index 10, above the interact iframe's 3)
+ * blends with the storyboard's pixels only. The two layers have no z-index,
+ * so they are not stacking contexts and the canvases' blend modes reach the
+ * content. */
+[data-rtsh-fx-host] {
+  isolation: isolate;
+}
+.rtsh-fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rtsh-fx-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.rtsh-fx-canvas[data-mode="background"] {
+  z-index: -1;
+}
+.rtsh-fx-canvas[data-mode="overlay"] {
+  z-index: 10;
+}
+
+/* Effects section rows (the section itself uses the app's classes). */
+.rtsh-fx-row-ic {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtsh-fx-row-mode {
+  flex: none;
+  max-width: 48%;
+  overflow: hidden;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.rtsh-fx-row-rm {
+  flex: none;
+}
+.rtsh-fx-list[hidden],
+[data-rtsh-fx-list][hidden] {
+  display: none;
+}
+
+/* "+" > Add effect > Shader */
+.rtsh-fx-menu {
+  position: fixed;
+  z-index: 4300;
+  min-width: 208px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--color-surface-container, #191919);
+  box-shadow: var(--shadow-dialog, 0 4px 14px rgba(0, 0, 0, 0.15), 0 10px 28px rgba(0, 0, 0, 0.11));
+  outline: 0.5px solid var(--color-border-secondary, #232323);
+  outline-offset: -0.5px;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 13px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+.rtsh-fx-menu[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtsh-fx-menu-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 8px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  font-weight: 500;
+}
+.rtsh-fx-menu-title .rtsh-ic {
+  width: 12px;
+  height: 12px;
+}
+.rtsh-fx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rtsh-fx-menu-item:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtsh-fx-menu-item:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtsh-fx-menu-item:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtsh-fx-menu-item .rtsh-ic {
+  width: 14px;
+  height: 14px;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtsh-fx-menu-label {
+  flex: 1 1 auto;
+}
+.rtsh-fx-menu-hint {
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+}
+
+/* reduce motion: opacity only, at most 120 ms */
+@media (prefers-reduced-motion: reduce) {
+  .rtsh-toast,
+  .rtsh-tooltip,
+  .rtsh-fx-menu,
+  .rtsh-sw,
+  .rtsh-sw-knob,
+  .rtsh-f,
+  .rtsh-f-val,
+  .rtsh-sbtn,
+  .rtsh-seg,
+  .rtsh-icon-btn {
+    transition: none;
+  }
+  .rtsh-dock,
+  .rtsh-sheet,
+  .rtsh-sheet[data-closing],
+  .rtsh-side[data-rtsh-out],
+  .rtsh-native[data-rtsh-out] {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
+  .rtsh-side[data-rtsh-in] {
+    animation: rtsh-fade 120ms linear both;
+    animation-delay: 0ms;
+  }
+  .rtsh-side-body[data-rtsh-swap] > * {
+    animation: rtsh-fade 100ms linear both;
+  }
+}
+@keyframes rtsh-fade {
+  from {
+    opacity: 0;
+  }
+}

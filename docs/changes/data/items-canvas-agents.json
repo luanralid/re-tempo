@@ -1,0 +1,359 @@
+{
+  "area": "canvas-agents",
+  "items": [
+    {
+      "id": "canvas-comment-agent",
+      "title": "Canvas comment as a Claude task",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-comment-agent.js",
+        "feature/canvas-comment-agent.css"
+      ],
+      "summary": "In the original Tempo a canvas comment is only a note for people. Now every comment you post on a canvas also becomes a task for a Claude chat that works in the background while you stay on the canvas.",
+      "features": [
+        {
+          "name": "Canvas comment as a Claude task",
+          "what": "Before: a comment was just text on the canvas and nothing happened. Now: when you post a comment (a new thread or a reply), a Claude chat is created and sent the comment, the pin position, the storyboard under it and the page. The task goes from queued to running to done.",
+          "how": "Click the canvas in comment mode, write what you want (for example \"add a blue square here\") and press Post. Nothing else to do.",
+          "media": [
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task.mp4",
+              "type": "video",
+              "caption": "Posting a comment: the task is queued, runs, and finishes with a blue square added (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task.gif",
+              "type": "gif",
+              "caption": "Same clip as a GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task-1-typed.png",
+              "type": "image",
+              "caption": "The comment is typed, ready to post (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task.png",
+              "type": "image",
+              "caption": "The agent is running (spinning ring next to the page name) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task-2-done.png",
+              "type": "image",
+              "caption": "The agent is done: the blue square is on the canvas (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Runs in the background",
+          "what": "Before: starting a chat moves you to the chat view. Now: the chat is created and started without leaving the canvas: same tab, same route, no chat view and no composer. The chat still appears in the chat list.",
+          "how": "Automatic. Use Open chat in the bubble panel if you want to see the full chat.",
+          "media": [
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task.png",
+              "type": "image",
+              "caption": "The designer stays on the canvas while the agent works (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Before / after captures and run GIF",
+          "what": "Before: no record of what the change looked like. Now: the mod takes a screenshot of the commented area before the run, frames while it runs and one after, and builds a small looping GIF of the whole run. Panels and bubbles are masked out of the images.",
+          "how": "Automatic. See the images in the bubble panel (Result).",
+          "media": [
+            {
+              "src": "media/canvas-agents/comment-bubbles--open-bubble-2-result-gif.png",
+              "type": "image",
+              "caption": "Result with before, after and the run GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/comment-bubbles--run-gif-sample.gif",
+              "type": "gif",
+              "caption": "A sample run GIF produced by the mod (a square appears) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Agent answer to a canvas comment",
+          "what": "Before: the thread had only people's messages. Now: when the run ends, the agent's answer is posted in the comment thread with its name, model, before/after images and the GIF attached.",
+          "how": "Automatic when a run is done. Turn off with localStorage rtd.commentAgent.reply = off.",
+          "media": [
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--agent-answer-in-thread.png",
+              "type": "image",
+              "caption": "The comment thread with Claude's answer, before/after and GIF (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: shows only in the real comment thread (fixture print only)"
+        },
+        {
+          "name": "Fallback task list",
+          "what": "Before: none. Now: if the bubbles mod is not loaded, a small list over the left sidebar shows each task (spinning logo while running, check when done, click to open the chat).",
+          "how": "Appears by itself while tasks exist.",
+          "media": [
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--fallback-list.png",
+              "type": "image",
+              "caption": "Mini list with a running task (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: hidden whenever the bubbles are on"
+        }
+      ]
+    },
+    {
+      "id": "comment-bubbles",
+      "title": "Comment bubbles",
+      "group": "canvas",
+      "files": [
+        "feature/comment-bubbles.js",
+        "feature/comment-bubbles.css"
+      ],
+      "summary": "Next to the \"Canvas page\" pill there is now a row of small bubbles, one per comment you sent to an agent. Each bubble shows the status and opens a panel with what you asked and what the agent did.",
+      "features": [
+        {
+          "name": "Bubbles next to the Canvas page pill",
+          "what": "Before: nothing showed which comments an agent was working on. Now: a counter (\"3 open - 1 done today\") and bubbles with the author's initials. The ring shows the status: amber with ? needs input, spinning Claude ring running, dashed queued, red ! failed, green check done.",
+          "how": "Automatic. Alt-click a bubble to follow the agent.",
+          "media": [
+            {
+              "src": "media/canvas-agents/comment-bubbles--bubble-states.png",
+              "type": "image",
+              "caption": "Four bubbles in different states next to the page name (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task.mp4",
+              "type": "video",
+              "caption": "A bubble going from queued to running to done (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--comment-becomes-task-2-done.png",
+              "type": "image",
+              "caption": "The done bubble with the green check (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Bubble tooltip",
+          "what": "Before: none. Now: hover a bubble to see its number, author, status and request. A running agent shows its last captured frame, a done one shows the result.",
+          "how": "Hover a bubble.",
+          "media": [
+            {
+              "src": "media/canvas-agents/comment-bubbles--bubble-tooltip.png",
+              "type": "image",
+              "caption": "Tooltip over a done bubble (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: hover is part of the open-bubble clip"
+        },
+        {
+          "name": "Request panel",
+          "what": "Before: none. Now: click a bubble to open a panel with You asked (comment and before image), Agent (steps), Result (before/after, run GIF, summary) and a footer to reply, open the chat, follow or dismiss.",
+          "how": "Click a bubble. Escape or a click outside closes it. Hold Shift to peek at Before.",
+          "media": [
+            {
+              "src": "media/canvas-agents/comment-bubbles--open-bubble.mp4",
+              "type": "video",
+              "caption": "Hovering and opening a bubble, then scrolling to the result and the GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/comment-bubbles--open-bubble.gif",
+              "type": "gif",
+              "caption": "Same clip as a GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/comment-bubbles--open-bubble.png",
+              "type": "image",
+              "caption": "The panel of a finished request (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/comment-bubbles--open-bubble-2-result-gif.png",
+              "type": "image",
+              "caption": "The result with before/after and GIF player (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Answer an agent that needs input",
+          "what": "Before: you had to find the chat. Now: when the agent asks a question, the bubble turns amber and the panel shows the question with an answer field already focused. The steps are folded into \"N steps\".",
+          "how": "Click the amber bubble, type the answer, press Enter.",
+          "media": [
+            {
+              "src": "media/canvas-agents/comment-bubbles--needs-input-panel.png",
+              "type": "image",
+              "caption": "Panel with the agent's question and the answer field (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/comment-bubbles--running-steps-panel.png",
+              "type": "image",
+              "caption": "Panel of a running request with its steps (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: needs several scripted states (images only)"
+        },
+        {
+          "name": "Agent answer in the comment thread",
+          "what": "Before: a thread showed only people. Now: a message that ends with the task marker is drawn as Claude's: Claude avatar, model and effort chip, the text, before/after and the GIF.",
+          "how": "Automatic.",
+          "media": [
+            {
+              "src": "media/canvas-agents/canvas-comment-agent--agent-answer-in-thread.png",
+              "type": "image",
+              "caption": "Claude's card in a comment thread (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: shows only in the real comment thread (fixture print only)"
+        }
+      ]
+    },
+    {
+      "id": "agent-cursors",
+      "title": "Agent cursors",
+      "group": "canvas",
+      "files": [
+        "feature/agent-cursors.js",
+        "feature/agent-cursors.css"
+      ],
+      "summary": "Agents that work on a comment now get a multiplayer-style cursor with a name tag on the canvas, in their own colour, like another person editing next to you.",
+      "features": [
+        {
+          "name": "Agent cursor with name tag",
+          "what": "Before: you could not see where an agent was working. Now: each running task gets an arrow and a tag (\"Claude - #1\" or the model) that starts on the comment's pin, then glides to the storyboard that changed, outlines it and clicks.",
+          "how": "Automatic while a task is running. Turn off with localStorage rtd.agentCursors = off.",
+          "media": [
+            {
+              "src": "media/canvas-agents/agent-cursors--agent-cursor-name-tag.mp4",
+              "type": "video",
+              "caption": "An agent cursor glides to an edited storyboard and clicks (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/agent-cursors--agent-cursor-name-tag.gif",
+              "type": "gif",
+              "caption": "Same clip as a GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/agent-cursors--agent-cursor-name-tag.png",
+              "type": "image",
+              "caption": "The first cursor appears on the comment's pin (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Several agents, one colour each",
+          "what": "Before: none. Now: parallel agents get different colours and tags (up to 8) and each moves only to its own storyboard.",
+          "how": "Automatic.",
+          "media": [
+            {
+              "src": "media/canvas-agents/agent-cursors--two-agents.png",
+              "type": "image",
+              "caption": "Two agents on one canvas: terracotta Claude #1 and blue Opus 5.5 #2 (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Tag tooltip and needs-input balloon",
+          "what": "Before: none. Now: hover the tag to read the comment and what the agent is doing; click it to open the bubble panel. When the agent waits for an answer an amber ? appears and the cursor stops moving. Finished cursors show a check and fade.",
+          "how": "Hover or click the name tag.",
+          "media": [
+            {
+              "src": "media/canvas-agents/agent-cursors--needs-input-tooltip.png",
+              "type": "image",
+              "caption": "Tooltip over a tag with the amber ? balloon (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "agent-follow",
+      "title": "Follow an agent",
+      "group": "canvas",
+      "files": [
+        "feature/agent-follow.js",
+        "feature/agent-follow.css"
+      ],
+      "summary": "Like Figma's follow mode: the canvas view pans and zooms by itself to keep an agent's work in frame.",
+      "features": [
+        {
+          "name": "Follow an agent (Alt-click)",
+          "what": "Before: you had to pan and zoom by hand to watch an agent. Now: Alt-click a task bubble (or press Follow in its panel) and the view flies to the agent's storyboard, zooms to fit it with a margin and keeps following when the cursor moves. A chip at the top shows who you follow and a Stop button.",
+          "how": "Alt-click a bubble, or Follow in the panel. Click Stop, press Escape, or Alt-click again to leave.",
+          "media": [
+            {
+              "src": "media/canvas-agents/agent-follow--follow-an-agent.mp4",
+              "type": "video",
+              "caption": "Alt-click a bubble: the view centres on the agent and follows it, then pauses on a click (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/agent-follow--follow-an-agent.gif",
+              "type": "gif",
+              "caption": "Same clip as a GIF (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/agent-follow--follow-an-agent.png",
+              "type": "image",
+              "caption": "Following chip, outline and agent cursor (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-agents/agent-follow--recenters.png",
+              "type": "image",
+              "caption": "The view re-centred after the agent moved (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Pauses when you take over",
+          "what": "Before: none. Now: if you click, pan or zoom yourself, follow pauses for 4 seconds so you keep control, then resumes. When the task ends the chip says Done and follow stops after 3 seconds.",
+          "how": "Just use the canvas. Stop to end it.",
+          "media": [
+            {
+              "src": "media/canvas-agents/agent-follow--paused.png",
+              "type": "image",
+              "caption": "The chip shows Paused after a click on the canvas (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    }
+  ]
+}

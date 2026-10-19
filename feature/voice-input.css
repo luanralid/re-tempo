@@ -1,0 +1,237 @@
+/*
+ * RE-TEMPO · voice-input — dictation button (.rtv-mic), live text (.rtv-live)
+ * and the Settings > Dictation section (.rtv-settings, using the native classes).
+ * The button inherits the classes of the composer's "+" button; this file only
+ * guarantees its size and styles the recording / finishing / error states. Live
+ * text inherits the editor font and color; each new word enters with a
+ * blur-to-sharp, fade and slight upward motion.
+ * Dictation in any field (attach / autoAttach): the same mic (.rtv-mic-field,
+ * idle look of its own since there is no "+" button to inherit from) and, in
+ * an <input>/<textarea>, a mirror (.rtv-mirror) over the field that draws the
+ * live words while the field's own text is transparent.
+ */
+
+button.rtv-mic {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rtv-menu {
+  z-index: 2147483000;
+}
+
+.rtv-menu-sep {
+  margin: 4px 6px;
+}
+
+/* --- Settings > Dictation --------------------------------------------------- */
+
+/* native content hidden and native item un-highlighted while the section is open */
+[data-rtv-hidden] {
+  display: none !important;
+}
+
+button[data-rtv-off]:not(:hover) {
+  background-color: transparent !important;
+}
+
+.rtv-settings [data-testid="settings-dictation-engine"] {
+  width: 340px;
+}
+
+.rtv-lang-field {
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.rtv-settings .rtv-engine-note:not(:empty),
+.rtv-settings .rtv-lang-note:not(:empty),
+.rtv-settings .rtv-test-note:not(:empty),
+.rtv-settings .rtv-test-out:not(:empty) {
+  margin-top: 10px;
+}
+
+.rtv-settings .rtv-engine-note[data-warn] {
+  color: #f59e0b;
+}
+
+button.rtv-mic[data-rtv-state="recording"] {
+  color: #ef4444;
+  animation: rtv-pulse 1.2s ease-in-out infinite;
+}
+
+button.rtv-mic[data-rtv-state="finishing"] svg {
+  animation: rtv-spin 0.8s linear infinite;
+}
+
+button.rtv-mic[data-rtv-state="error"] {
+  color: #f59e0b;
+}
+
+/* --- live text (widget in the editor) ------------------------------------ */
+
+/* while there is live text: hide the editor placeholder and caret */
+[data-rtv-live] [data-testid="chat-input-placeholder"] {
+  visibility: hidden !important;
+}
+
+[data-rtv-live] .ProseMirror {
+  caret-color: transparent !important;
+}
+
+.rtv-live {
+  user-select: none;
+}
+
+/* volatile: dimmed until finalized; the change is smooth (no flicker) */
+.rtv-w {
+  transition: opacity 0.35s ease;
+}
+
+.rtv-w[data-vol] {
+  opacity: 0.55;
+}
+
+.rtv-a {
+  display: inline-block;
+  animation: rtv-word-in 380ms cubic-bezier(0.22, 1, 0.36, 1) var(--rtv-d, 0ms) backwards;
+}
+
+/* already entered: no new animation if the widget moves to another editor (composer pool) */
+.rtv-a[data-done] {
+  animation: none;
+}
+
+@keyframes rtv-word-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes rtv-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes rtv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rtv-word-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.rtv-mic[data-rtv-state="recording"],
+  button.rtv-mic[data-rtv-state="finishing"] svg {
+    animation: none;
+  }
+
+  .rtv-a {
+    animation-name: rtv-word-fade;
+  }
+}
+
+/* --- dictation in any field (attach / autoAttach) -------------------------- */
+
+/* idle look of a field's mic; :where() keeps it below the state rules above */
+:where(button.rtv-mic-field) {
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary, currentColor);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+:where(button.rtv-mic-field):hover {
+  color: var(--color-text-primary, currentColor);
+  background: var(--color-surface-container-highest, rgba(127, 127, 127, 0.18));
+}
+
+:where(button.rtv-mic-field):focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+:where(button.rtv-mic-field):disabled {
+  cursor: default;
+}
+
+/* over the right end of the field (placed by voice-input.js) */
+button.rtv-mic-field[data-rtv-place="inside-end"] {
+  position: absolute;
+  z-index: 1;
+}
+
+button.rtv-mic-field[hidden] {
+  display: none;
+}
+
+/* live words in an <input>/<textarea>: the field's own text, caret and
+   placeholder step aside for the mirror (the value holds the same text) */
+textarea[data-rtv-field-live],
+input[data-rtv-field-live] {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: transparent !important;
+}
+
+textarea[data-rtv-field-live]::placeholder,
+input[data-rtv-field-live]::placeholder {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* a backdrop the field's component draws under it (canvas mention highlight) */
+[data-rtv-hide] {
+  visibility: hidden !important;
+}
+
+.rtv-mirror {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  border-color: transparent !important;
+  background: transparent !important;
+  -webkit-text-fill-color: currentColor;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* contenteditable / ProseMirror field: no caret while words come in */
+[data-rtv-edit-live],
+.ProseMirror[data-rtv-live] {
+  caret-color: transparent !important;
+}
+
+/* attach opts.reducedMotion: words only fade in */
+.rtv-reduced .rtv-a:not([data-done]) {
+  animation-name: rtv-word-fade;
+}

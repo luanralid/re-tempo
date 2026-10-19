@@ -1,0 +1,522 @@
+#!/usr/bin/env node
+/*
+ * RE-TEMPO · tempo-ui — drive the open Tempo window from a shell (Orca-style)
+ * ---------------------------------------------------------------------------
+ * The ui-drive mod (feature/ui-drive.js) runs the command in the Tempo window,
+ * with the ui-beam animation, and the user can Deny / Undo screen changes.
+ * Tempo's agent runs shell commands, so this is the agent's way in.
+ *
+ * Usage:
+ *   tempo-ui <command words>          e.g. tempo-ui open settings
+ *   tempo-ui <action id> name=value   any action registered in the window
+ *                                     (window.__RE_TEMPO_ACTIONS__)
+ *   tempo-ui list [--raw]             the registered actions and their params
+ *   tempo-ui screenshot [--canvas | --selector <css>] [--out file.png]
+ *   tempo-ui --json '{"action":"open canvas","args":{"name":"Home"}}'
+ *   tempo-ui --instructions           text to paste into CLAUDE.md / AGENTS.md
+ *   tempo-ui --help
+ * Options: --no-wait (do not wait for the window's answer), --timeout <ms>
+ * (default 6000, screenshot 15000), --quiet, --raw (JSON output).
+ *
+ * Writes one JSON line {id, ts, action, args, argv, cwd, raw, agent} to
+ * $TEMPO_UI_COMMANDS, else ~/.tempo/ui-commands.jsonl (folder 0700, file
+ * 0600; past 256 KB the file is cut to its last 200 lines). Native commands
+ * are validated here (same rules as the mod, which stays the authority) and
+ * sent as {action, args}; any other id goes as argv and the window resolves
+ * it against its registry. Then waits for the reply in ui-replies.jsonl,
+ * same folder ({id, status, reason, via, result?, dataUrl?}), prints it, and
+ * for a screenshot writes the PNG (unless the window already wrote it).
+ * The window drops commands older than 15 s.
+ * Exit: 0 done or queued; 1 denied, refused or failed in the window; 2 usage.
+ * No dependencies, no network.
+ * ---------------------------------------------------------------------------
+ */
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const crypto = require("crypto");
+
+const MAX_BYTES = 256 * 1024;
+const KEEP_LINES = 200;
+const SELF = (() => {
+  try {
+    return fs.realpathSync(__filename);
+  } catch (_) {
+    return __filename;
+  }
+})();
+
+// Kept identical to INSTRUCTIONS in feature/ui-drive.js (<CLI> = this script).
+const INSTRUCTIONS = `## Tempo UI control
+
+You can drive the user's Tempo window: open a screen, take them somewhere,
+point at something on it, or look at it. Do it when the user asks to see or
+open something, or when showing the result clearly helps. Use one or two
+commands per answer and say in words what you opened. The user sees an
+animation and can Deny or Undo screen changes; never repeat a command the user
+denied.
+
+Two ways, same command words:
+- Shell (preferred when you can run commands):
+    tempo-ui open settings
+  If tempo-ui is not on PATH:
+    node "<CLI>" open settings
+  It prints the result (done, denied, refused, failed, and any data the action
+  returns) and exits 0 when the command ran or is queued.
+- In your reply, on a line of its own (not indented, not in a code block):
+    @tempo-ui open canvas Home
+  or a fenced block whose language is tempo-ui, with JSON:
+    \`\`\`tempo-ui
+    {"action": "open doc", "args": {"title": "Launch plan"}}
+    \`\`\`
+  The line runs as soon as it appears. To mention a command without running
+  it, wrap it in backticks.
+
+Commands:
+  open settings [section]            Settings; section = a Settings menu label
+                                     (Preferences, Chat, Billing, Providers...)
+  go chat|design|docs|issues|agents  switch the main section
+  open canvas <name>
+  open doc <title>
+  open issue <key|number|title>      e.g. TEM-12 or #12
+  open agent <name>
+  open chat <title>
+  open url <https://...>             Browser tab in the center (http/https only)
+  focus <css selector|data-testid>   scroll to an element and highlight it
+  highlight <css selector|data-testid> [ms]
+  toast <text>                       short note on screen (max 200 characters)
+  split left|right                   move the active tab into a split pane
+  run <action>                       toggle-left-panel, toggle-right-panel,
+                                     toggle-split, focus-composer
+  screenshot [--canvas | --selector <css>] --out <file.png>
+                                     capture the window, the canvas or one
+                                     element to a PNG you can then read (shell)
+  list                               every action the window knows, with its
+                                     parameters; other mods register more
+  <action id> name=value ...         run any listed action, e.g.
+                                     tempo-ui canvas.browser.create url=https://example.com
+
+Only listed actions run: no scripts, no file:, javascript: or data: URLs.
+Actions marked destructive wait for the user's explicit Allow.
+`;
+
+const USAGE = `tempo-ui — drive the open Tempo window (needs the ui-drive mod)
+
+Usage:
+  tempo-ui <command>                 e.g. tempo-ui open settings
+  tempo-ui <action id> name=value    any action the window registered
+  tempo-ui list [--raw]              registered actions and their parameters
+  tempo-ui screenshot [--canvas | --selector <css>] [--out file.png]
+  tempo-ui --json '<{"action": ..., "args": ...}>'
+  tempo-ui --instructions            agent instructions (paste into CLAUDE.md)
+  tempo-ui --help
+
+Commands:
+  open settings [section] | go chat|design|docs|issues|agents
+  open canvas <name> | open doc <title> | open issue <key|title>
+  open agent <name> | open chat <title> | open url <https://...>
+  focus <selector> | highlight <selector> [ms] | toast <text>
+  split left|right | run toggle-left-panel|toggle-right-panel|toggle-split|focus-composer
+  screenshot | list | <registered id> name=value ...
+
+Options:
+  --no-wait        do not wait for the window's answer
+  --timeout <ms>   how long to wait for it (default 6000, screenshot 15000)
+  --quiet          print nothing on success
+  --raw            JSON output (list, results)
+
+Queue file: $TEMPO_UI_COMMANDS or ~/.tempo/ui-commands.jsonl (replies: ui-replies.jsonl)
+Exit: 0 done or queued, 1 denied/refused/failed in the window, 2 usage error.
+`;
+
+// ------------------------------------------------------------ the protocol
+// Same words as the mod's parser (feature/ui-drive.js fromWords / fromObject).
+const ROUTES = ["chat", "design", "docs", "issues", "agents", "settings"];
+const ROUTE_ALIAS = { chats: "chat", canvas: "design", canvases: "design", doc: "docs", prd: "docs", issue: "issues", agent: "agents", setting: "settings", preferences: "settings" };
+const OPEN_ALIAS = { preferences: "settings", setting: "settings", canvases: "canvas", docs: "doc", prd: "doc", issues: "issue", agents: "agent", chats: "chat", link: "url", page: "url", browser: "url" };
+const ARG_KEY = { "open settings": "section", go: "route", "open canvas": "name", "open doc": "title", "open issue": "query", "open agent": "name", "open chat": "title", "open url": "url", focus: "selector", highlight: "selector", toast: "text", split: "side", run: "id" };
+const ALIAS_KEYS = ["name", "title", "id", "target", "query", "value", "section", "route", "url", "selector", "text", "side"];
+const RUN_IDS = ["toggle-left-panel", "toggle-right-panel", "toggle-split", "focus-composer"];
+
+const unquote = (s) => {
+  const t = String(s == null ? "" : s).trim();
+  const m = /^(["'“‘`])([\s\S]*)(["'”’`])$/.exec(t);
+  return m ? m[2].trim() : t;
+};
+function argsFrom(action, rest) {
+  const r = String(rest == null ? "" : rest).trim();
+  if (action === "highlight") {
+    const mm = /^([\s\S]*?)\s+(\d{2,6})\s*(?:ms)?$/.exec(r);
+    return mm ? { selector: unquote(mm[1]), ms: Number(mm[2]) } : { selector: unquote(r) };
+  }
+  const key = ARG_KEY[action];
+  if (!key) return r ? { text: r } : {};
+  if (action === "open settings" && !r) return {};
+  return { [key]: unquote(r) };
+}
+function fromWords(text) {
+  const s = String(text == null ? "" : text)
+    .trim()
+    .replace(/^@tempo-ui\s+/i, "");
+  if (!s) return { error: "empty command" };
+  const m = /^(\S+)(?:\s+([\s\S]*))?$/.exec(s);
+  const verb = m[1].toLowerCase().replace(/[_.:]+/g, " ").trim();
+  const rest = (m[2] || "").trim();
+  if (verb.includes(" ")) return fromWords(`${verb} ${rest}`);
+  if (verb === "open") {
+    const k = /^(\S+)(?:\s+([\s\S]*))?$/.exec(rest);
+    if (!k) return { error: "open what? (settings, canvas, doc, issue, agent, chat, url)" };
+    if (/^[a-z][a-z0-9+.-]*:/i.test(k[1]) && !/^(settings|canvas|doc|issue|agent|chat|url):?$/i.test(k[1])) return { action: "open url", args: { url: unquote(rest) } };
+    let kind = k[1].toLowerCase();
+    kind = OPEN_ALIAS[kind] || kind;
+    const action = `open ${kind}`;
+    return { action, args: argsFrom(action, k[2] || "") };
+  }
+  return { action: verb, args: argsFrom(verb, rest) };
+}
+function fromObject(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return { error: "a command must be an object {action, args}" };
+  let action = typeof o.action === "string" ? o.action : typeof o.command === "string" ? o.command : "";
+  action = action.replace(/^@tempo-ui\s+/i, "").replace(/[_.:]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!action) return { error: "missing action" };
+  const args = o.args;
+  if (action.toLowerCase() === "open" && args && typeof args === "object" && !Array.isArray(args)) {
+    const kind = args.kind || args.type || args.what;
+    if (typeof kind === "string") action = `open ${kind}`;
+  }
+  const parsed = fromWords(action);
+  if (parsed.error || args == null) return parsed;
+  if (typeof args === "string" || typeof args === "number") return { action: parsed.action, args: argsFrom(parsed.action, String(args)) };
+  if (Array.isArray(args)) return { action: parsed.action, args: argsFrom(parsed.action, args.map(String).join(" ")) };
+  if (typeof args !== "object") return { error: "args must be a string or an object" };
+  const out = Object.assign({}, parsed.args);
+  for (const [k, v] of Object.entries(args)) if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") out[k] = v;
+  const key = ARG_KEY[parsed.action];
+  if (key && (out[key] == null || out[key] === "")) {
+    for (const k of ALIAS_KEYS) {
+      if (k !== key && out[k] != null && out[k] !== "") {
+        out[key] = out[k];
+        break;
+      }
+    }
+  }
+  return { action: parsed.action, args: out };
+}
+function safeUrl(raw) {
+  let s = String(raw == null ? "" : raw).trim();
+  if (!s) return { error: "missing url" };
+  if (s.length > 2048) return { error: "url too long" };
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s) && /^[\w.-]+(:\d+)?(\/|\?|#|$)/.test(s)) s = (/^(localhost|127\.0\.0\.1)(:|\/|$)/.test(s) ? "http://" : "https://") + s;
+  let u;
+  try {
+    u = new URL(s);
+  } catch (_) {
+    return { error: "not a valid URL" };
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return { error: `only http(s) URLs can be opened (got ${u.protocol})` };
+  if (u.username || u.password) return { error: "URLs with credentials are refused" };
+  return { url: u.href };
+}
+// Same checks as the mod's PLANS[*].check, without the DOM ones.
+function validate(cmd) {
+  if (cmd.error) return cmd.error;
+  const a = cmd.args || (cmd.args = {});
+  const need = (k, what) => {
+    const v = a[k] == null ? "" : String(a[k]).trim();
+    if (!v) return `missing ${what}`;
+    if (v.length > 200) return `${what} too long`;
+    a[k] = v;
+    return null;
+  };
+  switch (cmd.action) {
+    case "open settings":
+      if (a.section != null && String(a.section).length > 60) return "section name too long";
+      return null;
+    case "go": {
+      let r = String(a.route || "").toLowerCase().trim();
+      r = ROUTE_ALIAS[r] || r;
+      if (!ROUTES.includes(r)) return `unknown section "${a.route || ""}" (chat, design, docs, issues, agents, settings)`;
+      a.route = r;
+      return null;
+    }
+    case "open canvas":
+      return need("name", "canvas name");
+    case "open doc":
+      return need("title", "doc title");
+    case "open issue":
+      return need("query", "issue");
+    case "open agent":
+      return need("name", "agent name");
+    case "open chat":
+      return need("title", "chat title");
+    case "open url": {
+      const r = safeUrl(a.url);
+      if (r.error) return r.error;
+      a.url = r.url;
+      return null;
+    }
+    case "focus":
+    case "highlight":
+      if (!String(a.selector || "").trim()) return "missing selector";
+      if (String(a.selector).length > 300) return "selector too long";
+      return null;
+    case "toast":
+      if (!String(a.text || "").trim()) return "toast needs a text";
+      return null;
+    case "split": {
+      const s = String(a.side || "right").toLowerCase().trim();
+      if (s !== "left" && s !== "right") return 'split takes "left" or "right"';
+      a.side = s;
+      return null;
+    }
+    case "run": {
+      const id = String(a.id || "").toLowerCase().trim().replace(/\s+/g, "-");
+      if (!RUN_IDS.includes(id)) return `run "${id}" is not in the allowlist (${RUN_IDS.join(", ")})`;
+      a.id = id;
+      return null;
+    }
+    default:
+      return `"${cmd.action}" is not an allowed action`;
+  }
+}
+
+// ------------------------------------------------------------------- io
+function queueFile() {
+  if (process.env.TEMPO_UI_COMMANDS) return path.resolve(process.env.TEMPO_UI_COMMANDS);
+  return path.join(os.homedir(), ".tempo", "ui-commands.jsonl");
+}
+function trim(file) {
+  let st;
+  try {
+    st = fs.statSync(file);
+  } catch (_) {
+    return;
+  }
+  if (st.size <= MAX_BYTES) return;
+  const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean).slice(-KEEP_LINES);
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, `${lines.join("\n")}\n`, { mode: 0o600 });
+  fs.renameSync(tmp, file);
+}
+function agentName() {
+  const env = process.env;
+  if (env.CLAUDECODE || env.CLAUDE_CODE_ENTRYPOINT) return "claude";
+  if (Object.keys(env).some((k) => k.startsWith("CODEX_"))) return "codex";
+  return null;
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// ui-replies.jsonl (written by the mod next to the queue file): one JSON per
+// line {id, status, reason, via, action, args, at, result?, dataUrl?}.
+async function waitReply(file, id, ms) {
+  const replies = path.join(path.dirname(file), "ui-replies.jsonl");
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    let text = "";
+    try {
+      text = fs.readFileSync(replies, "utf8");
+    } catch (_) {}
+    for (const line of text.split("\n")) {
+      if (!line.includes(id)) continue;
+      try {
+        const r = JSON.parse(line);
+        if (r && r.id === id && r.status && r.status !== "pending") return r;
+      } catch (_) {}
+    }
+    await sleep(100);
+  }
+  return null;
+}
+function describe(cmd) {
+  if (!cmd.action) return (cmd.argv || []).join(" ");
+  const a = cmd.args || {};
+  const v = a[ARG_KEY[cmd.action]];
+  const extra = cmd.action === "highlight" && a.ms ? ` ${a.ms}ms` : "";
+  return `${cmd.action}${v != null && v !== "" ? ` ${v}` : ""}${extra}`;
+}
+function screenshotCmd(words) {
+  const a = { target: "window" };
+  for (let i = 0; i < words.length; i++) {
+    const t = words[i];
+    const kv = /^(?:--)?(target|selector|out)=([\s\S]*)$/i.exec(t);
+    if (kv) {
+      a[kv[1].toLowerCase()] = kv[2];
+      if (kv[1].toLowerCase() === "selector") a.target = "selector";
+    } else if (t === "--canvas" || t === "canvas") a.target = "canvas";
+    else if (t === "--window" || t === "window") a.target = "window";
+    else if (t === "--selector" || t === "selector") {
+      a.target = "selector";
+      a.selector = words[++i];
+    } else if (t === "--out" || t === "-o") a.out = words[++i];
+    else if (a.target === "selector" && a.selector == null) a.selector = t;
+    else return { error: `unknown screenshot option "${t}" (--canvas, --selector <css>, --out <file.png>)` };
+  }
+  if (!["window", "canvas", "selector"].includes(a.target)) return { error: "screenshot target must be window, canvas or selector" };
+  if (a.target === "selector" && !String(a.selector || "").trim()) return { error: "--selector needs a CSS selector or data-testid" };
+  if (!a.out) {
+    const d = new Date();
+    const p2 = (n) => String(n).padStart(2, "0");
+    a.out = `tempo-screenshot-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.png`;
+  }
+  a.out = path.resolve(process.cwd(), a.out);
+  if (!/\.png$/i.test(a.out)) return { error: "--out must end with .png" };
+  if (a.target !== "selector") delete a.selector;
+  return { action: "screenshot", args: a };
+}
+function printList(list, raw) {
+  if (raw) {
+    process.stdout.write(`${JSON.stringify(list, null, 2)}\n`);
+    return;
+  }
+  const sig = (x) =>
+    [x.id]
+      .concat(
+        (x.params || []).map((p) => {
+          const t = p.enum ? p.enum.join("|") : p.type && p.type !== "string" ? `${p.name}:${p.type}` : p.name;
+          return p.required ? `<${t}>` : `[${t}]`;
+        })
+      )
+      .join(" ");
+  const rows = list.map((x) => [sig(x), `${x.label || ""}${x.risk && x.risk !== "safe" ? ` · ${x.risk}` : ""}${x.native ? "" : ` · ${x.owner}`}`]);
+  const w = Math.min(46, Math.max(...rows.map((r) => r[0].length)) + 2);
+  process.stdout.write(`tempo-ui: ${list.length} actions (run one with: tempo-ui <id> name=value ...)\n`);
+  for (const [a, b] of rows) process.stdout.write(`  ${a.length >= w ? `${a}\n  ${" ".repeat(w)}` : a.padEnd(w)}${b}\n`);
+}
+
+// ------------------------------------------------------------------ main
+const NATIVE_VERBS = ["open", "go", "focus", "highlight", "toast", "split", "run"];
+async function main(argv) {
+  const opts = { wait: true, timeout: null, quiet: false, json: null, raw: false };
+  const words = [];
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--help" || a === "-h") {
+      process.stdout.write(USAGE);
+      return 0;
+    }
+    if (a === "--instructions") {
+      process.stdout.write(INSTRUCTIONS.replace(/<CLI>/g, SELF));
+      return 0;
+    }
+    if (a === "--no-wait") opts.wait = false;
+    else if (a === "--quiet" || a === "-q") opts.quiet = true;
+    else if (a === "--raw") opts.raw = true;
+    else if (a === "--timeout") opts.timeout = Math.max(0, Number(argv[++i]) || 0);
+    else if (a.startsWith("--timeout=")) opts.timeout = Math.max(0, Number(a.slice(10)) || 0);
+    else if (a === "--json" && (i === argv.length - 1 || words.length)) opts.raw = true;
+    else if (a === "--json") opts.json = argv[++i] == null ? "" : argv[i];
+    else if (a.startsWith("--json=")) opts.json = a.slice(7);
+    else words.push(a);
+  }
+  let cmd;
+  let raw;
+  if (opts.json != null) {
+    raw = opts.json;
+    try {
+      const o = JSON.parse(opts.json);
+      const known = o && typeof o.action === "string" && NATIVE_VERBS.includes(o.action.trim().toLowerCase().split(/[\s_.:]+/)[0]);
+      cmd = known ? fromObject(o) : o && typeof o.action === "string" && o.action.trim() ? { action: o.action.trim(), args: o.args == null ? {} : o.args, forward: true } : { error: "--json needs an object {action, args}" };
+    } catch (_) {
+      cmd = { error: "--json needs a JSON object {action, args}" };
+    }
+  } else {
+    raw = words.join(" ").trim();
+    if (!raw) {
+      process.stderr.write(USAGE);
+      return 2;
+    }
+    const head = words[0].toLowerCase();
+    const verb = head.split(/[_:]/)[0];
+    if (head === "list") cmd = { action: "list", args: {} };
+    else if (head === "screenshot") cmd = screenshotCmd(words.slice(1));
+    else if (verb === "run" && words[1] && !RUN_IDS.includes(words[1].toLowerCase())) cmd = { action: null, argv: words.slice(1) };
+    else if (NATIVE_VERBS.includes(verb)) {
+      // name=value words: the window's parser handles them (it validates too)
+      cmd = words.slice(1).some((w) => /^[A-Za-z_][\w-]*=/.test(w)) ? { action: null, argv: words.slice() } : fromWords(raw);
+    } else if (/^[A-Za-z][\w.:-]{0,63}$/.test(words[0])) cmd = { action: null, argv: words.slice() };
+    else cmd = { error: `"${words[0]}" is not an action (tempo-ui list shows them)` };
+  }
+  const err = cmd.action && !cmd.forward && cmd.action !== "list" && cmd.action !== "screenshot" ? validate(cmd) : cmd.error || null;
+  if (err) {
+    process.stderr.write(`tempo-ui: refused · ${err}\n(tempo-ui --help, tempo-ui list)\n`);
+    return 2;
+  }
+  const file = queueFile();
+  const id = `cli-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
+  const line = { id, ts: Date.now(), action: cmd.action || null, args: cmd.action ? cmd.args || {} : null, argv: words.length ? words : null, cwd: process.cwd(), raw: clipRaw(raw), agent: agentName() };
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+    trim(file);
+    fs.appendFileSync(file, `${JSON.stringify(line)}\n`, { mode: 0o600 });
+    try {
+      fs.chmodSync(file, 0o600);
+    } catch (_) {}
+  } catch (e) {
+    process.stderr.write(`tempo-ui: could not write ${file}: ${e.message}\n`);
+    return 1;
+  }
+  const what = describe(cmd);
+  const timeout = opts.timeout != null ? opts.timeout : cmd.action === "screenshot" ? 15000 : 6000;
+  if (!opts.wait || timeout === 0) {
+    if (!opts.quiet) process.stdout.write(`tempo-ui: queued · ${what} (id ${id}, ${file})\n`);
+    return 0;
+  }
+  const reply = await waitReply(file, id, timeout);
+  if (!reply) {
+    process.stdout.write(
+      `tempo-ui: queued · ${what} (id ${id})\n` +
+        `no Tempo window answered within ${Math.round(timeout / 100) / 10} s: is RE-TEMPO open with the ui-drive mod? ` +
+        `The window drops commands older than 15 s. Queue: ${file}\n`
+    );
+    return 0;
+  }
+  const shown = reply.action ? describe({ action: reply.action, args: reply.args }) : what;
+  const how = reply.via ? ` (via ${reply.via})` : "";
+  if (reply.status !== "done") {
+    const why = reply.reason ? ` · ${reply.reason}` : "";
+    process.stdout.write(`tempo-ui: ${reply.status} · ${shown}${why}\n`);
+    return reply.status === "skipped" ? 0 : 1;
+  }
+  if (reply.action === "list") {
+    printList(Array.isArray(reply.result) ? reply.result : [], opts.raw);
+    return 0;
+  }
+  if (reply.action === "screenshot") {
+    const r = reply.result || {};
+    const out = cmd.args && cmd.args.out ? cmd.args.out : r.out;
+    if (reply.dataUrl) {
+      const b64 = reply.dataUrl.slice(reply.dataUrl.indexOf(",") + 1);
+      try {
+        fs.mkdirSync(path.dirname(out), { recursive: true });
+        fs.writeFileSync(out, Buffer.from(b64, "base64"));
+      } catch (e) {
+        process.stderr.write(`tempo-ui: could not write ${out}: ${e.message}\n`);
+        return 1;
+      }
+    } else if (!r.written || !fs.existsSync(out)) {
+      process.stdout.write(`tempo-ui: failed · screenshot · the window did not deliver the image\n`);
+      return 1;
+    }
+    if (!opts.quiet) process.stdout.write(`tempo-ui: done · screenshot ${r.target || ""} ${r.width}x${r.height} → ${out}${reply.dataUrl ? "" : " (written by the window)"}\n`);
+    return 0;
+  }
+  if (!opts.quiet) process.stdout.write(`tempo-ui: done · ${shown}${how}\n`);
+  if (reply.result != null) {
+    const body = opts.raw ? JSON.stringify(reply.result) : JSON.stringify(reply.result, null, 2);
+    process.stdout.write(`${body.length > 20000 ? `${body.slice(0, 20000)}\n… (${body.length} characters, cut)` : body}\n`);
+  }
+  return 0;
+}
+function clipRaw(s) {
+  const t = String(s || "");
+  return t.length > 300 ? `${t.slice(0, 299)}…` : t;
+}
+
+main(process.argv.slice(2)).then(
+  (code) => process.exit(code),
+  (e) => {
+    process.stderr.write(`tempo-ui: ${e && e.message ? e.message : e}\n`);
+    process.exit(1);
+  }
+);

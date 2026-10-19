@@ -1,0 +1,135 @@
+/*
+ * RE-TEMPO · shell-glass
+ * ---------------------------------------------------------------------------
+ * The canvas HUD's surfaces (tool rail, pills, composer, agents pill, zoom,
+ * the left and Properties cards, the browser card, popovers, tooltips, toasts)
+ * take the glass of the portfolio header. Tokens copied from the site's
+ * PortfolioHeader.css, the dark fill (line 11):
+ *   .ph-glass-fill-dark { background: rgba(33,33,33,.33);
+ *                         backdrop-filter: blur(10px); }
+ * The site's dark fill has no border, shadow or grain; the HUD keeps its own
+ * hairline and shadow (they are the owning mods' geometry, not the surface).
+ *
+ * Contrast: the canvas can be dark or a white storyboard. The HUD text is
+ * light, so the backdrop is capped with brightness(.35) before the fill: it
+ * leaves a dark canvas (#232323) almost as it is and keeps white text at 4.5:1
+ * or more over a white storyboard. (The site picks a light fill for light
+ * pages; the canvas cannot be sampled across the storyboard iframes, so the
+ * dark fill plus the cap is the one tone that is legible over both.)
+ *
+ * Levels: a glass root paints the fill and the blur once. Everything inside
+ * (fields, segments, hovers, chips) is a tonal white wash over it, through the
+ * app's own surface tokens re-scoped to the root: nested backdrop filters
+ * would only see their parent, and each one costs GPU.
+ *
+ * Everything is scoped under html.rtsg-on (shell-glass.js, off switch).
+ * ---------------------------------------------------------------------------
+ */
+html.rtsg-on {
+  --rtsg-fill: rgba(33, 33, 33, .33);   /* PortfolioHeader.css:11 */
+  --rtsg-blur: 10px;                    /* PortfolioHeader.css:11 */
+  --rtsg-backdrop: blur(var(--rtsg-blur)) brightness(.35);
+  --rtsg-hi: rgba(255, 255, 255, .07);
+  --rtsg-highest: rgba(255, 255, 255, .13);
+  --rtsg-lo: rgba(0, 0, 0, .18);
+}
+
+/* ------------------------------------------------ tokens inside a glass root */
+html.rtsg-on :is(
+  .rcc-file, .rcc-top, .rcc-sel, .rcc-zoom, .rcc-menu, .rcc-tip,
+  [data-rcc-rail], .rcq-ltog, .rcc-composer-wrap, .rcc-agents-pill,
+  [data-rcc-card], [data-rcc-rwrap] > aside,
+  .rtcb-panel, .rtcb-pop, .rtcb-tip, .rtac-tip,
+  .rtwp-dock, .rtwp-menu, .rtwp-tip, .rtwp-toast,
+  body > .pointer-events-auto > .shadow-popover
+) {
+  --color-surface-container: transparent;
+  --color-surface-container-low: var(--rtsg-lo);
+  --color-surface-container-high: var(--rtsg-hi);
+  --color-surface-container-highest: var(--rtsg-highest);
+  --rcc-surface: transparent;
+  --rtcb-surface: transparent;
+  --rtcb-surface-hi: var(--rtsg-hi);
+  --rtcb-surface-lo: var(--rtsg-lo);
+  --rtac-surface: transparent;
+}
+
+/* ------------------------------------------------------------- glass roots */
+html.rtsg-on :is(
+  .rcc-file, .rcc-top, .rcc-sel, .rcc-zoom, .rcc-menu, .rcc-tip,
+  [data-rcc-shell] [data-rcc-rail], .rcq-ltog, [data-rcc-card],
+  .rtcb-panel, .rtcb-pop, .rtcb-tip, .rtac-tip,
+  .rtwp-dock, .rtwp-menu, .rtwp-tip, .rtwp-toast,
+  body > .pointer-events-auto > .shadow-popover
+) {
+  background: var(--rtsg-fill) !important;
+  -webkit-backdrop-filter: var(--rtsg-backdrop);
+  backdrop-filter: var(--rtsg-backdrop);
+}
+
+/* The composer and the agents pill draw their surface as caps + middle inside
+   a wrapper that carries a drop-shadow filter. A filter makes the wrapper a
+   backdrop root (nothing behind it to blur), so the wrapper takes the glass
+   itself (its box is the pill) and the caps keep only their hairline. */
+html.rtsg-on :is(.rcc-composer-surface, .rcc-ap-surface) {
+  filter: none;
+  border-radius: var(--rcc-comp-radius, 20px);
+  background: var(--rtsg-fill);
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, .35));
+  -webkit-backdrop-filter: var(--rtsg-backdrop);
+  backdrop-filter: var(--rtsg-backdrop);
+}
+html.rtsg-on :is(.rcc-cs-top, .rcc-cs-mid, .rcc-cs-bot, .rcc-ap-l, .rcc-ap-m, .rcc-ap-r) {
+  background: transparent;
+}
+
+/* Comment pins on the canvas (the app's own capsule: avatar + Claude dot).
+   Many of them ride the moving canvas, and a backdrop filter on each cost
+   about 30 fps while panning and zooming (measured: 120 -> 86 with the other
+   ten surfaces on, 120 with the pins left out). They take the glass fill
+   without the blur, denser so the avatar ring reads over any canvas. */
+html.rtsg-on div.relative.w-max.select-none > div.absolute.bottom-0.left-0.z-10 {
+  background: rgba(33, 33, 33, .82) !important;
+}
+
+/* Properties: the card is a ::before behind the aside's content. */
+html.rtsg-on [data-rcc-shell] [data-rcc-rwrap] > aside::before {
+  background: var(--rtsg-fill);
+  -webkit-backdrop-filter: var(--rtsg-backdrop);
+  backdrop-filter: var(--rtsg-backdrop);
+}
+
+/* ------------------------------------------------ optional: the shell's own black
+   Off by default (localStorage["rtd.shellGlass.bg"] = "on"). Two fixed layers on
+   <html> behind everything: ::before ambient light, ::after the same fill and
+   blur; the shell's black (body, root, mac header, project sidebar) goes
+   transparent so they show through. */
+html.rtsg-bg::before,
+html.rtsg-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  contain: strict;
+}
+html.rtsg-bg::before {
+  z-index: -2;
+  background:
+    radial-gradient(70% 70% at 4% 0%, rgba(132, 146, 196, .46), transparent 72%),
+    radial-gradient(55% 40% at 70% 0%, rgba(160, 160, 190, .24), transparent 72%),
+    radial-gradient(50% 55% at 100% 100%, rgba(190, 150, 120, .24), transparent 72%),
+    #000;
+}
+html.rtsg-bg::after {
+  z-index: -1;
+  background: rgba(33, 33, 33, .33);   /* PortfolioHeader.css:11 */
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+html.rtsg-bg body,
+html.rtsg-bg #root,
+html.rtsg-bg #root > div.h-screen.w-screen,
+html.rtsg-bg header[class*="mac-header"],
+html.rtsg-bg.rtps-on .rtps {
+  background: transparent !important;
+}

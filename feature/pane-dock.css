@@ -1,0 +1,950 @@
+/*
+ * RE-TEMPO · pane-dock — free-form panes in the workspace center (rtd- prefix).
+ * Colors come from the app tokens (--color-*, --blueberry-500), so it follows the theme.
+ */
+
+.rtd-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.rtd-layer:not(.rtd-on) {
+  display: none;
+}
+
+.rtd-panel {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: auto;
+  background: var(--color-surface-container-low, #0e0e0e);
+}
+/* The popout renderer creates an h-screen w-screen container; here it fills the pane. */
+.rtd-panel > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+/* The popout header is a window drag region: not allowed inside the main window. */
+.rtd-panel,
+.rtd-panel * {
+  -webkit-app-region: no-drag !important;
+}
+.rtd-panel header {
+  height: 45px;
+  border-bottom: 0.5px solid var(--color-border-secondary, #232323);
+  background: var(--color-surface-topshell, transparent);
+}
+/* The popout's own header (the one holding the tab bar), laid out as the center's
+   tab row: first tab 6px in (the tab list's px-1.5), split button 8px from the
+   right edge (pr-2). Headers inside the pane's content keep their own padding. */
+.rtd-panel header:has(> div > [data-tab-bar]) {
+  padding-left: 0;
+  padding-right: 8px;
+}
+/* The pane's own "+", right after the last tab (same look and slot as the
+   center's "+": 28x28, 6px from the tab list, outside the scrolling list). */
+.rtd-add {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-tertiary, #8a8a8a);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+.rtd-add:hover,
+.rtd-add[data-open] {
+  background: var(--color-surface-container-high, rgba(255, 255, 255, 0.08));
+  color: var(--color-icons-primary, #ededed);
+}
+/* "Open in split view" at the header's right end (same look as the center's toggle). */
+.rtd-split {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  margin-left: 4px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  cursor: pointer;
+  transition: color 120ms ease-out;
+}
+.rtd-split:hover {
+  background: var(--color-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--color-text-primary, #ededed);
+}
+.rtd-split[aria-disabled="true"] {
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  opacity: 0.4;
+  cursor: default;
+}
+/* Solo (before "Open in split view"; in the center's header too): an icon, and
+   while solo an "Exit solo" pill with the accent outline. */
+.rtd-solo {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  margin-left: 4px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rtd-solo[hidden] {
+  display: none;
+}
+.rtd-solo:hover {
+  background: var(--color-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--color-text-primary, #ededed);
+}
+.rtd-solo svg {
+  width: 14px;
+  height: 14px;
+}
+.rtd-solo-label {
+  display: none;
+}
+.rtd-solo[data-on] {
+  box-shadow: inset 0 0 0 1px var(--color-accent, #d4d4d4);
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 10%, transparent);
+  color: var(--color-text-primary, #ededed);
+}
+.rtd-solo[data-on] .rtd-solo-label {
+  display: inline;
+}
+/* The center solo: "Exit solo" floats over its top right, under its tab bar
+   (its native header stays untouched). */
+.rtd-solo.rtd-solo-float {
+  position: absolute;
+  z-index: 35;
+  margin: 0;
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 10%, var(--color-surface-menu, #1a1a1a));
+  box-shadow:
+    inset 0 0 0 1px var(--color-accent, #d4d4d4),
+    var(--shadow-dropdown, 0 12px 32px rgba(0, 0, 0, 0.45));
+}
+.rtd-panel > .rtd-solo {
+  position: absolute;
+  top: 8px;
+  right: 76px;
+  z-index: 3;
+  margin: 0;
+}
+.rtd-panel:has(header [data-tab-bar] [role="tablist"]) > .rtd-solo {
+  visibility: hidden;
+}
+.rtd-add:focus-visible,
+.rtd-split:focus-visible,
+.rtd-solo:focus-visible {
+  outline: 2px solid var(--blueberry-500, #67cffd);
+  outline-offset: -2px;
+}
+.rtd-add svg,
+.rtd-split svg {
+  width: 14px;
+  height: 14px;
+}
+/* No tab bar yet: both float in the header's corner. Hidden for the moment
+   between the tab bar's render and the tick that moves them into it. */
+.rtd-panel > .rtd-add,
+.rtd-panel > .rtd-split {
+  position: absolute;
+  top: 8px;
+  z-index: 3;
+  margin: 0;
+}
+.rtd-panel > .rtd-split {
+  right: 8px;
+}
+.rtd-panel > .rtd-add {
+  right: 42px;
+}
+.rtd-panel:has(header [data-tab-bar] [role="tablist"]) > .rtd-add,
+.rtd-panel:has(header [data-tab-bar] [role="tablist"]) > .rtd-split {
+  visibility: hidden;
+}
+/* A disabled item with a reason (New Canvas) keeps its tooltip. */
+.rtd-menu [data-disabled][title] {
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+/* Popout window traffic lights: they do not apply to a pane. */
+.rtd-panel header > div:first-child {
+  display: none !important;
+}
+.rtd-panel.rtd-flash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1.5px var(--blueberry-500, #67cffd);
+  animation: rtd-flash 700ms ease-out forwards;
+}
+@keyframes rtd-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Dividers: 1px line, 7px grab area. */
+.rtd-divider {
+  position: absolute;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: none;
+}
+.rtd-divider::before {
+  content: "";
+  position: absolute;
+  background: var(--color-border-secondary, #232323);
+  transition: background-color 120ms ease-out;
+}
+.rtd-divider-v {
+  cursor: col-resize;
+}
+.rtd-divider-v::before {
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+}
+.rtd-divider-h {
+  cursor: row-resize;
+}
+.rtd-divider-h::before {
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 1px;
+}
+.rtd-divider:hover::before,
+.rtd-divider.rtd-active::before {
+  background: var(--blueberry-500, #67cffd);
+}
+.rtd-divider-v:hover::before,
+.rtd-divider-v.rtd-active::before {
+  left: 2px;
+  width: 3px;
+}
+.rtd-divider-h:hover::before,
+.rtd-divider-h.rtd-active::before {
+  top: 2px;
+  height: 3px;
+}
+
+/* Drag layer: above webviews, only while dragging/resizing. */
+.rtd-dnd {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  pointer-events: none;
+}
+.rtd-dnd.rtd-dragging,
+.rtd-dnd.rtd-resizing {
+  display: block;
+}
+.rtd-dnd.rtd-resizing {
+  pointer-events: auto;
+  cursor: col-resize;
+}
+.rtd-dnd.rtd-resizing[data-dir="h"] {
+  cursor: row-resize;
+}
+.rtd-catcher {
+  position: absolute;
+  pointer-events: auto;
+}
+/* Destination pane of a move, over its tab bar or its body: a 1px outline in the
+   app's accent (the color of its own tab drag marker). No fill: the tab bar slot
+   shows where the tab lands. */
+.rtd-target {
+  position: absolute;
+  display: none;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px var(--color-accent, #d4d4d4);
+  pointer-events: none;
+  transition:
+    left 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    top 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtd-target[data-on] {
+  display: block;
+  animation: rtd-fade-in 120ms ease-out;
+}
+@keyframes rtd-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+/* New split (the body's edges): the half that becomes the new pane, same outline
+   and accent, with a light tint and a small label. */
+.rtd-hint {
+  position: absolute;
+  display: none;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent, #d4d4d4);
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 10%, transparent);
+  pointer-events: none;
+  transition:
+    left 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    top 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtd-hint[data-on] {
+  display: flex;
+  animation: rtd-fade-in 120ms ease-out;
+}
+.rtd-hint-label {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  color: var(--color-on-accent, #0e0e0e);
+  background: var(--color-accent, #d4d4d4);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtd-hint,
+  .rtd-target,
+  .rtd-divider::before {
+    transition: none;
+    animation: none;
+  }
+  .rtd-panel.rtd-flash::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Tab type icon (the popout tab bar only has the label). 2px stroke, like the app's icons.
+   Drawn in ::after placed first (order -1): the app's tab bar owns ::before for its
+   drag-over marker (before:absolute before:left-[-3px] ...), which would pull the icon
+   on top of the label of the tab under the pointer. Same size and color as the center
+   tab's icon (size-3, text-text-tertiary). */
+.rtd-panel [role="tab"][data-rtd-type]:not([data-rtd-type=""])::after,
+.rtd-ghost[data-rtd-type]:not([data-rtd-type=""])::after,
+.rtd-fly[data-rtd-type]:not([data-rtd-type=""])::after,
+.rtd-ph-tab[data-rtd-type]:not([data-rtd-type=""])::after {
+  content: "";
+  order: -1;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-text-tertiary, #8a8a8a);
+  -webkit-mask: var(--rtd-icon) center / contain no-repeat;
+  mask: var(--rtd-icon) center / contain no-repeat;
+}
+[data-rtd-type="chat"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>");
+}
+[data-rtd-type="terminal"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m7 11 2-2-2-2'/><path d='M11 13h4'/><rect width='18' height='18' x='3' y='3' rx='2'/></svg>");
+}
+[data-rtd-type="canvas"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='7' height='7' x='3' y='3' rx='1'/><rect width='7' height='7' x='14' y='3' rx='1'/><rect width='7' height='7' x='14' y='14' rx='1'/><rect width='7' height='7' x='3' y='14' rx='1'/></svg>");
+}
+[data-rtd-type="browser"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/><path d='M2 12h20'/></svg>");
+}
+[data-rtd-type="prd"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/><path d='M14 2v4a2 2 0 0 0 2 2h4'/><path d='M16 13H8'/><path d='M16 17H8'/><path d='M10 9H8'/></svg>");
+}
+[data-rtd-type="issue"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='1'/></svg>");
+}
+[data-rtd-type="file"],
+[data-rtd-type="diff"],
+[data-rtd-type="artifact"] {
+  --rtd-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/><path d='M14 2v4a2 2 0 0 0 2 2h4'/></svg>");
+}
+
+
+/* Tab bar preview (like Chrome): the bar opens a slot where the tab lands. The tabs
+   after it slide right (the list gets the room first, see pane-dock.js), a translucent
+   copy of the dragged tab fills the slot and a 2px rounded marker, the app's own
+   tab bar marker shape, sits in the gap before it. */
+.rtd-ghost {
+  position: absolute;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, rgba(255, 255, 255, 0.08));
+  color: var(--color-text-secondary, #bababa);
+  opacity: 0.5;
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rtd-ghost-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtd-insert {
+  position: absolute;
+  display: none;
+  border-radius: 9999px;
+  background: var(--color-accent, #d4d4d4); /* the app's marker: before:bg-accent */
+  pointer-events: none;
+}
+.rtd-ghost,
+.rtd-insert {
+  transition: left 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtd-insert[data-on] {
+  display: block;
+}
+/* The slot opens the same way from the bar and from the body. */
+.rtd-ghost[data-on] {
+  display: flex;
+  transform-origin: left center;
+  animation: rtd-slot-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rtd-slot-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.6);
+  }
+}
+/* The dragged tab while the pointer is over its own bar: the slot stands for it. */
+[data-rtd-lift] {
+  display: none !important;
+}
+[data-rtd-shifting] [role="tab"] {
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* The slot stands in for the app's drag-over marker (the ::before of the tab under
+   the pointer): never both. The mod also keeps those drag events from the app. */
+[data-rtd-shifting] [role="tab"]::before {
+  content: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtd-ghost,
+  .rtd-insert,
+  [data-rtd-shifting] [role="tab"] {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Undo/redo status ("Undid split"): centered under the dock area (left/bottom set
+   by the mod), the app's menu surface and type. */
+.rtd-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-primary, #3a3a3a);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-menu, var(--color-surface-container-high, #232323));
+  box-shadow: var(--shadow-dropdown, 0 12px 32px rgba(0, 0, 0, 0.45));
+  color: var(--color-text-primary, #ededed);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 0s linear 120ms;
+}
+.rtd-toast[data-show] {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+/* With an action ("Moved to new workspace make-it-red · Undo"): clickable, the
+   message cut with an ellipsis before the button. */
+.rtd-toast[data-action] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 4px 4px 4px 10px;
+  pointer-events: auto;
+}
+.rtd-toast-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtd-toast-sep {
+  flex: none;
+  color: var(--color-text-tertiary, #737373);
+}
+.rtd-toast-btn {
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-text-primary, #ededed);
+  font: 600 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+}
+.rtd-toast-btn:hover {
+  background: var(--color-surface-container-high, rgba(255, 255, 255, 0.08));
+}
+.rtd-toast-btn:focus-visible {
+  outline: 2px solid var(--blueberry-500, #67cffd);
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtd-toast {
+    transition: none;
+  }
+}
+
+/* Empty deck: covers the center content under the center tab bar while the active
+   deck has no tab there (the app's active tab belongs to another deck). Placed by
+   the mod over the center's rect; the app's surface, type and button look. */
+.rtd-empty {
+  position: absolute;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--color-surface-container-low, #0e0e0e);
+  color: var(--color-text-secondary, #a3a3a3);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-align: center;
+  pointer-events: auto;
+}
+.rtd-empty[hidden] {
+  display: none;
+}
+.rtd-empty-title {
+  color: var(--color-text-primary, #ededed);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.rtd-empty-hint {
+  color: var(--color-text-tertiary, #737373);
+}
+.rtd-empty-btn {
+  margin-top: 10px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-primary, #3a3a3a);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface-container, #1a1a1a);
+  color: var(--color-text-primary, #ededed);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+}
+.rtd-empty-btn:hover {
+  background: var(--color-surface-container-high, #232323);
+}
+.rtd-empty-btn:focus-visible {
+  outline: 2px solid var(--blueberry-500, #4f7cff);
+  outline-offset: 2px;
+}
+.rtd-empty-btn[hidden] {
+  display: none;
+}
+
+/* A tab over a "+" (a pane's or the center's): the "+" grows into a "New
+   workspace" pill, with the split preview's accent outline and tint, from where
+   the "+" is (placed by the mod, kept inside its pane). Not allowed (not a chat,
+   a running chat...): dashed and muted, with the reason, and no drop. */
+.rtd-newws {
+  position: absolute;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 6px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent, #d4d4d4);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 10%, var(--color-surface-menu, #1a1a1a));
+  box-shadow: var(--shadow-dropdown, 0 12px 32px rgba(0, 0, 0, 0.45));
+  color: var(--color-text-primary, #ededed);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  transform-origin: left center;
+}
+.rtd-newws svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--color-accent, #d4d4d4);
+}
+.rtd-newws[data-on] {
+  display: flex;
+  animation: rtd-pill-in 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtd-newws[data-off] {
+  border-style: dashed;
+  border-color: var(--color-border-primary, #3a3a3a);
+  background: var(--color-surface-menu, #1a1a1a);
+  color: var(--color-text-tertiary, #737373);
+}
+.rtd-newws[data-off] svg {
+  color: var(--color-text-tertiary, #737373);
+}
+@keyframes rtd-pill-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.4);
+  }
+}
+
+/* The dropped tab flying into the "+" (transform and opacity animated by the mod),
+   and the "+" pulsing as it lands. */
+.rtd-fly {
+  position: fixed;
+  z-index: 2147482999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #262626);
+  box-shadow:
+    inset 0 0 0 1px var(--color-accent, #d4d4d4),
+    var(--shadow-dropdown, 0 12px 32px rgba(0, 0, 0, 0.45));
+  color: var(--color-text-primary, #ededed);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+.rtd-fly-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-rtd-pulse] {
+  animation: rtd-plus-pulse 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rtd-plus-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent, #d4d4d4) 55%, transparent);
+  }
+  45% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+@keyframes rtd-plus-glow {
+  40% {
+    background-color: color-mix(in srgb, var(--color-accent, #d4d4d4) 25%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtd-newws[data-on] {
+    animation: rtd-fade-in 120ms ease-out;
+  }
+  [data-rtd-pulse] {
+    animation: rtd-plus-glow 260ms linear;
+  }
+}
+/* The moved tab while its copy flies: it keeps its room (the "+" stays put). */
+[data-rtd-flying-src] {
+  visibility: hidden !important;
+}
+
+/* A change of the layout's shape (a pane gone, the center hidden or back, a
+   split) eases in: the mod puts rtd-anim on #workspace-center for that change
+   only (never while a divider is dragged or the window resizes). */
+.rtd-anim > .rtd-layer > .rtd-panel,
+.rtd-anim > [data-rtd-main] {
+  transition:
+    left 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    top 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtd-anim > .rtd-layer > .rtd-panel,
+  .rtd-anim > [data-rtd-main] {
+    transition: none;
+  }
+}
+
+/* External window placeholder: the tab's chip at home (after the pane's "+", or
+   floating after the center's "+"), dashed while its tab is out; picked, its pane
+   shows the empty state below. */
+.rtd-ph {
+  display: inline-flex;
+  flex-shrink: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  margin-right: 6px;
+}
+.rtd-ph-center {
+  position: absolute;
+  z-index: 36;
+  height: 28px;
+}
+.rtd-ph-float {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 45px;
+  padding: 0 120px 0 6px;
+  box-sizing: border-box;
+  border-bottom: 0.5px solid var(--color-border-secondary, #232323);
+  background: var(--color-surface-topshell, var(--color-surface-container-low, #0e0e0e));
+}
+/* Direct children of a pane: not sized by the popout container rule
+   (.rtd-panel > div fills the pane). */
+.rtd-panel > div.rtd-ph-float {
+  width: auto !important;
+  height: 45px !important;
+}
+.rtd-panel > div.rtd-ext {
+  width: auto !important;
+  height: auto !important;
+}
+.rtd-ph-tab {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px dashed var(--color-border-primary, #3a3a3a);
+  outline-offset: -1px;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  white-space: nowrap;
+  cursor: pointer;
+  transform-origin: center;
+}
+.rtd-ph-tab:hover {
+  background: var(--color-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--color-text-primary, #ededed);
+}
+.rtd-ph-tab[data-active] {
+  background: var(--color-surface-container-high, rgba(255, 255, 255, 0.08));
+  color: var(--color-text-primary, #ededed);
+  outline-color: var(--color-accent, #d4d4d4);
+}
+.rtd-ph-tab:focus-visible {
+  outline: 2px solid var(--blueberry-500, #67cffd);
+}
+.rtd-ph-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtd-ph-mark {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-text-tertiary, #8a8a8a);
+}
+.rtd-ph-mark svg {
+  width: 12px;
+  height: 12px;
+}
+/* Detached: the chip lifts (and stays lifted while its tab is out). */
+.rtd-ph-tab.rtd-ph-lift {
+  animation: rtd-lift 250ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes rtd-lift {
+  from {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  to {
+    transform: scale(0.96);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  }
+}
+.rtd-ext {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--color-surface-container-low, #0e0e0e);
+  color: var(--color-text-secondary, #a3a3a3);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  text-align: center;
+  animation: rtd-fade-in 160ms ease-out;
+}
+.rtd-ext.rtd-ext-center {
+  z-index: 31;
+}
+.rtd-ext-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: var(--color-surface-container, #1a1a1a);
+  color: var(--color-text-tertiary, #8a8a8a);
+}
+.rtd-ext-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.rtd-ext-title {
+  color: var(--color-text-primary, #ededed);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.rtd-ext-sub {
+  max-width: 80%;
+  overflow: hidden;
+  color: var(--color-text-tertiary, #737373);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtd-ext-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.rtd-ext-actions button {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-md, 6px);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  cursor: pointer;
+}
+.rtd-ext-primary {
+  border: 1px solid transparent;
+  background: var(--color-text-primary, #ededed);
+  color: var(--color-surface-container-low, #0e0e0e);
+}
+.rtd-ext-primary:hover {
+  opacity: 0.9;
+}
+.rtd-ext-secondary {
+  border: 1px solid var(--color-border-primary, #3a3a3a);
+  background: var(--color-surface-container, #1a1a1a);
+  color: var(--color-text-primary, #ededed);
+}
+.rtd-ext-secondary:hover {
+  background: var(--color-surface-container-high, #232323);
+}
+.rtd-ext-actions button:focus-visible {
+  outline: 2px solid var(--blueberry-500, #67cffd);
+  outline-offset: 2px;
+}
+/* Back home: a copy lands on the tab (0.96 -> 1, the shadow going). */
+.rtd-land {
+  position: fixed;
+  z-index: 2147482999;
+  border-radius: 6px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 12%, transparent);
+  animation: rtd-land 250ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes rtd-land {
+  from {
+    transform: scale(0.96);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    opacity: 0;
+  }
+}
+.rtd-land.rtd-land-fade {
+  animation: rtd-land-fade 250ms ease-out forwards;
+}
+@keyframes rtd-land-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtd-ph-tab.rtd-ph-lift {
+    animation: rtd-fade-in 160ms ease-out;
+  }
+  .rtd-land {
+    animation: rtd-land-fade 250ms ease-out forwards;
+  }
+}
+
+/* Off the chat route (design, docs, issues...): the dock's own things on the
+   workspace area hide with the route and come back with it. */
+.rtd-offroute > .rtd-ph-center,
+.rtd-offroute > .rtd-ext,
+.rtd-offroute > .rtd-solo-float,
+.rtd-offroute > .rtd-empty {
+  display: none !important;
+}

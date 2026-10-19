@@ -1,0 +1,164 @@
+/*
+ * RE-TEMPO · bg-tasks — inline "background tasks" block at the end of the
+ * transcript (.rbt-*). Only the app's tokens, so dark/light come for free.
+ * Row anatomy mirrors the app's task popover row (icon · label · mono chip ·
+ * elapsed); the header mirrors the turn summary trigger (text-body, secondary).
+ */
+
+.rbt-block {
+  margin: 4px 0 8px;
+  border: var(--border-width, 0.5px) solid var(--color-border-primary);
+  border-radius: 8px;
+  background: var(--color-surface-container);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  animation: rbt-in 160ms ease-out;
+}
+
+/* ---------------------------------------------------------------- header */
+.rbt-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  text-align: left;
+  cursor: pointer;
+}
+.rbt-head:disabled {
+  cursor: default;
+}
+.rbt-head:not(:disabled):hover {
+  background: var(--color-surface-container-high);
+}
+.rbt-head:focus-visible {
+  outline: 1px solid var(--color-border-focus, var(--color-border-primary));
+  outline-offset: -1px;
+}
+.rbt-head-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rbt-head-meta {
+  flex-shrink: 0;
+  margin-left: -4px;
+  color: var(--color-text-tertiary);
+}
+.rbt-chev {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  transition: transform 120ms ease-out;
+}
+.rbt-head[aria-expanded="true"] .rbt-chev {
+  transform: rotate(90deg);
+}
+[hidden].rbt-head-meta,
+[hidden].rbt-chev,
+[hidden].rbt-ico,
+[hidden].rbt-list,
+[hidden].rbt-chip {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- rows */
+.rbt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 4px 4px;
+}
+.rbt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  animation: rbt-in 160ms ease-out;
+}
+.rbt-row:hover {
+  background: var(--color-surface-container-high);
+}
+.rbt-ico {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+.rbt-ico svg {
+  display: block;
+}
+/* The app's `animate-spin` (var(--animate-spin)); own fallback if missing. */
+.rbt-ico .animate-spin {
+  animation: var(--animate-spin, rbt-spin 1s linear infinite);
+  transform-origin: center;
+}
+.rbt-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+}
+.rbt-chip {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+}
+.rbt-time {
+  flex-shrink: 0;
+  min-width: 3ch;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs, 12px);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rbt-row:not([data-status="running"]) .rbt-label {
+  color: var(--color-text-tertiary);
+}
+.rbt-row[data-status="failed"] .rbt-time {
+  color: var(--color-text-error, var(--color-text-tertiary));
+}
+
+/* ---------------------------------------------------------------- motion */
+@keyframes rbt-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+@keyframes rbt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rbt-block,
+  .rbt-row {
+    animation: none;
+  }
+  .rbt-chev {
+    transition: none;
+  }
+}

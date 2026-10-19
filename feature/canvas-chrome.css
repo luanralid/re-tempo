@@ -1,0 +1,2160 @@
+/*
+ * RE-TEMPO · canvas-chrome — pen.dev layout for the design canvas (see
+ * canvas-chrome.js). Everything is keyed on [data-rcc-shell], which the mod
+ * sets only on shells it manages: without it (flag off, narrow pane, no
+ * canvas toolbar) nothing here applies. App tokens only (dark/light free).
+ *
+ * Design scale (pen.dev, 8px grid, the comfortable sizes): one inset,
+ * --rcc-inset (4px), from a container's outer edge (its 1px hairline
+ * included) to every item with a hover or active state inside it, on every
+ * side, and concentric radii (outer = inner + inset): 40px pills (file,
+ * top, selection, zoom) with 32px items of radius 8 → radius 12; the rail,
+ * 44px wide, 36px tool circles → a 22px capsule, the round toggle 44px on
+ * its axis; the card (16) with its tabs (12); the composer (20) with its
+ * 32px send circle; the agents pill (20) with comment-bubbles' 32px
+ * "Manage agents" circle and 24px avatars (inset 8, radius 12).
+ * Menus 16, tooltips and menu items 8; one 1px hairline (border-secondary);
+ * one shadow on every floating surface; 12px edges for every floating piece
+ * (the left column with the composer, the top pills, the zoom); 18px icons,
+ * stroke 1.5; 13px/500 in pills, 12px in chips; 8px gaps between pieces,
+ * 4px between items. Hover = surface-container-high, pressed / active =
+ * accent-subtle + accent, focus = 60% focus ring.
+ *
+ * Floating chrome geometry (shell custom properties, set by the mod; every
+ * use has a fallback, positions are never recomputed here):
+ *   --rcc-gap / --rcc-edge / --rcc-space   inset (24), edge inset (12), base space (8)
+ *   --rcc-col-top             card and toggle column top (60)
+ *   --rcc-vp-l / --rcc-vp-t   viewport area offset inside the shell
+ *   --rcc-rail-x              rail column x in the viewport area
+ *   --rcc-rail-top            tool rail top (under canvas-quick's toggle, 104)
+ *   --rcc-right-inset         zoom pill right offset (clears the dropdown)
+ *   --rcc-comp-x / -w / -b    composer box in the viewport area (one row at
+ *                             the bottom left, or docked under the open card)
+ *   --rcc-ta-max              (on the composer) how tall its input may grow
+ *   --rcc-card-bottom         the open card's bottom (8px above the composer)
+ *   --rcc-sel-top             selection pill top
+ *   --rcc-sel-w               the selection card's width (pill + properties)
+ *   --rcc-dd-top / -w / -h    the selection card's body (the right panel)
+ *                             box, in the right column's box
+ *   --rcc-share-x / -y / -w   native Share, fixed over the top pill's slot
+ *   --rcc-hbar-bottom         horizontal tool bar (rail fallback) bottom
+ * Attributes on the shell: data-rcc-dd="open|closed", data-rcc-hbar,
+ * data-rcc-native (a view left to the app: its own tool bar and right panel
+ * show; without it, and without the layout, they are hidden).
+ */
+
+[data-canvas-shell][data-rcc-shell],
+[data-canvas-shell][data-rcc-compact],
+.rcc-menu,
+.rcc-tip {
+  --rcc-space: 8px;
+  --rcc-inset: 4px;
+  --rcc-bar: 40px;
+  --rcc-pill-radius: 12px;
+  --rcc-card-radius: 16px;
+  --rcc-comp-radius: 20px; /* the composer and the agents pill: 16 (send) + inset */
+  --rcc-btn-radius: 8px;
+  --rcc-item-radius: 8px;
+  --rcc-pill-pad: 12px;
+  --rcc-icon: 18px;
+  --rcc-surface: var(--color-surface-container);
+  --rcc-line: var(--color-border-secondary);
+  --rcc-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --rcc-ring: color-mix(in oklab, var(--color-focus) 60%, transparent);
+}
+[data-canvas-shell][data-rcc-shell],
+[data-canvas-shell][data-rcc-compact] {
+  --rcc-gap: 24px;
+  /* the left column (file pill, card, toggle, rail) and the top pills sit
+     12px from the view's edges; 8px between pill, toggle and rail */
+  --rcc-edge: 12px;
+  --rcc-col-top: 60px; /* edge + bar + space */
+}
+[data-canvas-shell][data-rcc-shell] {
+  position: relative;
+}
+
+/* before the chrome: a canvas view it has not taken yet (the frames while
+   the app mounts it) does not draw the app's own tool bar and right panel,
+   so they never flash before the layout takes them over. Keyed on the
+   absence of the mod's attributes, so it holds from the very first frame;
+   a view left to the app (flag off, narrow, never ready) is marked
+   [data-rcc-native] and draws them (canvas-chrome.js, markNative).
+   Fallback without the script (it never ran, or stopped): after 2.5s the
+   CSS alone gives them back (rcc-native-back). */
+[data-canvas-shell]:not([data-rcc-shell]):not([data-rcc-compact]):not([data-rcc-native]) [role="toolbar"][aria-label="Design tools"],
+[data-canvas-shell]:not([data-rcc-shell]):not([data-rcc-compact]):not([data-rcc-native]) [data-testid="canvas-right-panel"] {
+  visibility: hidden;
+  animation: rcc-native-back 0s linear 2.5s forwards;
+}
+/* the right panel's column too: out of the flow (the canvas keeps its
+   width, no jump when the chrome takes it) and not drawn (its resize
+   handle); in a taken view as well, for a right panel that has just
+   mounted and is not marked yet ([data-rcc-rwrap], the next sync) */
+[data-canvas-shell]:not([data-rcc-shell]):not([data-rcc-compact]):not([data-rcc-native]) :has(> [data-testid="canvas-right-panel"]),
+[data-canvas-shell][data-rcc-shell] [data-rcc-rrow] > :not([data-rcc-rwrap]):has(> [data-testid="canvas-right-panel"]) {
+  position: var(--rcc-pre-pos, absolute);
+  visibility: hidden;
+  animation: rcc-native-back 0s linear 2.5s forwards;
+}
+@keyframes rcc-native-back {
+  to {
+    visibility: visible;
+    --rcc-pre-pos: relative;
+  }
+}
+
+/* ------------------------------------------------------------ icons */
+.rcc-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--rcc-icon, 18px);
+  height: var(--rcc-icon, 18px);
+}
+.rcc-ico svg {
+  width: 100%;
+  height: 100%;
+}
+.rcc-ico svg,
+.rcc-ico svg[stroke],
+.rcc-ico svg [stroke] {
+  stroke-width: 1.5;
+}
+
+/* shared focus ring (keyboard only) */
+.rcc-tab:focus-visible,
+.rcc-tool:focus-visible,
+.rcc-empty-action:focus-visible,
+.rcc-zoom-btn:focus-visible,
+.rcc-zoom-level:focus-visible,
+.rcc-composer-send:focus-visible,
+.rcc-composer-mic:focus-visible,
+.rcc-sel-toggle:focus-visible,
+.rcc-top-btn:focus-visible,
+.rcc-menu-item:focus-visible,
+[data-rcc-shell] [data-rcc-rail] button:focus-visible,
+[data-rcc-shell] .rcq-ltog:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: 1px;
+}
+
+/* shared tooltip (label + shortcut), 500ms delay like the native ones. The
+   tabs do not use it: their row scrolls and would clip it, so canvas-chrome.js
+   draws a .rcc-tip at body level (data-rcc-tab-tip, end of this file). */
+[data-rcc-tip] {
+  position: relative;
+}
+[data-rcc-tip]::after {
+  content: attr(data-rcc-tip);
+  position: absolute;
+  z-index: 60;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  background: var(--color-surface-container-high);
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+[data-rcc-tip]:hover::after {
+  opacity: 1;
+  transition-delay: 500ms;
+}
+
+/* ------------------------------------------------- floating left card */
+/* The canvas's own left panel wrapper, floated over the canvas under the
+   file pill: tab row on top, the active tab below (Layers = the native
+   panel, untouched; other tabs = hosts stacked in the same grid cell). */
+[data-canvas-shell][data-rcc-shell][data-rcc-left="open"] > [data-rcc-card] {
+  position: absolute;
+  z-index: 30;
+  top: calc(var(--rcc-vp-t, 0px) + var(--rcc-col-top, 60px));
+  bottom: var(--rcc-edge, 12px);
+  left: calc(var(--rcc-vp-l, 0px) + var(--rcc-edge, 12px));
+  height: auto;
+  max-width: calc(100% - 2 * var(--rcc-gap, 24px) - 120px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, auto);
+  box-sizing: border-box;
+  border: 1px solid var(--rcc-line);
+  border-radius: var(--rcc-card-radius);
+  background: var(--rcc-surface);
+  box-shadow: var(--rcc-shadow);
+  overflow: hidden;
+}
+[data-canvas-shell][data-rcc-shell][data-rcc-left="open"][data-rcc-comp="docked"] > [data-rcc-card] {
+  bottom: var(--rcc-card-bottom, 116px);
+}
+[data-rcc-shell][data-rcc-left="open"] > [data-rcc-card] > :not([data-rcc-own]),
+[data-rcc-shell][data-rcc-left="open"] > [data-rcc-card] > [style*="contents"] > * {
+  grid-row: 2;
+  grid-column: 1;
+  min-height: 0;
+}
+/* the native panel blends into the card */
+[data-rcc-shell][data-rcc-left="open"] > [data-rcc-card] aside {
+  background: transparent;
+}
+/* another tab active: the native panel stays mounted and sized (the card
+   keeps its width) but is not drawn nor hit */
+[data-rcc-shell][data-rcc-left="open"] > [data-rcc-card]:not([data-rcc-tab="layers"]) > :not([data-rcc-own]) {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-rcc-shell][data-rcc-left="closed"] > [data-rcc-card] > [data-rcc-own] {
+  display: none !important;
+}
+
+.rcc-card-head {
+  grid-row: 1;
+  grid-column: 1;
+  width: 0;
+  min-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--rcc-inset, 4px);
+  /* the tabs at the inset from the card's edge (its hairline inside it) */
+  padding: calc(var(--rcc-inset, 4px) - 1px);
+  /* registered tabs scroll instead of being cut off; the padding keeps the
+     2px focus ring (offset 1) inside the scroll box, no scrollbar drawn */
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.rcc-card-head::-webkit-scrollbar {
+  display: none;
+}
+.rcc-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: var(--rcc-space, 8px);
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  /* concentric with the card's corner */
+  border-radius: calc(var(--rcc-card-radius, 16px) - var(--rcc-inset, 4px));
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-container-high);
+}
+.rcc-tab.rcc-tab-on {
+  width: auto;
+  padding: 0 12px 0 8px;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-tab-label {
+  white-space: nowrap;
+}
+
+.rcc-panel {
+  grid-row: 2;
+  grid-column: 1;
+  width: 0;
+  min-width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.rcc-panel[hidden] {
+  display: none !important;
+}
+.rcc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rcc-space, 8px);
+  flex: 1;
+  min-height: 160px;
+  padding: 24px;
+  text-align: center;
+  font-family: var(--font-sans);
+}
+.rcc-empty-title {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.rcc-empty-body {
+  max-width: 264px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}
+.rcc-empty-action {
+  margin-top: var(--rcc-space, 8px);
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-empty-action:hover {
+  background: var(--color-surface-container-highest);
+}
+.rcc-empty-action:active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+/* the Agent tab (pen.dev): the head row (the search, the whole row), then
+   the body the chat view is drawn on. This
+   canvas's own chat (Design route) brings the app's session row: ours hides. */
+.rcc-agent-head {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--rcc-inset, 4px);
+  padding: 0 calc(var(--rcc-inset, 4px) - 1px) var(--rcc-inset, 4px);
+  border-bottom: 1px solid var(--rcc-line);
+}
+.rcc-panel[data-rcc-chat="own"] .rcc-agent-head {
+  display: none;
+}
+/* the head row's search slot (comment-bubbles puts the agents list's field
+   in it); empty without that mod */
+.rcc-agent-search {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+}
+.rcc-agent-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid var(--rcc-line);
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+.rcc-agent-session {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: space-between;
+  padding: 0 10px 0 12px;
+}
+.rcc-agent-session-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rcc-agent-session-chev {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+.rcc-agent-session:hover {
+  background: var(--color-surface-container-highest);
+}
+.rcc-agent-session[aria-expanded="true"] {
+  background: var(--color-accent-subtle);
+}
+.rcc-agent-session:focus-visible {
+  outline: 2px solid var(--rcc-ring);
+  outline-offset: 1px;
+}
+/* the tab's area under the head row: the agents list's host, then the body
+   the chat is drawn on (canvas-chrome.js, 1) */
+.rcc-agent-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.rcc-agent-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+/* the agents list's host (canvas-chrome.js, 1; comment-bubbles renders the
+   list in it), by data-rcc-hub-mode: "off" (no agents) no height, no
+   hairline (never display: none, it stays measurable); "row" one line over
+   the chat, its hairline under it; "area" the list or a thread over the
+   whole area (the chat under it veiled), no ceiling: only its rows scroll */
+.rcc-agent-hub {
+  flex: 0 0 auto;
+  height: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-bottom: 0 solid var(--rcc-line);
+}
+.rcc-agent-hub[data-rcc-hub-mode="row"] {
+  height: auto;
+  border-bottom-width: 1px;
+}
+.rcc-agent-hub[data-rcc-hub-mode="area"] {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  background: var(--rcc-surface);
+}
+/* the list that shrank: its old area folds up over the chat (body level,
+   above the hosted chat; canvas-chrome.js, foldList) */
+.rcc-hub-fold {
+  position: fixed;
+  z-index: 46;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-border-secondary);
+  background: var(--color-surface-container);
+  transform-origin: 50% 0;
+  pointer-events: none;
+}
+.rcc-session-menu {
+  max-width: 320px;
+}
+.rcc-session-menu .rcc-menu-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The hosted chat's empty state (the app's 281 x 276 illustration over its
+   title) fits a short chat area: the illustration shrinks with it, and
+   goes under 160px, instead of the whole block being cut at both ends */
+[data-rcc-chat-hosted] img.object-contain[class*="h-[276px]"] {
+  width: auto !important;
+  height: auto !important;
+  max-width: min(100%, 281px);
+  max-height: min(276px, max(0px, var(--rcc-chat-h, 400px) - 132px));
+}
+
+/* The Agent tab's chat (canvas-chrome.js, 1): the app's chat view, drawn on
+   the tab body's rect. Keyed on the attribute alone: in a chat route canvas tab
+   the view (the workspace's chat tab body) lives outside the canvas shell. */
+[data-rcc-chat-hosted][data-rcc-chat-hosted] {
+  position: fixed !important;
+  inset: auto !important;
+  left: var(--rcc-chat-x) !important;
+  top: var(--rcc-chat-y) !important;
+  width: var(--rcc-chat-w) !important;
+  height: var(--rcc-chat-h) !important;
+  visibility: visible !important;
+  pointer-events: auto;
+  z-index: 45;
+  /* in the card: the tab body's rect, down to the card's bottom; fixed, so
+     the card does not clip it: its own bottom corners follow the card's */
+  border-radius: 0 0 calc(var(--rcc-card-radius, 16px) - 1px) calc(var(--rcc-card-radius, 16px) - 1px);
+  background: var(--color-surface-container);
+  overflow: hidden;
+}
+/* the composer is the input: the view's own footer (input, pickers,
+   its bars) stays mounted and focusable (Cmd/Ctrl+Enter types and sends
+   through it) but is not drawn */
+[data-rcc-chat-hosted] .chat-view {
+  background: transparent;
+}
+[data-rcc-chat-hosted] .chat-view > :not(.message-list) {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* under the agents list's area (data-rcc-chat-veil): faded out (120ms),
+   then hidden; still mounted (Cmd/Ctrl+Enter reaches its input). Back:
+   it fades in (220ms, once the list's copy has mostly gone: 80ms later)
+   while it slides under the list's line */
+[data-rcc-chat-hosted][data-rcc-chat-hosted] {
+  transition:
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1) 80ms,
+    visibility 0s linear 0s;
+}
+[data-rcc-chat-hosted][data-rcc-chat-hosted][data-rcc-chat-veil] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition:
+    opacity 120ms cubic-bezier(0.65, 0, 0.35, 1),
+    visibility 0s linear 120ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-rcc-chat-hosted][data-rcc-chat-hosted] {
+    transition:
+      opacity 120ms linear,
+      visibility 0s linear 0s;
+  }
+  [data-rcc-chat-hosted][data-rcc-chat-hosted][data-rcc-chat-veil] {
+    transition:
+      opacity 120ms linear,
+      visibility 0s linear 120ms;
+  }
+}
+[data-rcc-hide-tab] {
+  display: none !important;
+}
+
+/* --------------------------------------------------------- top bar */
+/* file pill, top left: name (+ canvas-quick's switcher chevron on chat
+   canvas tabs) and "Auto-saved" */
+.rcc-file {
+  position: absolute;
+  top: var(--rcc-edge, 12px);
+  left: var(--rcc-edge, 12px);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rcc-space, 8px);
+  max-width: min(420px, calc(100% - 240px));
+  height: var(--rcc-bar, 40px);
+  box-sizing: border-box;
+  padding: 0 calc(var(--rcc-inset, 4px) - 1px) 0 14px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rcc-pill-radius, 12px);
+  background: var(--color-surface-container);
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  pointer-events: auto;
+}
+.rcc-file-ico {
+  color: var(--color-text-tertiary);
+}
+.rcc-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+.rcc-file-saved {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+}
+.rcc-file-saved::before {
+  content: "— ";
+}
+/* canvas-quick's switcher chevron: a 32px item at the pill's inset */
+.rcc-file .rcq-pill-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: -8px;
+  color: var(--color-text-tertiary);
+  border-radius: var(--rcc-item-radius, 8px);
+}
+.rcc-file [data-rtcb-host-alt][hidden] {
+  display: none !important;
+}
+/* the app's own row: same inset as the floating chrome. "Canvas controls"
+   is always an empty, transparent, 0-wide box in the chrome: the top pill
+   (.rcc-top) holds the actions and its Share slot, the native Share is drawn
+   over that slot (position:fixed, see [data-rcc-share]); the native "Canvas
+   page" pill gives way to the file pill */
+[data-rcc-shell] [data-rcc-row] {
+  justify-content: flex-end;
+  padding: var(--rcc-gap, 24px);
+}
+[data-rcc-shell] [data-rcc-row] > [role="toolbar"][aria-label="Canvas page"] {
+  display: none !important;
+}
+[data-rcc-shell] [data-rcc-row] > [role="toolbar"][aria-label="Canvas controls"] {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  border-width: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+/* canvas-quick's panel mirror: the top pill and the selection pill replace it */
+[data-rcc-shell] [data-testid="rcq-right-rail"] {
+  display: none !important;
+}
+
+/* top right pill: the view / panel actions and the slot the native Share is
+   drawn over (pen.dev, images/116.png) */
+.rcc-top {
+  position: absolute;
+  top: var(--rcc-edge, 12px);
+  right: calc(var(--rcc-edge, 12px) + var(--rcc-rcw-inset, 0px));
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rcc-inset, 4px);
+  height: var(--rcc-bar, 40px);
+  box-sizing: border-box;
+  padding: 0 calc(var(--rcc-inset, 4px) - 1px);
+  border: 1px solid var(--rcc-line, var(--color-border-secondary));
+  border-radius: var(--rcc-pill-radius, 12px);
+  background: var(--rcc-surface, var(--color-surface-container));
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  pointer-events: auto;
+}
+.rcc-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rcc-top-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-top-btn:hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rcc-top-btn[aria-pressed="true"],
+.rcc-top-btn:active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-top-btn[data-rcc-tip]::after {
+  top: calc(100% + 12px);
+  right: 0;
+}
+.rcc-top-share {
+  flex-shrink: 0;
+  width: var(--rcc-share-w, 0px);
+  height: 32px;
+}
+.rcc-top[hidden],
+.rcc-top-share[hidden] {
+  display: none !important;
+}
+.rcc-top-actions:empty {
+  display: none;
+}
+/* the app's own Share, moved over the slot (viewport coordinates, set by the
+   mod): fixed so it escapes the panel it lives in, above the pill */
+[data-rcc-shell] [data-rcc-share] {
+  position: fixed !important;
+  left: var(--rcc-share-x, auto) !important;
+  top: var(--rcc-share-y, auto) !important;
+  z-index: 50;
+  height: 32px !important; /* the pill's item height (its own content centred) */
+  margin: 0 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* ------------------------------------------------- rail column (left) */
+/* pen.dev's rail (images/131.png, the comfortable sizes): a 44px capsule,
+   36px tools at the inset (4px) from its edge on every side and 4px apart,
+   one continuous stack (no separators), a tool's options as a 6px corner
+   sub-indicator; the active tool is a 36px circle (accent-subtle), same
+   size as every item, never touching the rail's edge, and the capsule's
+   radius is concentric with it (18 + 4). The round toggle, 44px, 8px above
+   on the same axis and the same 12px left edge. 18px icons, stroke 1.5.
+   (canvas-chrome.js: RAIL_W, RAIL_ITEM, RAIL_STEP, RAIL_PAD, TOGGLE) */
+[data-canvas-shell][data-rcc-shell] {
+  --rcc-rail-item: 36px;
+  --rcc-rail-w: calc(var(--rcc-rail-item) + 2 * var(--rcc-inset, 4px));
+  --rcc-rail-pad: var(--rcc-inset, 4px);
+  --rcc-rail-gap: var(--rcc-inset, 4px);
+  --rcc-rail-radius: calc(var(--rcc-rail-item) / 2 + var(--rcc-inset, 4px));
+  --rcc-rail-icon: 18px;
+  --rcc-rail-active-radius: 9999px;
+  --rcc-toggle: var(--rcc-rail-w);
+  --rcc-toggle-gap: 8px;
+}
+/* canvas-quick's round toggle heads the column, on the rail's axis */
+[data-rcc-shell] .rcq-ltog {
+  top: var(--rcc-col-top, 60px);
+  left: calc(var(--rcc-rail-x, var(--rcc-edge, 12px)) + (var(--rcc-rail-w) - var(--rcc-toggle)) / 2);
+  width: var(--rcc-toggle);
+  height: var(--rcc-toggle);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 9999px;
+  box-shadow: var(--rcc-shadow);
+  /* a move (card opened / closed) slides by FLIP (canvas-chrome.js slideOn),
+     never by animating left */
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+/* its tooltip like the rail's: 12px to its right, centred, the chrome's tip
+   look (below it, it ran under the rail) */
+[data-rcc-shell] .rcq-ltog[data-rcq-tip]::after {
+  top: 50%;
+  left: calc(100% + 12px);
+  z-index: 60;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  transform: translateY(-50%);
+}
+[data-rcc-shell] .rcq-ltog svg {
+  width: var(--rcc-rail-icon);
+  height: var(--rcc-rail-icon);
+  stroke-width: 1.5;
+}
+[data-rcc-shell] .rcq-ltog:active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+/* the native "Design tools" toolbar, vertical, under the toggle (the
+   horizontal fallback, [data-rcc-hbarwrap], is placed further down) */
+[data-rcc-shell] [data-rcc-railwrap]:not([data-rcc-hbarwrap]) {
+  left: var(--rcc-rail-x, var(--rcc-edge, 12px)) !important;
+  top: var(--rcc-rail-top, calc(var(--rcc-col-top, 60px) + var(--rcc-toggle) + var(--rcc-toggle-gap))) !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+[data-rcc-shell] [data-rcc-railwrap] > div {
+  position: relative;
+  align-items: flex-start;
+}
+[data-rcc-shell] [data-rcc-railwrap] [data-testid="canvas-loading-toolbar"] {
+  position: absolute;
+  top: 0;
+  left: calc(100% + var(--rcc-space, 8px));
+}
+/* the rail does not fit the height: the app's horizontal tool bar stays, kept
+   above the composer, with the chrome's surface */
+[data-rcc-shell] [data-rcc-hbarwrap] {
+  top: auto !important;
+  bottom: var(--rcc-hbar-bottom, 96px) !important;
+}
+[data-rcc-shell] [data-rcc-hbarwrap] [role="toolbar"] {
+  border-radius: var(--rcc-pill-radius);
+  box-shadow: var(--rcc-shadow) !important;
+  outline: 1px solid var(--rcc-line) !important;
+  outline-offset: -1px !important;
+}
+/* no overflow box: the side tooltips of the tools must not be clipped */
+[data-rcc-shell] [data-rcc-rail] {
+  flex-direction: column;
+  align-items: center;
+  width: var(--rcc-rail-w);
+  height: auto;
+  box-sizing: border-box;
+  padding: var(--rcc-rail-pad);
+  gap: var(--rcc-rail-gap);
+  border-radius: var(--rcc-rail-radius);
+  background: var(--color-surface-container);
+  box-shadow: var(--rcc-shadow) !important;
+  outline: 1px solid var(--color-border-secondary) !important;
+  outline-offset: -1px !important;
+}
+/* item order (canvas-chrome.js orderRail): app tools 0, its comment group
+   10, other mods 20, canvas-browser's separator 28 and Browser 30; the
+   registered tools carry an inline order (before:browser 29, tools 40,
+   actions 50), their group box is transparent to the rail's flex */
+[data-rcc-shell] [data-rcc-rail] > [data-rcc-order="late"] {
+  order: 5;
+}
+[data-rcc-shell] [data-rcc-rail] > [data-rcc-order="cmt"] {
+  order: 10;
+}
+[data-rcc-shell] [data-rcc-rail] > [data-rcc-order="mod"] {
+  order: 20;
+}
+[data-rcc-shell] [data-rcc-rail] > [data-rcc-order="bsep"] {
+  order: 2;
+}
+[data-rcc-shell] [data-rcc-rail] > [data-rcc-order="browser"] {
+  order: 3;
+}
+[data-rcc-shell] [data-rcc-rail] > .rcc-tools {
+  display: contents;
+}
+/* nothing reserves space for nothing: invisible / empty items and a
+   separator without an item on both sides (canvas-chrome.js normalizeRail) */
+[data-rcc-shell] [data-rcc-rail] [data-rcc-hide] {
+  display: none !important;
+}
+/* pen.dev has one continuous stack: every separator is hidden (the app's,
+   canvas-browser's, canvas-notes', ours) */
+[data-rcc-shell] [data-rcc-rail] > div.w-px,
+[data-rcc-shell] [data-rcc-rail] > .rtbf-tool-sep,
+[data-rcc-shell] [data-rcc-rail] > .rtcn-tool-sep,
+[data-rcc-shell] [data-rcc-rail] > [data-rtbf-sep],
+[data-rcc-shell] [data-rcc-rail] > [data-rtcn-sep],
+[data-rcc-shell] [data-rcc-rail] .rcc-tools-sep {
+  display: none !important;
+}
+/* every tool: a 28px item (plain buttons, the tooltip wrappers of the
+   option groups, other mods' buttons, ours) */
+[data-rcc-shell] [data-rcc-rail] > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--rcc-rail-item);
+}
+[data-rcc-shell] [data-rcc-rail] button {
+  box-sizing: border-box;
+}
+[data-rcc-shell] [data-rcc-rail] > button,
+[data-rcc-shell] [data-rcc-rail] > div > button:not(:is([data-rcc-opts], [aria-label$=" options"])),
+[data-rcc-shell] [data-rcc-rail] > div > div > button:not(:is([data-rcc-opts], [aria-label$=" options"])),
+[data-rcc-shell] [data-rcc-rail] .rcc-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--rcc-rail-item);
+  height: var(--rcc-rail-item);
+  padding: 0;
+  border-radius: var(--rcc-rail-active-radius);
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+/* hover / pressed (the active tool), one look for native and other mods' tools */
+[data-rcc-shell] [data-rcc-rail] button:not(:is([data-rcc-opts], [aria-label$=" options"])):not([aria-pressed="true"]):not(.rcc-tool-on):hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+[data-rcc-shell] [data-rcc-rail] button:not(:is([data-rcc-opts], [aria-label$=" options"]))[aria-pressed="true"],
+[data-rcc-shell] [data-rcc-rail] button.rcc-tool-on {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+[data-rcc-shell] [data-rcc-rail] button:not(:is([data-rcc-opts], [aria-label$=" options"])) svg {
+  width: var(--rcc-rail-icon);
+  height: var(--rcc-rail-icon);
+}
+[data-rcc-shell] [data-rcc-rail] button:not(:is([data-rcc-opts], [aria-label$=" options"])) svg[stroke],
+[data-rcc-shell] [data-rcc-rail] button:not(:is([data-rcc-opts], [aria-label$=" options"])) svg [stroke] {
+  stroke-width: 1.5;
+}
+/* a tool with options (Div / Rectangle / Text): one 36px item; its menu
+   trigger ([data-rcc-opts], marked by the mod on the pair's second button) is
+   a 6px sub-indicator in the item's bottom right corner, inside the tool
+   (never a row of its own), a 14x14 hit area. The app's 12px chevron draws its
+   glyph on x 3..9 / y 4.5..7.4 of its 12 units: the svg sits 1px in from the
+   right and 0.6px under the area, so the glyph is 4px from the item's right
+   and bottom edges. A long press on the tool opens the same menu
+   (canvas-chrome.js). */
+[data-rcc-shell] [data-rcc-rail] :is([data-rcc-grp], div:has(> button[aria-label$=" options"])) {
+  position: relative;
+  display: block;
+  width: var(--rcc-rail-item);
+  height: var(--rcc-rail-item);
+}
+[data-rcc-shell] [data-rcc-rail] button:is([data-rcc-opts], [aria-label$=" options"]) {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: block;
+  width: 14px;
+  height: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rcc-item-radius, 8px);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+[data-rcc-shell] [data-rcc-rail] button:is([data-rcc-opts], [aria-label$=" options"]):hover,
+[data-rcc-shell] [data-rcc-rail] button:is([data-rcc-opts], [aria-label$=" options"])[aria-expanded="true"] {
+  background: transparent;
+  color: var(--color-text-primary);
+}
+[data-rcc-shell] [data-rcc-rail] button:is([data-rcc-opts], [aria-label$=" options"]) svg {
+  position: absolute;
+  right: 1px;
+  bottom: -0.60355px;
+  width: 12px;
+  height: 12px;
+}
+[data-rcc-shell] [data-rcc-rail] button:is([data-rcc-opts], [aria-label$=" options"]) svg path {
+  stroke-width: 1.5;
+}
+
+/* registered tools: after the native ones, the app's button look; a row in
+   the native horizontal toolbar, a column in the rail */
+.rcc-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--rcc-space, 8px);
+}
+.rcc-tools-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background: var(--color-border-secondary);
+}
+[data-rcc-shell] [data-rcc-rail] .rcc-tools {
+  flex-direction: column;
+  gap: var(--rcc-rail-gap);
+}
+.rcc-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: transparent;
+  color: var(--color-icons-primary, var(--color-text-primary));
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-tool:hover {
+  background: var(--color-surface-container-high);
+}
+.rcc-tool.rcc-tool-on {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-tool[data-rcc-tip]::after {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+[data-rcc-shell] [data-rcc-rail] .rcc-tool[data-rcc-tip]::after {
+  top: 50%;
+  bottom: auto;
+  left: calc(100% + 12px);
+  transform: translateY(-50%);
+}
+
+/* ------------------------------------------- selection card, top right */
+/* One card (pen.dev): the selection pill is its top row; the app's right
+   panel is its body, right under that row, as wide (--rcc-sel-w), down to
+   the composer / zoom (--rcc-dd-top / -w / -h, the mod's). Open, the card
+   only grows downwards: the top row stays as it is, where it is (its bottom
+   corners square, its bottom hairline and the body's top one gone, each
+   shadow clipped where the two meet). No tab row ("Design"), no second box.
+   No transform / opacity / filter / clip-path on the wrapper or the aside:
+   the hosted chat and the Share are position:fixed descendants of both; the
+   body's surface (aside::before) and the panels are revealed top-down
+   instead, and the aside is hidden after that. */
+[data-rcc-shell] [data-rcc-rrow] {
+  position: relative;
+}
+[data-rcc-shell] [data-rcc-rwrap] {
+  position: absolute;
+  top: var(--rcc-dd-top, 64px);
+  right: calc(var(--rcc-edge, 12px) + var(--rcc-rcw-inset, 0px));
+  bottom: auto;
+  width: var(--rcc-dd-w, var(--rcc-sel-w, 300px)) !important;
+  max-width: none !important;
+  height: var(--rcc-dd-h, auto) !important;
+}
+[data-rcc-shell] [data-rcc-rwrap] > [role="separator"] {
+  display: none !important;
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0 0 var(--rcc-pill-radius, 12px) var(--rcc-pill-radius, 12px);
+  background: transparent;
+  box-shadow: none;
+  visibility: visible;
+  transition: visibility 0s linear 0s;
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-sizing: border-box;
+  border: 1px solid var(--rcc-line);
+  border-top-width: 0;
+  border-radius: 0 0 var(--rcc-pill-radius, 12px) var(--rcc-pill-radius, 12px);
+  background: var(--rcc-surface);
+  box-shadow: var(--rcc-shadow);
+  clip-path: inset(0 -40px -40px -40px);
+  pointer-events: none;
+}
+/* the header row's Share moved to the top pill: the row collapses; the tab
+   row is not drawn (the card is the properties) */
+[data-rcc-shell] [data-rcc-rwrap] > aside > :first-child > .h-11 {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+  overflow: visible;
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside > :first-child > .min-h-11 {
+  display: none !important;
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside > :first-child {
+  border-width: 0 !important;
+}
+/* the panels keep the card's rounded bottom; no hairline under the top row */
+[data-rcc-shell] [data-rcc-rwrap] > aside > :not(:first-child) {
+  border-top-width: 0 !important;
+  overflow: hidden;
+  border-radius: 0 0 var(--rcc-pill-radius, 12px) var(--rcc-pill-radius, 12px);
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside::before,
+[data-rcc-shell] [data-rcc-rwrap] > aside [role="tabpanel"]:not([data-rcc-chat-hosted]) {
+  clip-path: inset(0 -40px -40px -40px);
+  transition: clip-path 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-rcc-shell] [data-rcc-rwrap] > aside [role="tabpanel"]:not([data-rcc-chat-hosted]) {
+  clip-path: inset(0 0 0 0);
+}
+/* closed: still mounted (its chat stays hosted in the card), not drawn nor hit */
+[data-rcc-shell][data-rcc-dd="closed"] [data-rcc-rwrap] {
+  pointer-events: none;
+}
+[data-rcc-shell][data-rcc-dd="closed"] [data-rcc-rwrap] > aside {
+  visibility: hidden;
+  transition: visibility 0s linear 200ms;
+}
+[data-rcc-shell][data-rcc-dd="closed"] [data-rcc-rwrap] > aside::before,
+[data-rcc-shell][data-rcc-dd="closed"] [data-rcc-rwrap] > aside [role="tabpanel"]:not([data-rcc-chat-hosted]) {
+  clip-path: inset(0 0 100% 0);
+}
+/* the fixed descendants stay live while the dropdown is closed */
+[data-rcc-shell][data-rcc-dd="closed"] [data-rcc-rwrap] [data-rcc-chat-hosted] {
+  pointer-events: auto;
+}
+/* open: the pill is the card's top row (same place, same content) */
+[data-rcc-shell][data-rcc-dd="open"] .rcc-sel {
+  border-bottom-color: transparent;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  clip-path: inset(-40px -40px 0 -40px);
+}
+
+/* fields are filled boxes with their label inside, buttons are filled: the
+   app draws them on surface-container, the card's own surface, so they get
+   the step above it here */
+[data-rcc-shell] [data-rcc-props] .bg-surface-container {
+  background-color: var(--color-surface-container-high);
+}
+[data-rcc-shell] [data-rcc-props] .rtcx-select-el,
+[data-rcc-shell] [data-rcc-props] .rtcx-btn:not(.rtcx-btn-primary),
+[data-rcc-shell] [data-rcc-props] .rcc-section-body button:not([aria-label]) {
+  height: 28px;
+  border-radius: 6px;
+  background: var(--color-surface-container-high);
+}
+[data-rcc-shell] [data-rcc-props] .rtcx-btn:not(.rtcx-btn-primary):hover:not(:disabled),
+[data-rcc-shell] [data-rcc-props] .rtcx-select-el:hover {
+  background: var(--color-surface-container-highest);
+}
+
+/* pen.dev section order (CSS order only): Create Component, Context,
+   Alignment, Position, Layout, Appearance, (Typography), Fill, Stroke,
+   Effects, (Transforms, Classes), Theme, Code, Export. The style panel's
+   wrappers and canvas-export's root are display: contents, so every
+   section is an item of the one column ([data-rcc-props]). */
+[data-rcc-shell] [data-rcc-props] > * {
+  order: 35;
+}
+[data-rcc-shell] [data-rcc-props] > [data-testid="design-selection-style-panel"],
+[data-rcc-shell] [data-rcc-props] > [data-testid="design-selection-style-panel"] > div,
+[data-rcc-shell] [data-rcc-props] [data-rcc-style],
+[data-rcc-shell] [data-rcc-props] > [data-rtcx-root] {
+  display: contents !important;
+}
+[data-rcc-shell] [data-rcc-props] [data-rtcx-section="code"] {
+  order: 130;
+}
+[data-rcc-shell] [data-rcc-props] [data-rtcx-section="export"] {
+  order: 140;
+}
+[data-rcc-shell] [data-rcc-props] > .rcc-node {
+  order: 0;
+}
+[data-rcc-shell] [data-rcc-props] > [data-testid="element-selected-accordion"] {
+  order: 30;
+}
+[data-rcc-shell] [data-rcc-props] > [data-testid="design-selection-style-panel"],
+[data-rcc-shell] [data-rcc-props] > [data-testid="design-selection-multi-state"],
+[data-rcc-shell] [data-rcc-props] > [data-section="canvas"] {
+  order: 40;
+}
+[data-rcc-shell] [data-rcc-props] > [data-rtsh-fx-section] {
+  order: 111;
+}
+[data-rcc-shell] [data-rcc-props] > [class*="h-[150px]"] {
+  order: 999;
+}
+[data-rcc-shell] [data-rcc-style] > * {
+  order: 114;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="position"] {
+  order: 50;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="layout"] {
+  order: 60;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="appearance"] {
+  order: 80;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="typography"] {
+  order: 85;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="fill"] {
+  order: 90;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="stroke"] {
+  order: 100;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="effects"] {
+  order: 110;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="transforms"] {
+  order: 112;
+}
+[data-rcc-shell] [data-rcc-style] > [data-section="classes"] {
+  order: 113;
+}
+[data-rcc-shell] [data-rcc-style] > [aria-hidden="true"]:not([data-section]) {
+  order: 990;
+}
+[data-rcc-shell] [data-rcc-style] > [role="status"] {
+  order: 995;
+}
+
+/* node header (pen.dev: the selection's name on top of the panel) */
+.rcc-node {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--rcc-space, 8px);
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--color-border-secondary);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+}
+.rcc-node-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+/* registered sections: the app's section anatomy (40px header, 16/8 inset) */
+.rcc-section {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.rcc-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 8px 8px 8px 16px;
+}
+.rcc-section-title {
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 510;
+}
+.rcc-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rcc-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rcc-space, 8px);
+  padding: 0 8px 12px 16px;
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+.rcc-section-body:empty {
+  padding-bottom: 0;
+}
+
+/* -------------------------------------------------- zoom, bottom right */
+[data-rcc-shell][data-rcc-zoom] button[aria-label^="Zoom "][aria-label$="%"] {
+  display: none !important;
+}
+/* pen.dev's zoom pill: 36 high, 12px padding, 28px buttons, 12px text */
+.rcc-zoom {
+  position: absolute;
+  right: var(--rcc-right-inset, 12px);
+  bottom: var(--rcc-edge, 12px);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rcc-inset, 4px);
+  height: var(--rcc-bar, 40px);
+  box-sizing: border-box;
+  padding: 0 calc(var(--rcc-inset, 4px) - 1px);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rcc-pill-radius, 12px);
+  background: var(--color-surface-container);
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+.rcc-zoom-btn,
+.rcc-zoom-level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-zoom-btn {
+  width: 32px;
+}
+.rcc-zoom-level {
+  min-width: 52px;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.rcc-zoom-btn:hover,
+.rcc-zoom-level:hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rcc-zoom-btn:active,
+.rcc-zoom-level:active,
+.rcc-zoom-level[aria-expanded="true"] {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.rcc-zoom-btn[data-rcc-tip]::after {
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* the zoom menu: a floating surface (16px radius, the shared hairline and shadow) */
+.rcc-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 224px;
+  box-sizing: border-box;
+  padding: var(--rcc-space, 8px);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rcc-card-radius, 16px);
+  background: var(--color-surface-container);
+  box-shadow: var(--rcc-shadow);
+  font-family: var(--font-sans);
+  outline: none;
+}
+.rcc-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rcc-space, 8px);
+  padding: 8px 12px;
+  border-radius: var(--rcc-item-radius, 8px);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  cursor: pointer;
+  outline: none;
+}
+.rcc-menu-item:hover,
+.rcc-menu-item.rcc-menu-item-on {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rcc-menu-item:active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-menu-label {
+  flex: 1;
+}
+.rcc-menu-kbd {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+.rcc-menu-check {
+  width: 14px;
+  height: 14px;
+}
+.rcc-menu-sep {
+  height: 1px;
+  margin: var(--rcc-space, 8px) calc(-1 * var(--rcc-space, 8px));
+  background: var(--color-border-secondary);
+}
+
+/* ---------------------------------------------- composer, bottom left */
+/* One floating composer per shell (canvas-chrome.js, 6), text only: the
+   input and send (the agents slot is in its own pill, on its right). In
+   the viewport area (the shell in a compact view), 12px from the left edge
+   and the bottom, as wide as the card at most; the geometry is the mod's
+   (--rcc-comp-x / -w / -b, and --rcc-ta-max on the composer):
+   - row ([data-rcc-mode="row"], the card closed): [input] [send];
+   - docked ([data-rcc-mode="docked"], the card open): under the card, two
+     rows: the input, then [send] on the right. The card ends 8px above it
+     (--rcc-card-bottom).
+   The surface is .rcc-composer-surface: three slices the mod's FLIP moves
+   with transforms (the corners never stretch), one drop-shadow over them. */
+.rcc-composer-wrap {
+  position: absolute;
+  z-index: 31;
+  left: var(--rcc-comp-x, 12px);
+  bottom: var(--rcc-comp-b, 12px);
+  width: var(--rcc-comp-w, 276px);
+  box-sizing: border-box;
+  pointer-events: none;
+  font-family: var(--font-sans);
+}
+/* the app's horizontal tool bar rises above the composer (compact view) */
+[data-rcc-compact] [data-rcc-hbarwrap] {
+  top: auto !important;
+  bottom: var(--rcc-hbar-bottom, 64px) !important;
+}
+/* parts the mod hides (no note) */
+.rcc-composer-wrap [hidden],
+.rcc-sel [hidden] {
+  display: none !important;
+}
+.rcc-composer-wrap > .rcc-composer {
+  pointer-events: auto;
+}
+.rcc-composer {
+  --rcc-comp-line: var(--rcc-line);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: var(--rcc-inset, 4px);
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  /* the surface's hairline is drawn by the slices, inside this box: the
+     inset is from the outer edge */
+  padding: var(--rcc-inset, 4px);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  cursor: text;
+}
+.rcc-composer:focus-within {
+  --rcc-comp-line: var(--color-border-primary);
+}
+.rcc-composer-wrap[data-rcc-mode="docked"] .rcc-composer {
+  grid-template-rows: auto auto;
+}
+.rcc-composer-wrap[data-rcc-mode="docked"] .rcc-composer-input {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.rcc-composer-wrap[data-rcc-mode="docked"] .rcc-composer-tools {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+/* the agent the composer answers (canvas-chrome.js syncReply): its mini
+   avatar (its colour, its number) and "Replying", at the start of the send
+   row, quiet; the same 32px row as send */
+.rcc-composer-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  margin-right: auto;
+  padding: 0 4px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.rcc-composer-target[hidden] {
+  display: none;
+}
+.rcc-ct-av {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rcc-ct-color, var(--color-accent));
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 1px rgb(0 0 0 / 0.25);
+}
+.rcc-ct-av[data-len="3"] {
+  font-size: 7.5px;
+}
+.rcc-ct-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the surface: top cap, middle, bottom cap (1px overlaps, so no seam), all
+   opaque; the hairline brightens while the input has the focus */
+.rcc-composer-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: 0 100%;
+  filter: drop-shadow(var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)));
+}
+.rcc-cs-top,
+.rcc-cs-mid,
+.rcc-cs-bot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--rcc-comp-line);
+  background: var(--rcc-surface);
+  transition: border-color 140ms ease-out;
+}
+.rcc-cs-top {
+  top: 0;
+  height: calc(var(--rcc-comp-radius, 20px) + 1px);
+  border-bottom: 0;
+  border-radius: var(--rcc-comp-radius, 20px) var(--rcc-comp-radius, 20px) 0 0;
+}
+/* (one round row, 40px: no middle; canvas-chrome.js flipComposer draws it
+   for the slide when the composer shrinks to that) */
+.rcc-cs-mid {
+  top: var(--rcc-comp-radius, 20px);
+  bottom: var(--rcc-comp-radius, 20px);
+  border-top: 0;
+  border-bottom: 0;
+  transform-origin: 50% 100%;
+}
+.rcc-cs-bot {
+  bottom: 0;
+  height: calc(var(--rcc-comp-radius, 20px) + 1px);
+  border-top: 0;
+  border-radius: 0 0 var(--rcc-comp-radius, 20px) var(--rcc-comp-radius, 20px);
+}
+/* one line at rest (32px: 20px text, 6px padding), grows with the text up
+   to --rcc-ta-max (6 lines at most), then scrolls */
+.rcc-composer-input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  min-height: 32px;
+  max-height: var(--rcc-ta-max, 132px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  resize: none;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-container-highest) transparent;
+}
+/* past 6 lines it scrolls: the lines fade at its top and bottom edges */
+.rcc-composer-input[data-rcc-scroll] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
+}
+.rcc-composer-input::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+  /* one line, whatever the room (a wrapped placeholder would grow the input) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the launch: the text leaves as the ghost; the placeholder waits for it */
+.rcc-composer[data-ghost] .rcc-composer-input::placeholder {
+  color: transparent;
+}
+.rcc-composer-tools {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 32px;
+}
+/* why a message did not go (no agents, no chat): a chip 8px over the
+   composer, the error colour */
+.rcc-composer-note {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: calc(100% + var(--rcc-space, 8px));
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--rcc-line);
+  border-radius: var(--rcc-item-radius, 8px);
+  background: var(--color-surface-container-high);
+  box-shadow: var(--rcc-shadow);
+  color: var(--color-text-error, var(--color-error, #e5484d));
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+  cursor: default;
+  animation: rcc-note-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes rcc-note-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* send: a 32px circle at the inset from the surface's right and bottom
+   edges (the surface's radius, 20, is concentric with it) */
+.rcc-composer-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-text-primary);
+  color: var(--color-surface-container);
+  cursor: pointer;
+  transition:
+    opacity 140ms ease-out,
+    color 220ms ease-out,
+    background-color 220ms ease-out;
+}
+.rcc-composer-send:hover:not(:disabled) {
+  opacity: 0.88;
+}
+.rcc-composer-send:active:not(:disabled) {
+  opacity: 0.72;
+}
+.rcc-composer-send:disabled {
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+/* a launch in flight keeps send lit (the input is already empty) */
+.rcc-composer[data-launch] .rcc-composer-send:disabled {
+  background: var(--color-text-primary);
+  color: var(--color-surface-container);
+}
+.rcc-composer[data-state="sending"] .rcc-composer-send {
+  animation: rcc-pulse 1.2s ease-in-out infinite;
+}
+@keyframes rcc-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* the launch (canvas-chrome.js, 6), at body level: the text's ghost where
+   the input drew it, and a glowing pill (its head bright, along its path)
+   with a blurred trail, flying to the agents slot */
+.rcc-launch {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+  overflow: hidden;
+}
+.rcc-launch-text {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  will-change: transform, filter, opacity;
+}
+.rcc-launch-mover {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.rcc-launch-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--color-text-primary, #f5f5f5) 30%, transparent) 0%, var(--color-text-primary, #f5f5f5) 62%, color-mix(in oklab, var(--color-text-primary, #f5f5f5) 70%, #fff) 100%);
+  box-shadow:
+    0 0 6px 1px color-mix(in oklab, var(--color-text-primary, #f5f5f5) 55%, transparent),
+    0 0 18px 4px color-mix(in oklab, var(--color-text-primary, #f5f5f5) 22%, transparent);
+  opacity: 0;
+  transform-origin: 14px 6px;
+  will-change: transform, opacity;
+}
+.rcc-launch-trail {
+  filter: blur(3px);
+  box-shadow: none;
+}
+
+/* the canvas's own scroll indicators (4px, 2px off the bottom / right edge)
+   run under the composer, the zoom and the top pills: pen.dev draws none */
+[data-rcc-shell] [data-canvas-root] > div[style*="bottom: 2px"][style*="height: 4px"][style*="rgba(0, 0, 0, 0.3)"],
+[data-rcc-shell] [data-canvas-root] > div[style*="right: 2px"][style*="width: 4px"][style*="rgba(0, 0, 0, 0.3)"] {
+  display: none !important;
+}
+
+/* the agents pill (canvas-chrome.js, 6): out of the composer, 8px to its
+   right, on its base line, one composer row high (40px), the composer's
+   surface (hairline, radius 20, the one shadow), drawn by three slices
+   (.rcc-ap-*: caps and middle, as the composer's) so it grows and shrinks
+   to the right with transforms only; as wide as the slot it holds. The
+   composer's inset (--rcc-inset, 4px, the hairline inside it):
+   comment-bubbles' "Manage agents" is a 32px circle 4px from the edge on
+   every side, as send is in the composer (radius 16 + 4 = 20), its 24px
+   avatars 8px from it (12 + 8 = 20). With no agent the pill is that button
+   alone: a 40px circle, no room left over. The surface's colour is told to
+   comment-bubbles (--rtcb-slot-bg: its avatars' cut-out ring and the
+   button's concentric size read it). It shows while the slot shows
+   something (always, with comment-bubbles; a fade in); hidden, it keeps
+   its box (never display:none: the slot must stay measurable). */
+.rcc-agents-pill {
+  --rtcb-slot-bg: var(--rcc-surface);
+  position: absolute;
+  left: calc(100% + 8px);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: max-content;
+  height: var(--rcc-bar, 40px);
+  margin: 0;
+  padding: 0 var(--rcc-inset, 4px);
+  border: 0;
+  border-radius: var(--rcc-comp-radius, 20px);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 220ms;
+}
+.rcc-ap-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: drop-shadow(var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)));
+}
+.rcc-ap-l,
+.rcc-ap-m,
+.rcc-ap-r {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--rcc-line);
+  background: var(--rcc-surface);
+}
+/* the caps overlap the middle by 1px (no seam); a 40px pill: the two caps */
+.rcc-ap-l {
+  left: 0;
+  width: calc(var(--rcc-comp-radius, 20px) + 1px);
+  border-right: 0;
+  border-radius: var(--rcc-comp-radius, 20px) 0 0 var(--rcc-comp-radius, 20px);
+}
+.rcc-ap-r {
+  right: 0;
+  width: calc(var(--rcc-comp-radius, 20px) + 1px);
+  border-left: 0;
+  border-radius: 0 var(--rcc-comp-radius, 20px) var(--rcc-comp-radius, 20px) 0;
+}
+.rcc-ap-m {
+  left: var(--rcc-comp-radius, 20px);
+  right: var(--rcc-comp-radius, 20px);
+  border-left: 0;
+  border-right: 0;
+  transform-origin: 0 50%;
+}
+/* with avatars, the last one 8px from the end cap too (concentric: 12 + 8) */
+.rcc-agents-pill:has(.rtcb-rail:not([data-empty="true"]) > *) {
+  padding-right: calc(2 * var(--rcc-inset, 4px));
+}
+/* a compact view too narrow beside the composer: 8px above it */
+.rcc-composer-wrap[data-rcc-pill="above"] > .rcc-agents-pill {
+  left: 0;
+  bottom: calc(100% + 8px);
+}
+.rcc-composer-wrap > .rcc-agents-pill:has(> .rcc-agents > :not([hidden])) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+/* "Manage agents" reads with send as one set: the same 32px filled circle
+   (send at rest: the highest surface), its icon 16px; hovered it lightens,
+   pressed it dims as send does; while the card shows the list, the
+   chrome's active state */
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage {
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-secondary);
+  transition:
+    opacity 140ms ease-out,
+    color 140ms ease-out,
+    background-color 140ms ease-out;
+}
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage svg {
+  width: 16px;
+  height: 16px;
+}
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage:hover {
+  background: color-mix(in oklab, var(--color-surface-container-highest) 88%, var(--color-text-primary));
+  color: var(--color-text-primary);
+}
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage:active {
+  opacity: 0.72;
+}
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage[aria-expanded="true"] {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-agents-pill .rcc-agents .rtcb--hosted > .rtcb-manage:focus-visible {
+  outline: 2px solid var(--rcc-ring);
+  outline-offset: 1px;
+}
+/* the agents slot (pen.dev's "⊞ 1x" place), in the pill: comment-bubbles'
+   segment mounts in [data-rtcb-host] (its children belong to that mod);
+   never display:none (its host must stay measurable). Its room is the
+   mod's (--rcc-agents-max on the slot, also as data-rcc-max-w); showing
+   nothing, it takes none. */
+.rcc-agents {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: var(--rcc-agents-max, 100px);
+  height: 32px;
+  box-sizing: border-box;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.rcc-agents > * {
+  flex-shrink: 0;
+}
+.rcc-agents:not(:has(> :not([hidden]))) {
+  width: 0;
+  overflow: hidden;
+}
+/* only the avatars in the composer: no "3 done" counter, no divider */
+.rcc-agents .rtcb-count,
+.rcc-agents .rtcb-sep {
+  display: none !important;
+}
+.rcc-agents [data-rtcb-root]::before {
+  display: none !important;
+}
+
+/* ----------------------------------------- selection pill, top right */
+/* The selection's name + the design panel toggle, in the top layer under the
+   top pill (--rcc-sel-top, 60). Without a selection it fades away; with one
+   it fades in (the pill is the node header the card no longer draws). */
+.rcc-sel {
+  position: absolute;
+  top: var(--rcc-sel-top, 60px);
+  right: calc(var(--rcc-edge, 12px) + var(--rcc-rcw-inset, 0px));
+  display: flex;
+  align-items: center;
+  gap: var(--rcc-space, 8px);
+  height: var(--rcc-bar, 40px);
+  width: var(--rcc-sel-w, 300px);
+  max-width: calc(100% - 2 * var(--rcc-gap, 24px));
+  box-sizing: border-box;
+  padding: 0 calc(var(--rcc-inset, 4px) - 1px) 0 var(--rcc-pill-pad, 12px);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rcc-pill-radius, 12px);
+  background: var(--color-surface-container);
+  box-shadow: var(--rcc-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 150ms ease-out,
+    visibility 0s linear 0s;
+}
+.rcc-sel-ico {
+  color: var(--color-text-tertiary);
+}
+.rcc-sel-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.rcc-sel-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rcc-btn-radius, 8px);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcc-sel-toggle[data-rcc-tip]::after {
+  top: calc(100% + 12px);
+  right: 0;
+}
+.rcc-sel-toggle:hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rcc-sel-toggle[aria-pressed="true"],
+.rcc-sel-toggle:active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+.rcc-sel[data-empty],
+.rcc-sel[data-rcc-noroom] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 150ms ease-out,
+    visibility 0s linear 150ms;
+}
+/* the node's name lives in the pill: the card's own header is not drawn */
+[data-rcc-shell] .rcc-node {
+  display: none !important;
+}
+.rcc-sel[data-rcc-fade] .rcc-sel-ico,
+.rcc-sel[data-rcc-fade] .rcc-sel-title {
+  animation: rcc-fade 150ms ease-out;
+}
+@keyframes rcc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-rcc-shell] .rcq-ltog,
+  [data-rcc-shell] [data-rcc-railwrap],
+  [data-rcc-shell] [data-rcc-rail] button,
+  .rcc-zoom,
+  .rcc-tab,
+  .rcc-tool,
+  .rcc-empty-action,
+  .rcc-zoom-btn,
+  .rcc-zoom-level,
+  .rcc-composer-send,
+  .rcc-composer-mic,
+  .rcc-cs-top,
+  .rcc-cs-mid,
+  .rcc-cs-bot,
+  .rcc-sel-toggle,
+  .rcc-sel,
+  .rcc-top-btn,
+  [data-rcc-tip]::after {
+    transition: none !important;
+  }
+  /* the card opens at once */
+  [data-rcc-shell] [data-rcc-rwrap] > aside::before,
+  [data-rcc-shell] [data-rcc-rwrap] > aside [role="tabpanel"]:not([data-rcc-chat-hosted]) {
+    transition: none !important;
+  }
+  .rcc-composer-note {
+    animation: rcc-fade 120ms ease-out !important;
+  }
+  .rcc-composer-wrap > .rcc-agents-pill {
+    transition-duration: 120ms, 0s !important;
+  }
+  .rcc-tip,
+  .rcc-composer-mic[data-rtv-state="recording"],
+  .rcc-composer-mic[data-rtv-state="finishing"] .rcc-mic-busy svg,
+  .rcc-composer[data-state="sending"] .rcc-composer-send,
+  .rcc-sel[data-rcc-fade] .rcc-sel-ico,
+  .rcc-sel[data-rcc-fade] .rcc-sel-title {
+    animation: none !important;
+  }
+}
+
+/* tab tooltip, at body level (the tab row scrolls and would clip it): the
+   shared tooltip look (8px radius, 1px hairline, the one shadow, 11px) */
+.rcc-tip {
+  position: fixed;
+  z-index: 70;
+  box-sizing: border-box;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 4px 8px;
+  border: 1px solid var(--rcc-line);
+  border-radius: var(--rcc-item-radius);
+  background: var(--color-surface-container-high);
+  box-shadow: var(--rcc-shadow);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: rcc-fade 120ms ease-out;
+}
+
+/* canvas-webpanel open (a browser card docked on the right of the view):
+   the floating chrome keeps clear of it (canvas-chrome.js: --rcc-rcw-inset
+   is the part of the view the card covers; the zoom sits 12px left of it,
+   the top pills slide there by FLIP, slideOn: never by animating right).
+   The selection pill keeps its 150ms fade. */
+[data-rcc-shell] .rcc-sel {
+  transition:
+    opacity 150ms ease-out,
+    visibility 0s linear 0s;
+}
+[data-rcc-shell] .rcc-sel[data-empty],
+[data-rcc-shell] .rcc-sel[data-rcc-noroom] {
+  transition:
+    opacity 150ms ease-out,
+    visibility 0s linear 150ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-rcc-shell] .rcc-sel,
+  [data-rcc-shell] .rcc-sel[data-empty],
+  [data-rcc-shell] .rcc-sel[data-rcc-noroom] {
+    transition: none;
+  }
+}
+
+/* compact (a view under 460px): the composer sits in the shell, bottom
+   left (right of the app's left panel when that leaves it room, else over
+   it) */
+[data-canvas-shell][data-rcc-compact] {
+  position: relative;
+}
+[data-canvas-shell][data-rcc-compact] > .rcc-composer-wrap {
+  z-index: 35;
+}
+
+/* dictation (voice-input attached to the composer, our button as its
+   toggle): the same 32px filled circle as send at rest and "Manage
+   agents", at the inset, 4px left of send; its 16px icon follows
+   voice-input's state (data-rtv-state): the mic, a stop square in red while
+   it records (a soft ring breathing out), a spinner while the last words
+   settle. One row (the card closed) answering an agent keeps only the
+   agent's mini avatar beside it, so the field keeps its room. */
+.rcc-composer-tools {
+  gap: var(--rcc-inset, 4px);
+}
+.rcc-composer-mic {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    opacity 140ms ease-out,
+    color 140ms ease-out,
+    background-color 140ms ease-out;
+}
+.rcc-composer-mic > .rcc-ico {
+  grid-area: 1 / 1;
+  --rcc-icon: 16px;
+}
+.rcc-composer-mic:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-surface-container-highest) 88%, var(--color-text-primary));
+  color: var(--color-text-primary);
+}
+.rcc-composer-mic:active:not(:disabled) {
+  opacity: 0.72;
+}
+.rcc-composer-mic:disabled {
+  cursor: default;
+}
+.rcc-composer-mic .rcc-mic-stop,
+.rcc-composer-mic .rcc-mic-busy,
+.rcc-composer-mic[data-rtv-state="recording"] .rcc-mic-idle,
+.rcc-composer-mic[data-rtv-state="finishing"] .rcc-mic-idle {
+  display: none;
+}
+.rcc-composer-mic[data-rtv-state="recording"] .rcc-mic-stop,
+.rcc-composer-mic[data-rtv-state="finishing"] .rcc-mic-busy {
+  display: inline-flex;
+}
+.rcc-composer-mic[data-rtv-state="recording"] {
+  background: color-mix(in srgb, #ef4444 20%, var(--color-surface-container-highest));
+  color: #ef4444;
+  animation: rcc-mic-ring 1.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.rcc-composer-mic[data-rtv-state="finishing"] .rcc-mic-busy svg {
+  animation: rcc-mic-spin 0.8s linear infinite;
+}
+.rcc-composer-mic[data-rtv-state="error"] {
+  color: #f59e0b;
+}
+@keyframes rcc-mic-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 6px rgb(239 68 68 / 0);
+  }
+}
+@keyframes rcc-mic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rcc-composer-wrap:not([data-rcc-mode="docked"]) .rcc-ct-label {
+  display: none;
+}

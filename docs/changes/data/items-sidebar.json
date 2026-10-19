@@ -1,0 +1,578 @@
+{
+  "area": "sidebar",
+  "items": [
+    {
+      "id": "project-sidebar",
+      "title": "Project sidebar",
+      "group": "sidebar",
+      "files": [
+        "feature/project-sidebar.js",
+        "feature/project-sidebar.css"
+      ],
+      "summary": "One sidebar organised by project replaces the left rail and the five separate route sidebars (chat, docs, design, issues, agents). Every project shows its branches, and every branch shows its decks and what is open in them.",
+      "features": [
+        {
+          "name": "Projects tree",
+          "what": "Before: the left rail had one button per route, and each route had its own sidebar. Now: one tree lists every project, its branches (worktrees) and their chats, canvases and terminals. Clicking a row runs the app's own navigation.",
+          "how": "Click a project row to fold or unfold it. Click a chat, canvas or terminal row to open it. The small + on a project starts a new worktree.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--projects.png",
+              "type": "image",
+              "caption": "The project tree: two projects, branch cards, decks and rows (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--tree.mp4",
+              "type": "video",
+              "caption": "Folding and unfolding a project, then opening a deck (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--tree.gif",
+              "type": "gif",
+              "caption": "Folding and unfolding a project, then opening a deck (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Search",
+          "what": "Before: each sidebar had its own search, or none. Now: one search box at the top filters the whole tree. A row stays when it or something inside it matches, and its parents open.",
+          "how": "Click the search box and type. Backspace to clear.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--search.png",
+              "type": "image",
+              "caption": "Typing 'csv' keeps only the matching branch and chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--search.mp4",
+              "type": "video",
+              "caption": "Typing 'csv' keeps only the matching branch and chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--search.gif",
+              "type": "gif",
+              "caption": "Typing 'csv' keeps only the matching branch and chat (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Issues, Agents, Docs and Organization rows",
+          "what": "Before: Issues, Agents and Docs were route buttons in the rail. Now: they are rows at the top of the sidebar and under each project, and 'Organization' holds the ones with no project link. Data comes from read-only queries to the app's own backend.",
+          "how": "Click a row to open it. Cmd+click opens a doc, issue or agent as a tab next to the chat.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--search.png",
+              "type": "image",
+              "caption": "Top of the sidebar. The Issues, Agents and Docs rows need real backend data, so they do not show in the fixture (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: needs the real app (backend data for docs, issues and agents)"
+        },
+        {
+          "name": "Decks under branches",
+          "what": "Before: decks (pages with their own pane layout) had no place in any sidebar. Now: each branch card lists its decks. The active deck is open and shows what is on screen; the other decks are compact rows.",
+          "how": "Click a deck row to switch to it. Click its chevron on the right to open or fold its rows. The + on the branch makes a new deck.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--tree.png",
+              "type": "image",
+              "caption": "Deck 02 opened under the main branch (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--deck-click.mp4",
+              "type": "video",
+              "caption": "Clicking Deck 03 switches the workspace to it (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--deck-click.gif",
+              "type": "gif",
+              "caption": "Clicking Deck 03 switches the workspace to it (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Collapsed deck rows",
+          "what": "Now: a deck that is not open is one compact row. It shows its number and a small pill: status icons (done, running, unread), the provider of the first chat, '+N' for more, then icons for other tabs (canvas, terminal, browser, file).",
+          "how": "Hover a row to see its chevron. Click the row to switch, the chevron to open it.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--deck-pills.png",
+              "type": "image",
+              "caption": "Decks 02 and 03 as compact rows with their pills (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--tree.mp4",
+              "type": "video",
+              "caption": "A compact row opens into its list and folds back (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--tree.gif",
+              "type": "gif",
+              "caption": "A compact row opens into its list and folds back (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Deck menu",
+          "what": "Now: right-click on a deck row opens a small menu with Rename and Remove deck. Remove asks first, in place ('Its 2 tabs go back to deck 01'), with Cancel focused. The tabs of a removed deck join the active deck.",
+          "how": "Right-click a deck row. Enter removes, Esc or Cancel keeps the deck. Double-click on a deck name renames it.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--deck-menu.png",
+              "type": "image",
+              "caption": "The deck context menu (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--deck-remove-confirm.png",
+              "type": "image",
+              "caption": "The confirmation before removing a deck (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--deck-menu.mp4",
+              "type": "video",
+              "caption": "Opening the menu and the remove confirmation, then cancelling (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--deck-menu.gif",
+              "type": "gif",
+              "caption": "Opening the menu and the remove confirmation, then cancelling (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "New worktree picker",
+          "what": "Before: the project + created a worktree with an auto name. Now: the + opens a small picker with a search field, 'New branch' (from main), the other local and remote branches, and the branches that already have a card ('switch').",
+          "how": "Click the + on a project. Type to filter. Pick a branch to open it in a new worktree, or pick 'switch' to jump to its card. Esc closes.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--new-worktree.png",
+              "type": "image",
+              "caption": "The worktree picker with a search field, branches and open worktrees (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--new-worktree.mp4",
+              "type": "video",
+              "caption": "The worktree picker with a search field, branches and open worktrees (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--new-worktree.gif",
+              "type": "gif",
+              "caption": "The worktree picker with a search field, branches and open worktrees (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Split pane rows",
+          "what": "Before: nothing in the sidebar knew about the split view or the dock panes. Now: the branch card lists every pane on screen (each side of the split, each dock pane) with its active tab, in screen order. Rows of one pane are linked by a thin line, and hovering a row flashes its pane in the window.",
+          "how": "Hover a row to see its pane outlined. Click a row to bring that tab forward on its own side without closing the split.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--split-pane.png",
+              "type": "image",
+              "caption": "Hovering a row outlines the right side of the split (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--split-pane.mp4",
+              "type": "video",
+              "caption": "Hovering a row outlines the right side of the split (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--split-pane.gif",
+              "type": "gif",
+              "caption": "Hovering a row outlines the right side of the split (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Drop a tab on + to open a new worktree",
+          "what": "Now: while you drag a tab, every project + appears. Dropping the tab on one makes a new worktree for that project and moves the tab into it. The new card slides in with a short highlight, and the dock's undo plays it backwards.",
+          "how": "Drag a tab from a tab bar or a dock pane over the + of a project (it turns into a 'New workspace' pill) and release.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--drop-new.png",
+              "type": "image",
+              "caption": "The + opened into a 'New workspace' pill under the dragged tab (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--drop-new-2.png",
+              "type": "image",
+              "caption": "The new card entered right after the drop (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--drop-new.mp4",
+              "type": "video",
+              "caption": "Dragging a tab onto the project + and the new card entering (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--drop-new.gif",
+              "type": "gif",
+              "caption": "Dragging a tab onto the project + and the new card entering (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Terminal agents as agent rows",
+          "what": "Now: a terminal that runs an agent CLI (Claude Code, Codex) is listed as an agent session, with a status, the provider logo, the task title and a 'CLI' badge, not as a plain terminal. The mod reads the tab title, or the visible terminal screen.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--agent-terminal.png",
+              "type": "image",
+              "caption": "A terminal titled with the Claude Code marker shows as an agent row with a CLI badge (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: needs a real terminal running an agent CLI"
+        },
+        {
+          "name": "Footer, settings and account",
+          "what": "Now: the bottom of the sidebar hosts the plan usage line (from the usage-bar mod). Settings and the account avatar sit in the title bar next to the sidebar switch.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--footer.png",
+              "type": "image",
+              "caption": "Sidebar footer with the usage line (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--titlebar.png",
+              "type": "image",
+              "caption": "Title bar with the sidebar switch, Settings and the account avatar (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static layout, no interaction"
+        },
+        {
+          "name": "Collapsed sidebar",
+          "what": "Now: the sidebar follows the app's own 'Toggle left panel' button and Cmd+B. Collapsed, the column goes away and the workspace takes its width back; expanded, it returns.",
+          "how": "Click Toggle left panel in the title bar, or press Cmd+B.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--collapsed.png",
+              "type": "image",
+              "caption": "The sidebar collapsed and the workspace using the full width (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--collapse.mp4",
+              "type": "video",
+              "caption": "Collapsing and expanding the sidebar (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/project-sidebar--collapse.gif",
+              "type": "gif",
+              "caption": "Collapsing and expanding the sidebar (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Always the only sidebar",
+          "what": "Before: a title bar switch cycled this sidebar, the native Chats sidebar and the app's own. Now: the project sidebar is the only one, with no switch. The native route sidebars stay mounted but hidden, so they keep working.",
+          "how": "Nothing to do. localStorage \"rtd.projectSidebar.hideNative\" = \"off\" shows the native sidebars again.",
+          "media": [
+            {
+              "src": "media/sidebar/project-sidebar--titlebar.png",
+              "type": "image",
+              "caption": "The switch is the first icon, left of Settings (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: there is no switch any more"
+        },
+        {
+          "name": "Context menus",
+          "what": "Before: right-click did nothing in the sidebar. Now: chats, projects and worktrees have Orca-style menus: Open, Open in split view or new window, Move to deck, Rename, Archive or Delete for a chat; New workspace, New worktree, Open in Finder, Editor or Terminal, Copy path for a project; new chat, canvas, doc, issue, terminal or browser, Copy branch and Pin for a worktree.",
+          "how": "Right-click a chat, a project or a worktree card.",
+          "media": [
+            {
+              "src": "media/updates/project-sidebar--context-chat.png",
+              "type": "image",
+              "caption": "Menu of a chat row (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/project-sidebar--context-project.png",
+              "type": "image",
+              "caption": "Menu of a project with its Open in submenu (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/project-sidebar--context-worktree.png",
+              "type": "image",
+              "caption": "Menu of a worktree card (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Worktree cards on one line",
+          "what": "Before: each worktree card had a second line with its path and tab icons. Now: a card is one line: dot, name, the primary chip and +. A branch whose name differs shows in the tooltip.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/updates/project-sidebar--cards-one-line.png",
+              "type": "image",
+              "caption": "Worktree cards on one line, decks under them (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static layout"
+        },
+        {
+          "name": "Green status dot",
+          "what": "The dot is green for every worktree that is ready, primary or not, and pulses while a session runs. It is gray only when the worktree is not available.",
+          "how": "Hover the dot to read its state.",
+          "media": [
+            {
+              "src": "media/updates/project-sidebar--green-dot.png",
+              "type": "image",
+              "caption": "Green dot on the main worktree (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: a static status mark"
+        }
+      ]
+    },
+    {
+      "id": "sidebar-chats",
+      "title": "Sidebar chats",
+      "group": "sidebar",
+      "files": [
+        "feature/sidebar-chats.js",
+        "feature/sidebar-chats.css"
+      ],
+      "summary": "Every chat tab of a workspace shows in the native Chats sidebar, nested under the chat it belongs to. The original app left out chats opened with the + of the tab bar, in the split view, in a window or in a dock pane.",
+      "features": [
+        {
+          "name": "Tabs nested under their chat",
+          "what": "Before: chats opened with the + of the center tab bar (and those in split view, windows, dock panes or CLI mode) had no row. Now: each shows as a child row under its chat, with a status icon, the provider logo, a title, a badge ('split', 'window', 'CLI') and the time.",
+          "how": "Click a child row to open that chat, in its window or pane when it lives there.",
+          "media": [
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.png",
+              "type": "image",
+              "caption": "Child rows with status icons, provider logos and badges under their parent chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.mp4",
+              "type": "video",
+              "caption": "Child rows with status icons, provider logos and badges under their parent chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.gif",
+              "type": "gif",
+              "caption": "Child rows with status icons, provider logos and badges under their parent chat (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Status and location badges",
+          "what": "Now: a small gray dot is a finished chat, a dashed spinning circle is a running one, a blue dot is unread, a yellow dot waits for your answer, a hollow dot is a draft.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.png",
+              "type": "image",
+              "caption": "Rows with each kind of status and badge (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: same clip as the nested chats"
+        },
+        {
+          "name": "Fold button",
+          "what": "Now: the parent row gets a round chevron button on the right, in place of its time. It folds and unfolds its children, and the state is remembered.",
+          "how": "Hover the parent row and click the chevron.",
+          "media": [
+            {
+              "src": "media/sidebar/sidebar-chats--folded.png",
+              "type": "image",
+              "caption": "The first chat folded, its children hidden and the count shown (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.mp4",
+              "type": "video",
+              "caption": "Folding and unfolding, then a new chat appearing (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/sidebar-chats--nested-chats.gif",
+              "type": "gif",
+              "caption": "Folding and unfolding, then a new chat appearing (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "New chats appear by themselves",
+          "what": "Now: a chat opened with the + of the tab bar shows up nested under its owner right away, without reloading anything.",
+          "how": "Open a new chat with the + in the center tab bar.",
+          "media": [
+            {
+              "src": "media/sidebar/sidebar-chats--new-chat-row.png",
+              "type": "image",
+              "caption": "A new child row 'Tag cleanup ideas' under its owner chat (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Workspace card per branch",
+          "what": "Now: each workspace (a local checkout or a worktree) gets a card header with a status dot (green while a chat runs), the branch in bold, a 'primary' badge for the local checkout, and its short path. The card's border contains the workspace row and all its chats.",
+          "how": "Click the header to select the workspace. Right-click opens the app's own workspace menu.",
+          "media": [
+            {
+              "src": "media/sidebar/sidebar-chats--workspace-card.png",
+              "type": "image",
+              "caption": "Branch cards with their title, path and chats (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static card, covered by the nested chats clip"
+        }
+      ]
+    },
+    {
+      "id": "usage-bar",
+      "title": "Plan usage",
+      "group": "sidebar",
+      "files": [
+        "feature/usage-bar.js",
+        "feature/usage-bar.css",
+        "feature/bin/claude-usage-oauth.mjs"
+      ],
+      "summary": "Shows how much of your Claude and Codex plan is used (not the context window), in two forms: rings in the left rail, or one compact line in the project sidebar footer. Hovering opens a popover with every window.",
+      "features": [
+        {
+          "name": "Usage rings",
+          "what": "Before: no plan usage anywhere. Now: two rings above the bug button in the rail, Claude on top and Codex below. The fill is the percent used of the shortest window; the centre is the time until reset (4h, 5d, 28m).",
+          "how": "Hover the rings to open the popover. A click pins it.",
+          "media": [
+            {
+              "src": "media/sidebar/usage-bar--rings.png",
+              "type": "image",
+              "caption": "Two usage rings in the rail above the bug button (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/usage-bar--rings.mp4",
+              "type": "video",
+              "caption": "Hovering the rings opens the usage popover (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/usage-bar--rings.gif",
+              "type": "gif",
+              "caption": "Hovering the rings opens the usage popover (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Footer usage line",
+          "what": "Now: when the project sidebar is on, the rings give way to one line in its footer: Claude's percent and time left, then Codex's, then a refresh arrow.",
+          "how": "Hover the line to open the popover.",
+          "media": [
+            {
+              "src": "media/sidebar/usage-bar--footer-line.png",
+              "type": "image",
+              "caption": "The usage line at the bottom of the sidebar (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Usage popover and footer line",
+          "what": "Now: hover (or click) opens a 'Usage' popover upward, with 'Updated … ago' and a refresh button. Each provider lists up to three windows, shortest first, with a thin bar, the percent and the time to reset. Bars turn amber from 80% and red from 95%.",
+          "how": "Hover the line or the rings. Click pins it; click again, Esc or a click outside closes it.",
+          "media": [
+            {
+              "src": "media/sidebar/usage-bar--popover.png",
+              "type": "image",
+              "caption": "The popover with Claude and Codex windows (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/usage-bar--popover.mp4",
+              "type": "video",
+              "caption": "The popover with Claude and Codex windows (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/sidebar/usage-bar--popover.gif",
+              "type": "gif",
+              "caption": "The popover with Claude and Codex windows (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Per-model weekly limits",
+          "what": "Now: a small helper script asks the installed Claude CLI for the weekly limit of each model (for example Fable). It sends no message, reads no token and writes one local file that the popover reads. It runs when the popover opens with old data, and every 15 minutes.",
+          "how": "Automatic. To run it by hand, with HOME set to your real home folder: node feature/bin/claude-usage-oauth.mjs",
+          "media": [
+            {
+              "src": "media/sidebar/usage-bar--model-limits.png",
+              "type": "image",
+              "caption": "The Claude block of the popover with the per-model Fable row (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: background helper, only its result is visible"
+        }
+      ]
+    }
+  ]
+}

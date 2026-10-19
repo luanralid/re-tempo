@@ -1,0 +1,800 @@
+/*
+ * RE-TEMPO · agent-cursors — multiplayer-style cursors for the Claude agents
+ * working on a canvas: comment tasks and running chats (see agent-cursors.js;
+ * a chat agent's cursor also has .rtac--chat). Figma-like arrow with a
+ * white edge, a coloured name tag, selections of what the agent is editing
+ * (outline, handles, tag), a caption under the tag (what the agent is
+ * doing, from its own stream), the flights out of / back into its avatar and
+ * a comment pin's pulse (a full-window layer: trail, glow, rings). Only the
+ * tag (and its "?" balloon)
+ * takes the pointer. The agent's colour comes from the JS (--rtac-color, one
+ * of 8 that keep white 11 px text at 4.6:1 or more); amber stays reserved
+ * for needs-input and red for failures and the snap guides. Motion:
+ * transform and opacity only.
+ */
+
+.rtac-layer,
+.rtac-sky,
+.rtac-tip {
+  --rtac-claude: #c2532d; /* Claude terracotta, the first agent's colour */
+  --rtac-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --rtac-amber: color-mix(in oklab, var(--color-warning, #f9d338) 60%, #f97316);
+  --rtac-red: var(--color-critical, #f46363);
+  --rtac-surface: var(--color-surface-container, #191919);
+  --rtac-border: var(--color-border-primary, #3a3a3a);
+  --rtac-text: var(--color-text-primary, #f5f5f5);
+  --rtac-text-2: var(--color-text-secondary, #bababa);
+  --rtac-text-3: var(--color-text-tertiary, #787878);
+  --rtac-hair: var(--border-width, 0.5px);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+
+/* One fixed layer per canvas view, clipped to it. Never takes input. */
+.rtac-layer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 44; /* over the canvas, under the comment bubbles (45) and panels */
+  contain: layout style;
+}
+
+/* The canvas layers hide while canvas-comment-agent takes "before" /
+   "after" (~0.1 s); the flights' layer stays (a cursor leaving its avatar on
+   Enter): what of it is over the captured region is masked in the image. */
+html.rtcc-capturing .rtac-layer,
+html.rtcc-capturing .rtac-tip {
+  display: none !important;
+}
+
+.rtac-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.rtac-cursor[hidden] {
+  display: none;
+}
+
+.rtac-body {
+  position: relative;
+  transform-origin: 0 0;
+}
+
+/* Flights: one full-window layer over everything, never clipped. */
+.rtac-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.rtac-trail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* A soft light around the arrow while it flies (opacity set per frame). */
+.rtac-glow {
+  position: absolute;
+  left: -12px;
+  top: -10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 52%, transparent) 0%,
+    color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 16%, transparent) 46%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The avatar's ring as the cursor leaves it (or comes back into it). */
+.rtac-ring {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid var(--rtac-color, var(--rtac-claude));
+  border-radius: 50%;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 45%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The arrow's tip is the cursor's point (0, 0). */
+.rtac-arrow {
+  position: absolute;
+  left: -1.5px;
+  top: -1.5px;
+  overflow: visible;
+  transform-origin: 1.5px 1.5px;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.32));
+}
+
+.rtac-arrow path {
+  fill: var(--rtac-color, var(--rtac-claude));
+  stroke: #ffffff;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+
+.rtac-ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--rtac-color, var(--rtac-claude));
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.rtac-tag {
+  position: absolute;
+  left: 13px;
+  top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.rtac-label {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  margin: 0;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 3px 9px 9px 9px;
+  background: var(--rtac-color, var(--rtac-claude));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
+  color: #ffffff;
+  font: 600 11px/20px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transform-origin: 0 50%; /* unfolds out of the arrow */
+}
+
+.rtac-name {
+  display: inline-block;
+}
+
+.rtac-label:hover {
+  filter: brightness(1.1);
+}
+
+.rtac-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  margin-left: -2px;
+  font-weight: 800;
+  line-height: 12px;
+}
+
+.rtac-icon svg {
+  display: block;
+}
+
+.rtac--done .rtac-icon,
+.rtac--failed .rtac-icon {
+  display: inline-flex;
+}
+
+.rtac--done .rtac-icon svg,
+.rtac--failed .rtac-icon {
+  animation: rtac-pop 300ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+/* What the agent is doing now, under its tag: the current tool call from
+   its own stream ("Editing Hero.tsx"), "Thinking" with three dots between
+   calls, the status at the end. Hidden while the cursor flies. */
+.rtac-cap {
+  position: absolute;
+  left: 13px;
+  top: 41px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  max-width: 230px;
+  height: 20px;
+  padding: 0 8px 0 7px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 14%, rgb(17 17 17 / 0.94));
+  box-shadow:
+    inset 0 0 0 0.5px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 60%, transparent),
+    0 1px 3px rgb(0 0 0 / 0.3);
+  color: rgb(255 255 255 / 0.92);
+  font: 500 11px/20px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 220ms var(--rtac-ease-out);
+}
+
+.rtac-cap[hidden] {
+  display: none;
+}
+
+.rtac--flying .rtac-cap {
+  opacity: 0;
+}
+
+/* a tool call: a dot in the agent's colour before its words */
+.rtac-cap:not(.rtac-cap--dots)::before {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rtac-color, var(--rtac-claude));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 28%, transparent);
+}
+
+.rtac-cap[data-k="done"]::before {
+  background: #3ecf8e;
+  box-shadow: 0 0 0 2px rgb(62 207 142 / 0.25);
+}
+
+.rtac-cap[data-k="failed"]::before {
+  background: var(--rtac-red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rtac-red) 28%, transparent);
+}
+
+.rtac-cap-t {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rtac-dots {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding-top: 1px;
+}
+
+.rtac-cap--dots .rtac-dots {
+  display: inline-flex;
+}
+
+.rtac-dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.25;
+  animation: rtac-dot 1.2s ease-in-out infinite;
+}
+
+.rtac-dots i:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.rtac-dots i:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+@keyframes rtac-dot {
+  0%,
+  70%,
+  100% {
+    opacity: 0.25;
+  }
+  35% {
+    opacity: 1;
+  }
+}
+
+/* The comment's pin pulses in the agent's colour when it is sent (rings and
+   a soft glow, transform and opacity only; placed by the JS). */
+.rtac-pulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.rtac-pulse i {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.rtac-pulse-ring {
+  border: 1.5px solid var(--rtac-color, var(--rtac-claude));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 40%, transparent);
+}
+
+.rtac-pulse-glow {
+  background: radial-gradient(circle, color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 42%, transparent) 0%, transparent 68%);
+}
+
+/* ink: a soft wash of the agent's colour that blooms out of the pin and
+   dissolves (blur animated by the JS, 8 px at most) */
+.rtac-pulse-ink {
+  background: radial-gradient(circle, color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 70%, transparent) 0%, color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 25%, transparent) 45%, transparent 70%);
+  will-change: transform, filter;
+}
+
+/* breath: the pin's disc swells once */
+.rtac-pulse-breath {
+  background: color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 55%, transparent);
+}
+
+/* The spark from the pin to the avatar: a bright head with a short tail in
+   the agent's colour (placed and rotated along its path by the JS). */
+.rtac-spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 85%, transparent),
+    0 0 10px 2px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 70%, transparent);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.rtac-spark i {
+  position: absolute;
+  right: 50%;
+  top: 50%;
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(to left, color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 90%, #fff), transparent);
+  opacity: 0.85;
+}
+
+/* Particle bursts (the spark landing, the check): dots and a halo, each one
+   animated by the JS (transform and opacity). */
+.rtac-burst {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.rtac-burst i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: var(--rtac-color, var(--rtac-claude));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 70%, transparent);
+  opacity: 0;
+}
+
+.rtac-burst b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 80%, #fff);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+/* Thinking: the glow around the arrow breathes slowly. */
+.rtac--thinking .rtac-glow {
+  animation: rtac-breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes rtac-breathe {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.34;
+    transform: scale(1.1);
+  }
+}
+
+/* The name tag and the caption hang on a spring (transform set per frame). */
+.rtac-tag,
+.rtac-cap {
+  will-change: transform;
+}
+
+/* A cursor outside the visible canvas: a chevron in its colour on the
+   nearest edge, pointing at it. */
+.rtac-edge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: var(--rtac-color, var(--rtac-claude));
+  box-shadow:
+    0 0 0 1.5px rgb(255 255 255 / 0.9),
+    0 1px 4px rgb(0 0 0 / 0.3);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  transition: opacity 220ms var(--rtac-ease-out);
+  pointer-events: none;
+}
+
+.rtac-edge[data-on] {
+  opacity: 1;
+}
+
+.rtac-edge svg {
+  display: block;
+  margin-left: 1px;
+}
+
+/* needs-input: an amber speech balloon next to the tag. */
+.rtac-ask {
+  pointer-events: auto;
+  display: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px 10px 10px 3px;
+  background: var(--rtac-amber);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
+  color: #1a1a1a;
+  font: 800 12px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rtac--ask .rtac-ask {
+  display: inline-grid;
+  animation:
+    rtac-pop 300ms cubic-bezier(0.2, 1.4, 0.4, 1),
+    rtac-ask-pulse 1.6s ease-in-out 300ms 3;
+}
+
+/* Wheel forwarding probes what is under the tag. */
+.rtac--pass,
+.rtac--pass * {
+  pointer-events: none !important;
+}
+
+/* Selections (pen.dev / Figma): outline, handles, the agent's tag; while a
+   box is dragged out, a tint and "W × H". Every part is placed by transform
+   (edges are 1 px strips scaled to the box: 1.5 px at any zoom). */
+.rtac-sel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 360ms ease-out;
+}
+
+.rtac-sel[data-dying] {
+  opacity: 0;
+}
+
+.rtac-sel-fill,
+.rtac-sel-edge,
+.rtac-sel-knob,
+.rtac-sel-tag,
+.rtac-sel-size {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.rtac-sel-fill {
+  width: 1px;
+  height: 1px;
+  background: color-mix(in srgb, var(--rtac-color, var(--rtac-claude)) 9%, transparent);
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.rtac-sel[data-mode="draw"] .rtac-sel-fill {
+  opacity: 1;
+}
+
+.rtac-sel-edge {
+  background: var(--rtac-color, var(--rtac-claude));
+}
+
+.rtac-sel-n,
+.rtac-sel-s {
+  width: 1px;
+  height: 1.5px;
+}
+
+.rtac-sel-w,
+.rtac-sel-e {
+  width: 1.5px;
+  height: 1px;
+}
+
+.rtac-sel-knob {
+  width: 7px;
+  height: 7px;
+}
+
+.rtac-sel-knob i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--rtac-color, var(--rtac-claude));
+  border-radius: 1.5px;
+  background: #ffffff;
+  box-shadow: 0 0.5px 1.5px rgb(0 0 0 / 0.22);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 160ms var(--rtac-ease-out),
+    transform 160ms var(--rtac-ease-out);
+}
+
+.rtac-sel-knob:nth-child(7) i {
+  transition-delay: 20ms;
+}
+
+.rtac-sel-knob:nth-child(8) i {
+  transition-delay: 40ms;
+}
+
+.rtac-sel-knob:nth-child(9) i {
+  transition-delay: 60ms;
+}
+
+.rtac-sel[data-mode="on"] .rtac-sel-knob i {
+  opacity: 1;
+  transform: none;
+}
+
+.rtac-sel-tag span,
+.rtac-sel-size span {
+  display: block;
+  border-radius: 3px;
+  background: var(--rtac-color, var(--rtac-claude));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  color: #ffffff;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.rtac-sel-tag span {
+  height: 18px;
+  padding: 0 6px;
+  font: 600 10.5px/18px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  letter-spacing: 0.01em;
+}
+
+.rtac-sel[data-mode="on"] .rtac-sel-tag span {
+  opacity: 1;
+}
+
+/* Under the agent's own cursor tag: that one already says who it is. */
+.rtac-sel[data-under] .rtac-sel-tag span {
+  opacity: 0;
+}
+
+.rtac-sel-size span {
+  height: 16px;
+  padding: 0 5px;
+  font: 600 10px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.rtac-sel[data-size] .rtac-sel-size span {
+  opacity: 1;
+}
+
+/* done / failed / dismissed: the check (or "!") shows, then 1.5 s fade. */
+.rtac--out {
+  animation: rtac-out var(--rtac-fade, 1500ms) ease-in forwards;
+}
+
+.rtac--failed .rtac-label {
+  background: color-mix(in oklab, var(--rtac-red) 80%, #000000);
+}
+
+/* prefers-reduced-motion: the check, then 120 ms of opacity. */
+.rtac--out-rm {
+  animation: rtac-out-rm var(--rtac-fade, 1020ms) linear forwards;
+}
+
+@keyframes rtac-out-rm {
+  0%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rtac-out {
+  0%,
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rtac-pop {
+  0% {
+    transform: scale(0.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rtac-ask-pulse {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Hover card: the comment, the model, what the agent is doing. */
+.rtac-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1001;
+  box-sizing: border-box;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: var(--rtac-hair) solid var(--rtac-border);
+  border-radius: 8px;
+  background: var(--rtac-surface);
+  box-shadow: var(--shadow-dropdown, 0 4px 14px rgb(0 0 0 / 0.28));
+  color: var(--rtac-text);
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 120ms ease-out,
+    visibility 0s linear 120ms;
+}
+
+.rtac-tip[data-show] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 120ms ease-out;
+}
+
+.rtac-tip-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.rtac-tip-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rtac-color, var(--rtac-claude));
+}
+
+.rtac-tip-meta {
+  color: var(--rtac-text-3);
+  font-weight: 500;
+}
+
+.rtac-tip-q {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  color: var(--rtac-text);
+  overflow-wrap: anywhere;
+}
+
+.rtac-tip-s {
+  margin-top: 4px;
+  color: var(--rtac-text-2);
+}
+
+.rtac-tip-hint {
+  margin-top: 2px;
+  color: var(--rtac-text-3);
+  font-size: 11px;
+}
+
+/* No motion: cursors only appear, jump and fade (the JS skips trajectories,
+   holds and flights); selections change with 120 ms of opacity. */
+@media (prefers-reduced-motion: reduce) {
+  .rtac--done .rtac-icon svg,
+  .rtac--failed .rtac-icon,
+  .rtac--ask .rtac-ask,
+  .rtac-dots i {
+    animation: none;
+  }
+
+  .rtac-dots i {
+    opacity: 0.6;
+  }
+
+  .rtac--thinking .rtac-glow {
+    animation: none;
+    opacity: 0;
+  }
+
+  .rtac-edge {
+    transition: opacity 120ms linear;
+  }
+
+  .rtac-cap {
+    transition: opacity 120ms linear;
+  }
+
+  .rtac-sel,
+  .rtac-sel-fill,
+  .rtac-sel-knob i,
+  .rtac-sel-tag span,
+  .rtac-sel-size span {
+    transition: opacity 120ms linear;
+    transition-delay: 0ms;
+  }
+
+  .rtac-sel-knob i {
+    transform: none;
+  }
+
+  .rtac-tip,
+  .rtac-tip[data-show] {
+    transition: none;
+  }
+}

@@ -1,0 +1,68 @@
+/*
+ * RE-TEMPO · app-map (user MOD layer) — debug overlay only.
+ * window.__RE_TEMPO_APP_MAP__.debug(true) draws one box per mapped element on
+ * screen with its id, colored by risk (safe / caution / destructive). The
+ * layer never takes pointer events and is never indexed by the map.
+ */
+[data-rtam-root] {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  contain: strict;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.rtam-box {
+  --rtam-c: var(--color-success, #2f9e5a);
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--rtam-c);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--rtam-c) 7%, transparent);
+}
+.rtam-box[data-risk="caution"] {
+  --rtam-c: var(--color-warning, #c98a12);
+}
+.rtam-box[data-risk="destructive"] {
+  --rtam-c: var(--color-critical, var(--color-error, #d64545));
+}
+.rtam-box[data-off] {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.rtam-tag {
+  position: absolute;
+  left: -1px;
+  bottom: 100%;
+  max-width: 240px;
+  overflow: hidden;
+  padding: 0 3px;
+  border-radius: 2px 2px 2px 0;
+  background: var(--rtam-c);
+  color: #fff;
+  font-size: 9px;
+  line-height: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtam-tag-in {
+  top: 0;
+  bottom: auto;
+  border-radius: 0 0 2px 0;
+}
+
+.rtam-legend {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-secondary, rgba(127, 127, 127, 0.3));
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface-container-high, rgba(20, 20, 20, 0.9));
+  color: var(--color-text-primary, #f2f2f2);
+  font-size: 11px;
+  line-height: 16px;
+  box-shadow: var(--shadow-dropdown, 0 4px 16px rgba(0, 0, 0, 0.25));
+}

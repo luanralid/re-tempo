@@ -1,0 +1,831 @@
+/*
+ * RE-TEMPO · canvas-notes — sticky notes that turn into prompts (pen.dev).
+ * The notes live in the canvas world layer (world units, scaled with the
+ * canvas), like canvas-browser's frames; the selection outline, handles and
+ * size label keep their screen size through the app's --canvas-unzoom.
+ * The card colours are Pen's per kind (they do not follow the app theme, as
+ * paper notes); the metrics are tuned for Tempo (radius 16, hairline,
+ * shadow 0 8px 24px rgba(0,0,0,.35), padding 12, text 13 / 12 px, gaps 8).
+ * The chrome around them (menus, tooltip, toast, toolbar) uses the app's
+ * tokens with the dark values as fallbacks. Prefix: rtcn-.
+ */
+
+.rtcn-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 1100; /* over the storyboards and canvas-browser's frames (1000) */
+  pointer-events: none;
+}
+
+.rtcn-note {
+  /* Pen's "prompt" colours */
+  --rtcn-head: rgba(195, 232, 255, 0.96); /* #C3E8FF */
+  --rtcn-bg: rgba(232, 246, 255, 0.92); /* #E8F6FF */
+  --rtcn-line: #009dff;
+  --rtcn-ink: #006caf;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  pointer-events: auto;
+  font-family: "JetBrains Mono", var(--font-mono, ui-monospace), SFMono-Regular, Menlo, monospace;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+.rtcn-note[data-kind="note"] {
+  --rtcn-head: rgba(255, 241, 214, 0.96); /* #FFF1D6 */
+  --rtcn-bg: rgba(255, 247, 229, 0.92); /* #FFF7E5 */
+  --rtcn-line: #8b6311;
+  --rtcn-ink: #664500;
+}
+.rtcn-note[data-kind="context"] {
+  --rtcn-head: rgba(255, 255, 255, 0.96); /* #FFFFFF */
+  --rtcn-bg: rgba(240, 240, 240, 0.92); /* #F0F0F0 */
+  --rtcn-line: #767676;
+  --rtcn-ink: #2c2c2c;
+}
+
+/* ------------------------------------------------------------------- card */
+.rtcn-card {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 16px;
+  /* A hairline: half a screen px at any zoom, as an inset shadow (borders
+     and outlines under 1px get rounded up; no layout either, so 250 x 219
+     stays 250 x 219). */
+  --rtcn-hair: inset 0 0 0 calc(var(--canvas-unzoom, 1) * 0.5px) color-mix(in srgb, var(--rtcn-line) 85%, transparent);
+  background: var(--rtcn-bg);
+  color: var(--rtcn-ink);
+  box-shadow: var(--rtcn-hair), 0 8px 24px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* Header: padding 12, Pen's dashed outline (only its bottom edge shows
+   inside the card's own outline). */
+.rtcn-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px;
+  box-sizing: border-box;
+  border-bottom: 1px dashed color-mix(in srgb, var(--rtcn-line) 70%, transparent);
+  background: var(--rtcn-head);
+}
+.rtcn-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--rtcn-ink);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 20px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rtcn-kind:focus-visible {
+  outline: 2px solid var(--rtcn-line);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.rtcn-chev {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+/* Prompts: how many context notes go with them. */
+.rtcn-ctx {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rtcn-line) 14%, transparent);
+  color: var(--rtcn-ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcn-ctx[hidden] {
+  display: none;
+}
+
+/* Body: padding 12; the text (13/20) grows with what is written and fills
+   the card (which is at least h tall). */
+.rtcn-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.rtcn-text {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 60px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: var(--rtcn-ink);
+  caret-color: var(--rtcn-ink);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  font-family: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  field-sizing: content;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.rtcn-text::placeholder {
+  color: var(--rtcn-ink);
+  opacity: 0.45;
+}
+.rtcn-note:not([data-editing]) .rtcn-text {
+  pointer-events: none;
+}
+.rtcn-note[data-editing] .rtcn-text {
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtcn-text::selection {
+  background: color-mix(in srgb, var(--rtcn-line) 28%, transparent);
+}
+
+/* -------------------------------------------------------- status (Tempo) */
+.rtcn-status {
+  flex: none;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rtcn-line) 9%, transparent);
+  font-size: 12px;
+  line-height: 18px;
+}
+.rtcn-status[hidden],
+.rtcn-summary[hidden],
+.rtcn-st-btn[hidden] {
+  display: none !important;
+}
+.rtcn-note:not([data-kind="prompt"]) .rtcn-status,
+.rtcn-note:not([data-kind="prompt"]) .rtcn-foot,
+.rtcn-note:not([data-kind="context"]) .rtcn-ctx-foot {
+  display: none;
+}
+/* Context notes: where their text goes. */
+.rtcn-ctx-foot {
+  flex: none;
+  padding-top: 8px;
+  overflow: hidden;
+  color: var(--rtcn-ink);
+  font-size: 12px;
+  line-height: 18px;
+  opacity: 0.7;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcn-st-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.rtcn-st-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font: 700 11px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  color: #fff;
+}
+.rtcn-claude {
+  width: 15px;
+  height: 15px;
+}
+.rtcn-note[data-status="queued"] .rtcn-claude {
+  opacity: 0.55;
+}
+.rtcn-note[data-status="running"] .rtcn-claude {
+  animation: rtcn-breathe 1.6s ease-in-out infinite;
+}
+.rtcn-note[data-status="needs-input"] .rtcn-st-icon {
+  background: #f59e0b;
+  animation: rtcn-pulse 1.4s ease-in-out infinite;
+}
+.rtcn-note[data-status="done"] .rtcn-st-icon {
+  background: #16a34a;
+}
+.rtcn-check {
+  width: 10px;
+  height: 10px;
+  color: #fff;
+}
+.rtcn-note[data-status="failed"] .rtcn-st-icon {
+  background: #dc2626;
+}
+.rtcn-st-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcn-st-btn {
+  flex: none;
+  height: 24px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--rtcn-line) 55%, transparent);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--rtcn-ink);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rtcn-st-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+.rtcn-st-btn:active {
+  background: rgba(255, 255, 255, 0.7);
+}
+.rtcn-st-btn:focus-visible {
+  outline: 2px solid var(--rtcn-line);
+  outline-offset: 2px;
+}
+/* The summary: the agent's result, 1-2 lines. */
+.rtcn-summary {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--rtcn-ink);
+  opacity: 0.9;
+  overflow-wrap: anywhere;
+}
+.rtcn-note[data-status="failed"] .rtcn-summary {
+  color: #b91c1c;
+}
+
+/* Footer (prompts): model and effort pickers, then Run. */
+.rtcn-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+.rtcn-foot-fill {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Model / effort pickers (Pen: label + 12 px chevron). */
+.rtcn-pick {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rtcn-ink);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rtcn-pick[hidden] {
+  display: none;
+}
+.rtcn-pick-effort {
+  flex-shrink: 0;
+}
+.rtcn-pick:hover,
+.rtcn-pick[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--rtcn-line) 12%, transparent);
+}
+.rtcn-pick:focus-visible {
+  outline: 2px solid var(--rtcn-line);
+  outline-offset: 1px;
+}
+.rtcn-pick-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtcn-chev-sm {
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+.rtcn-run {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--rtcn-ink);
+  color: #fff;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 120ms ease, filter 120ms ease;
+}
+.rtcn-run:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.rtcn-run:focus-visible {
+  outline: 2px solid var(--rtcn-line);
+  outline-offset: 2px;
+}
+.rtcn-run:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+.rtcn-run:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rtcn-play {
+  width: 10px;
+  height: 10px;
+}
+
+/* Pen's flash on Run: a scan line sweeps the note. */
+.rtcn-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+}
+.rtcn-note[data-flash] .rtcn-flash {
+  opacity: 1;
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--rtcn-line) 0%, transparent) 40%, color-mix(in srgb, var(--rtcn-line) 38%, transparent) 50%, transparent 52%) 0 0 / 100% 220% no-repeat;
+  animation: rtcn-scan 1.1s cubic-bezier(0.3, 0, 0.2, 1) forwards;
+}
+.rtcn-note[data-flash] .rtcn-card {
+  animation: rtcn-glow 1.2s ease-out;
+}
+
+/* ------------------------------------- selection (the storyboards' outline) */
+.rtcn-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 2px) solid rgba(0, 145, 255, 0.95);
+  pointer-events: none;
+}
+.rtcn-note[data-selected] .rtcn-outline {
+  display: block;
+}
+.rtcn-note:not([data-selected]):hover .rtcn-outline {
+  display: block;
+  border-width: calc(var(--canvas-unzoom, 1) * 1px);
+  border-color: rgba(0, 145, 255, 0.65);
+}
+html[data-rtcn-dragging] .rtcn-note:not([data-selected]):hover .rtcn-outline,
+html[data-rtcn-armed] .rtcn-note:not([data-selected]):hover .rtcn-outline {
+  display: none;
+}
+.rtcn-note:not([data-selected]) .rtcn-edge,
+.rtcn-note:not([data-selected]) .rtcn-corner,
+.rtcn-note[data-editing] .rtcn-edge,
+.rtcn-note[data-editing] .rtcn-corner {
+  display: none;
+}
+.rtcn-edge {
+  position: absolute;
+  pointer-events: auto;
+}
+.rtcn-edge-n,
+.rtcn-edge-s {
+  left: 0;
+  width: 100%;
+  height: calc(var(--canvas-unzoom, 1) * 4px);
+  transform: translateY(-50%);
+  cursor: ns-resize;
+}
+.rtcn-edge-n {
+  top: 0;
+}
+.rtcn-edge-s {
+  top: 100%;
+}
+.rtcn-edge-w,
+.rtcn-edge-e {
+  top: 0;
+  width: calc(var(--canvas-unzoom, 1) * 4px);
+  height: 100%;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+}
+.rtcn-edge-w {
+  left: 0;
+}
+.rtcn-edge-e {
+  left: 100%;
+}
+.rtcn-corner {
+  position: absolute;
+  width: calc(var(--canvas-unzoom, 1) * 14px);
+  height: calc(var(--canvas-unzoom, 1) * 14px);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.rtcn-corner-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.rtcn-corner-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.rtcn-corner-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.rtcn-corner-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.rtcn-corner-sq {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--canvas-unzoom, 1) * 10px);
+  height: calc(var(--canvas-unzoom, 1) * 10px);
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  border: calc(var(--canvas-unzoom, 1) * 1px) solid rgba(0, 145, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+
+/* The app's resize label: blue monospace pill under the note. */
+.rtcn-size {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 30;
+  display: none;
+  margin-top: calc(var(--canvas-unzoom, 1) * 8px);
+  padding: calc(var(--canvas-unzoom, 1) * 4px) calc(var(--canvas-unzoom, 1) * 8px);
+  transform: translateX(-50%);
+  border-radius: calc(var(--canvas-unzoom, 1) * 8px);
+  background: rgba(0, 145, 255, 0.95);
+  color: #fff;
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: calc(var(--canvas-unzoom, 1) * 11px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rtcn-note[data-sizing] .rtcn-size,
+.rtcn-draw-preview .rtcn-size {
+  display: block;
+}
+
+/* ------------------------------------------------------- sticky note tool */
+.rtcn-draw-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2600;
+  cursor: crosshair;
+  touch-action: none;
+}
+/* Pen's ghost: fill #E8F6FFcc, stroke #009DFFcc, radius 16. */
+.rtcn-ghost,
+.rtcn-draw-preview {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 157, 255, 0.8);
+  border-radius: 16px;
+  background: rgba(232, 246, 255, 0.8);
+  pointer-events: none;
+}
+
+.rtcn-tool {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icons-primary, #f5f5f5);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.rtcn-tool:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcn-tool:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcn-tool[aria-pressed="true"] {
+  background: var(--color-accent-subtle, #2a2a2a);
+  color: var(--color-accent, #e0e0e0);
+}
+.rtcn-tool:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcn-tool .rtcn-ic {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+.rtcn-tool-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: var(--color-border-secondary, #232323);
+}
+/* While the tool is armed, the native tool stops looking active. */
+html[data-rtcn-armed] [role="toolbar"][aria-label="Design tools"] button[aria-pressed="true"]:not(.rtcn-tool) {
+  background: transparent !important;
+  color: var(--color-icons-primary, #f5f5f5) !important;
+}
+
+/* ------------------------------------- kind / model / effort menus (app's) */
+.rtcn-menu {
+  position: fixed;
+  z-index: 2147483000;
+  min-width: 144px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  font: 400 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+.rtcn-menu[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtcn-menu {
+  max-height: min(360px, calc(100vh - 16px));
+  overflow-y: auto;
+}
+.rtcn-menu-title {
+  padding: 4px 12px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.rtcn-menu-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--color-border-secondary, #3a3a3a);
+}
+.rtcn-menu-item[aria-disabled="true"] {
+  opacity: 0.45;
+}
+.rtcn-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  outline: none;
+  cursor: default;
+}
+.rtcn-menu-item:hover,
+.rtcn-menu-item:focus {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcn-menu-item:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcn-menu-item:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcn-menu-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #009dff;
+  background: #e8f6ff;
+}
+.rtcn-menu-dot[data-kind="note"] {
+  border-color: #8b6311;
+  background: #fff7e5;
+}
+.rtcn-menu-dot[data-kind="context"] {
+  border-color: #767676;
+  background: #f0f0f0;
+}
+.rtcn-menu-text {
+  flex: 1 1 auto;
+}
+.rtcn-menu-check {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
+  color: var(--color-text-tertiary, #787878);
+  visibility: hidden;
+}
+.rtcn-menu-item[aria-checked="true"] .rtcn-menu-check {
+  visibility: visible;
+}
+
+/* The app's tooltip: rounded 6, border-secondary, surface-container-high. */
+.rtcn-tooltip {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 8px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font: 400 var(--text-label, 12px) / 16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.rtcn-tooltip[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtcn-kbd {
+  color: var(--color-text-tertiary, #787878);
+  font: inherit;
+}
+
+/* Undo toast: the canvas "Copied as PNG" pill, above the toolbar. */
+.rtcn-toast {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 24px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.rtcn-toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.rtcn-toast-action {
+  height: 24px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rtcn-toast-action:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcn-toast-action:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- animation */
+@keyframes rtcn-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+@keyframes rtcn-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+  }
+}
+@keyframes rtcn-scan {
+  from {
+    background-position: 0 100%;
+  }
+  to {
+    background-position: 0 -10%;
+    opacity: 0;
+  }
+}
+@keyframes rtcn-glow {
+  0% {
+    box-shadow: var(--rtcn-hair), 0 0 0 0 color-mix(in srgb, var(--rtcn-line) 60%, transparent), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  100% {
+    box-shadow: var(--rtcn-hair), 0 0 0 calc(var(--canvas-unzoom, 1) * 10px) color-mix(in srgb, var(--rtcn-line) 0%, transparent), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcn-note[data-status="running"] .rtcn-claude,
+  .rtcn-note[data-status="needs-input"] .rtcn-st-icon,
+  .rtcn-note[data-flash] .rtcn-flash,
+  .rtcn-note[data-flash] .rtcn-card {
+    animation: none;
+  }
+  .rtcn-note[data-flash] .rtcn-flash {
+    opacity: 0;
+  }
+  .rtcn-menu,
+  .rtcn-toast,
+  .rtcn-tooltip {
+    transition: none;
+  }
+}

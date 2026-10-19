@@ -1,0 +1,716 @@
+/*
+ * RE-TEMPO · canvas-quick — the "Open ›" submenu in the "+" menu (.rcq-sub), the
+ * canvas switcher on the "Canvas page" pill (.rcq-switch, .rcq-pill-chevron) with
+ * its row actions (.rcq-sub-more, .rcq-more, .rcq-confirm), the
+ * left rail order, the canvas right-sidebar toggle moved from the title bar and
+ * the zoom toolbar into the canvas (.rcq-rail, pen.dev pattern), the canvas
+ * left-panel toggle as a round floating button (.rcq-ltog, pen.dev pattern)
+ * and the hidden "Pop out canvas" button. Everything uses
+ * the app's tokens (dark/light for free).
+ */
+
+/* ---------------------------------------------------------------- icons */
+.rcq-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+.rcq-ico svg {
+  width: 100%;
+  height: 100%;
+}
+.rcq-ico-canvas {
+  color: var(--lavender-400);
+}
+
+/* ------------------------------------------------- "Open ›" submenu */
+.rcq-sub {
+  position: absolute;
+  z-index: 1;
+  width: 240px;
+  padding: 8px;
+  border: var(--border-width, 0.5px) solid var(--color-border-primary);
+  border-radius: 16px; /* menus 16 = item 8 + padding 8 (concentric) */
+  background: var(--color-surface-menu);
+  box-shadow: var(--shadow-dropdown);
+  font-family: var(--font-sans);
+  animation: rcq-sub-in 120ms ease-out;
+}
+@keyframes rcq-sub-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcq-sub,
+  .rcq-sub.rcq-switch {
+    animation: none;
+  }
+}
+.rcq-sub-label {
+  padding: 4px 8px;
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+}
+.rcq-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+[data-theme="light"] .rcq-sub-item {
+  color: var(--color-text-primary);
+}
+.rcq-sub-item[data-active] {
+  background: var(--color-surface-menu-hover);
+}
+.rcq-sub-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rcq-sub-when {
+  flex-shrink: 0;
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+}
+.rcq-sub-empty {
+  padding: 8px;
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  color: var(--color-text-tertiary);
+}
+.rcq-sub-sep {
+  height: 1px;
+  margin: 4px -8px;
+  background: var(--color-menu-divider);
+}
+.rcq-sub-item .rcq-ico {
+  width: 16px;
+  height: 16px;
+}
+.rcq-sub-item > .rcq-ico:not(.rcq-ico-canvas) {
+  color: var(--color-text-tertiary);
+}
+
+/* "Open" stays highlighted while its submenu is open */
+[data-rcq-sub-open] {
+  background: var(--color-surface-menu-hover);
+}
+
+/* ------------------------------------- canvas name pill: switcher */
+/* The app's floating "Canvas page" toolbar (role="toolbar", no testid). The
+   name span and the injected chevron open the switcher; the chevron matches
+   the pill's own icon buttons (tertiary, primary on hover, no fill). */
+[data-rcq-switch] > span.truncate {
+  cursor: pointer;
+  transition: color 120ms ease-out;
+}
+[data-rcq-switch] > span.truncate:hover,
+[data-rcq-switch-open] > span.truncate {
+  color: var(--color-text-primary);
+}
+.rcq-pill-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: -4px; /* hugs the name inside the pill's 6px gap */
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color 120ms ease-out;
+}
+.rcq-pill-chevron .rcq-ico {
+  width: 12px;
+  height: 12px;
+}
+.rcq-pill-chevron .rcq-ico svg {
+  transition: transform 120ms ease-out;
+}
+.rcq-pill-chevron:hover,
+[data-rcq-switch] > span.truncate:hover + .rcq-pill-chevron,
+[data-rcq-switch-open] > .rcq-pill-chevron {
+  color: var(--color-text-primary);
+}
+[data-rcq-switch-open] > .rcq-pill-chevron .rcq-ico svg {
+  transform: rotate(180deg);
+}
+.rcq-pill-chevron:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: 1px;
+}
+
+/* the menu: same surface as the "Open ›" submenu, fixed under the pill */
+.rcq-sub.rcq-switch {
+  position: fixed;
+  z-index: 1000;
+  width: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  animation-name: rcq-switch-in;
+}
+@keyframes rcq-switch-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.rcq-sub.rcq-switch[data-side="top"] {
+  animation-name: rcq-switch-in-up;
+}
+@keyframes rcq-switch-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.rcq-switch .rcq-sub-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rcq-switch .rcq-sub-check {
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-secondary);
+}
+.rcq-switch .rcq-switch-current {
+  color: var(--color-text-primary);
+}
+/* open in a tab: a tertiary dot in the check's 14px slot */
+.rcq-switch .rcq-sub-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+}
+
+/* -------------------------------------- switcher rows: "⋯" actions */
+/* The button sits over the row's right slot (dot, check or time), which only
+   turns invisible while the row is hovered / highlighted: nothing moves. */
+.rcq-switch .rcq-sub-item[data-canvas] {
+  position: relative;
+}
+.rcq-sub-more {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcq-sub-more .rcq-ico {
+  width: 16px;
+  height: 16px;
+}
+.rcq-switch .rcq-sub-item[data-canvas]:is(:hover, [data-active], [data-more-open]) > .rcq-sub-more,
+.rcq-sub-more:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.rcq-switch .rcq-sub-item[data-canvas]:is(:hover, [data-active], [data-more-open], :has(> .rcq-sub-more:focus-visible)) > :is(.rcq-sub-when, .rcq-sub-dot, .rcq-sub-check) {
+  visibility: hidden;
+}
+.rcq-sub-more:hover,
+.rcq-sub-more[aria-expanded="true"] {
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-primary);
+}
+.rcq-sub-more:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: -1px;
+}
+.rcq-switch .rcq-sub-item[data-renaming] > .rcq-sub-more {
+  display: none;
+}
+
+/* the actions menu: same surface as the switcher, to its right */
+.rcq-sub.rcq-more {
+  position: fixed;
+  z-index: 1001;
+  width: 200px;
+  outline: none;
+}
+.rcq-more .rcq-sub-item[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+.rcq-more .rcq-sub-danger,
+.rcq-more .rcq-sub-danger > .rcq-ico {
+  color: var(--color-critical);
+}
+/* why Rename / Delete are off, in words */
+.rcq-more-note {
+  margin: 8px -8px -8px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-menu-divider);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  color: var(--color-text-tertiary);
+}
+
+/* inline rename: the field takes the name's place at the same height */
+.rcq-switch .rcq-sub-item[data-renaming] {
+  flex-wrap: wrap;
+  cursor: default;
+}
+.rcq-sub-rename {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  margin: -3px 0;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-focus);
+  border-radius: 4px;
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-primary);
+  font: inherit;
+  outline: none;
+}
+.rcq-sub-rename[aria-invalid="true"] {
+  border-color: var(--color-critical);
+}
+.rcq-sub-rename:disabled {
+  opacity: 0.6;
+}
+.rcq-sub-error {
+  flex-basis: 100%;
+  padding-left: 24px;
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  color: var(--color-critical);
+}
+
+/* delete confirmation: a small dialog like the app's (Cancel, then a
+   critical primary button) */
+.rcq-confirm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-scrim, rgba(0, 0, 0, 0.5));
+}
+.rcq-confirm {
+  width: min(384px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px;
+  border: var(--border-width, 0.5px) solid var(--color-border-primary);
+  border-radius: 16px;
+  background: var(--color-surface-menu);
+  box-shadow: var(--shadow-dropdown);
+  font-family: var(--font-sans);
+  animation: rcq-switch-in 120ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcq-confirm {
+    animation: none;
+  }
+}
+.rcq-confirm-title {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.rcq-confirm-body {
+  margin-top: 4px;
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  color: var(--color-text-secondary);
+}
+.rcq-confirm-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.rcq-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out,
+    filter 120ms ease-out;
+}
+.rcq-btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.rcq-btn-ghost:hover:not(:disabled) {
+  background: var(--color-surface-menu-hover);
+  color: var(--color-text-primary);
+}
+.rcq-btn-critical {
+  background: var(--color-critical);
+  color: var(--color-on-critical, #fff);
+}
+.rcq-btn-critical:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.rcq-btn:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: 1px;
+}
+.rcq-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* opening fallback: Open modal opened hidden, only to click the item */
+html[data-rcq-hide-open-modal] [data-base-ui-portal]:has([data-testid="open-modal-search"]) {
+  opacity: 0 !important;
+}
+
+/* ------------------------------------------------- left rail: Design 2nd */
+/* Visual order chat, design, docs, issues, agents via flex `order` only (no
+   React node moves). Docs and every later item except Design go to order 1,
+   so Design stays right after Chat. Ctrl+1…5 still follow the app's array
+   (chat, docs, design, issues, agents). */
+[data-testid="workspace-navbar"] [data-testid="workspace-navbar-docs-button"],
+[data-testid="workspace-navbar"] [data-testid="workspace-navbar-docs-button"] ~ :not([data-testid="workspace-navbar-design-button"]) {
+  order: 1;
+}
+
+/* ----------------------------- right sidebar toggle inside the canvas */
+/* pen.dev pattern (see canvas-quick.js). The native toggles are hidden only
+   once the mirror is placed: the title-bar rail of the Design route (html
+   attr, and only when it holds the canvas toggle's labels, so other routes
+   keep theirs) and the canvas's own toggles (shell attr): the zoom toolbar's
+   toggle group and the panel header's collapse group. */
+html[data-rcq-rail-moved] [data-testid="right-panel-rail"]:has(button[aria-label="Open right sidebar"], button[aria-label="Collapse right sidebar"]),
+[data-rcq-rail-shell] [role="toolbar"][aria-label="Canvas controls"] > div:has(button[aria-label="Open right sidebar"]:not(.rcq-rail-btn)),
+[data-rcq-rail-shell] [data-testid="canvas-right-panel"] .h-11 > div:has(button[aria-label="Collapse right panel"]) {
+  display: none !important;
+}
+/* the header's zoom/Share group stays on the right once its left group is gone */
+[data-rcq-rail-shell] [data-testid="canvas-right-panel"] .h-11:has(> div button[aria-label="Collapse right panel"]) > div:last-child {
+  margin-left: auto;
+}
+/* The mirror. Open panel: last item of the tab row (its pr-2 inset). Closed:
+   a pill hung under the zoom/Share toolbar, right-aligned, like the app's
+   floating pills (radius 12, surface-container, no stroke). */
+.rcq-rail {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-right: 8px;
+}
+[role="toolbar"][aria-label="Canvas controls"]:has(> .rcq-rail) {
+  position: relative;
+}
+.rcq-rail.rcq-rail-pill {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  max-width: 280px;
+  height: 40px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 6px 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-surface-container);
+}
+.rcq-rail.rcq-rail-pill:not(:has(.rcq-rail-name)) {
+  padding-left: 6px;
+}
+.rcq-rail-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+/* the toggle: the canvas's own h-7 controls (28px, 16px icon, tertiary,
+   primary on hover); pressed fill while the panel is open */
+.rcq-rail-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+.rcq-rail-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.rcq-rail-btn:hover,
+.rcq-rail-btn[aria-pressed="true"] {
+  color: var(--color-text-primary);
+}
+.rcq-rail-btn[aria-pressed="true"] {
+  background: var(--color-surface-container-high);
+}
+.rcq-rail-btn:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: 1px;
+}
+/* tooltip below, right-aligned (the toggle sits on the right edge), 500ms
+   delay like the native one */
+.rcq-rail-btn[data-rcq-tip]::after {
+  content: attr(data-rcq-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  padding: 4px 8px;
+  border: var(--border-width-thin, 0.5px) solid var(--color-border-secondary);
+  border-radius: 6px;
+  background: var(--color-surface-container-high);
+  box-shadow: var(--shadow-popover);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.rcq-rail-btn[data-rcq-tip]:hover::after {
+  opacity: 1;
+  transition-delay: 500ms;
+}
+
+/* --------------------------------- left panel toggle inside the canvas */
+/* pen.dev pattern (see canvas-quick.js): a 40px circle at the top left of the
+   canvas view, in the top toolbar's absolute layer: 16px off the left
+   panel's edge, its top on the pills' top (their 6px inset). The in-canvas
+   native left toggles are hidden only in shells that got the circle. */
+[data-rcq-ltog-shell] [role="toolbar"][aria-label="Canvas page"] > button[aria-label="Open left sidebar"],
+[data-rcq-ltog-shell] [data-testid="canvas-design-sidebar"] button[aria-label="Collapse left panel"],
+[data-rcq-ltog-shell] [data-testid="canvas-design-sidebar"] button[aria-label="Hide sidebar"] {
+  display: none !important;
+}
+/* the name pill makes room for the circle (40px + 8px gap) and, its native
+   toggle gone, keeps the same right inset as its left one */
+/* the name pill starts 8px right of the circle (16 + 40 + 8 - the row's 6) */
+[data-rcq-ltog-shell] [role="toolbar"][aria-label="Canvas page"]:not([data-rcc-file]) {
+  margin-left: 58px;
+}
+[data-rcq-ltog-shell] [role="toolbar"][aria-label="Canvas page"]:not([data-rcc-file]):has(> button[aria-label="Open left sidebar"]) {
+  padding-right: 14px;
+}
+/* same surface and hairline as the app's floating pills (bg-surface-container,
+   0.5px border-secondary, no shadow); tertiary icon, primary on hover or
+   while the panel is open */
+.rcq-ltog {
+  position: absolute;
+  top: 6px;
+  left: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: var(--border-width-thin, 0.5px) solid var(--color-border-secondary);
+  border-radius: 9999px;
+  background: var(--color-surface-container);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+.rcq-ltog svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.rcq-ltog:hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rcq-ltog[aria-pressed="true"] {
+  color: var(--color-text-primary);
+}
+.rcq-ltog:active {
+  transform: scale(0.94);
+}
+/* click feedback: 150ms fade + scale back to rest */
+.rcq-ltog.rcq-ltog-pop {
+  animation: rcq-ltog-pop 150ms ease-out;
+}
+@keyframes rcq-ltog-pop {
+  from {
+    opacity: 0.6;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rcq-ltog:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-focus) 60%, transparent);
+  outline-offset: 2px;
+}
+/* tooltip below, left-aligned (the circle sits on the left edge): the
+   label only, 500ms delay like the native ones */
+.rcq-ltog[data-rcq-tip]::after {
+  content: attr(data-rcq-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  padding: 4px 8px;
+  border: var(--border-width-thin, 0.5px) solid var(--color-border-secondary);
+  border-radius: 6px;
+  background: var(--color-surface-container-high);
+  box-shadow: var(--shadow-popover);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  font-weight: 400;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.rcq-ltog[data-rcq-tip]:hover::after {
+  opacity: 1;
+  transition-delay: 500ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcq-ltog,
+  .rcq-ltog[data-rcq-tip]::after {
+    transition: none;
+  }
+  .rcq-ltog.rcq-ltog-pop {
+    animation: none;
+  }
+  .rcq-ltog:active {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------ "Pop out canvas" removed */
+/* The four-arrow button of an embedded canvas (floating toolbar and right
+   panel header). Display none, so the flex gap closes with no hole. */
+button[aria-label="Pop out canvas"] {
+  display: none !important;
+}
+
+/* -------------------------------------------- empty canvas cleanup toast */
+/* "Deleted empty canvas <name>": bottom center, above everything, at most 3
+   stacked (newest last), gone after 3.5 s. */
+.rcq-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.rcq-toast {
+  max-width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 8px 14px;
+  border: var(--border-width, 0.5px) solid var(--color-border-primary);
+  border-radius: 12px;
+  background: var(--color-surface-menu);
+  box-shadow: var(--shadow-dropdown);
+  font-family: var(--font-sans);
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+  animation: rcq-toast-in 160ms ease-out;
+  transition: opacity 200ms ease-out;
+}
+.rcq-toast.rcq-toast-out {
+  opacity: 0;
+}
+@keyframes rcq-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcq-toast {
+    animation: none;
+    transition: none;
+  }
+}

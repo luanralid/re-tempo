@@ -1,0 +1,70 @@
+/*
+ * RE-TEMPO · canvas-snap — Alt/Option measurement overlay on the design
+ * canvas. Matches the app's native snap guides (1 px #E53636 lines, red
+ * labels with white 11 px monospace text, 3 px radius), so the measurements
+ * read as part of the same system. The snap guides themselves are the app's.
+ */
+
+.rcsn-measure {
+  --rcsn-color: #e53636;
+  --rcsn-label-text: #ffffff;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1001; /* just above the native guides (1000) */
+  opacity: 0;
+  transition: opacity 90ms ease-out;
+}
+
+/* Fallback when the app's overlay host is unknown: fixed over the canvas root. */
+.rcsn-measure.rcsn-measure--fixed {
+  position: fixed;
+  overflow: hidden;
+  z-index: 2147482000;
+}
+
+.rcsn-measure.is-visible {
+  opacity: 1;
+}
+
+.rcsn-measure .rcsn-line,
+.rcsn-measure .rcsn-cap {
+  stroke: var(--rcsn-color);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.rcsn-measure .rcsn-dash {
+  stroke: var(--rcsn-color);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  shape-rendering: crispEdges;
+}
+
+.rcsn-measure .rcsn-target {
+  fill: none;
+  stroke: var(--rcsn-color);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.rcsn-measure .rcsn-label rect {
+  fill: var(--rcsn-color);
+}
+
+.rcsn-measure .rcsn-label text {
+  fill: var(--rcsn-label-text);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcsn-measure {
+    transition: none;
+  }
+}

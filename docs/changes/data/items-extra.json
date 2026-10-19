@@ -1,0 +1,480 @@
+{
+  "area": "extra",
+  "items": [
+    {
+      "id": "smart-suggestions",
+      "title": "Smart suggestions in a new chat",
+      "group": "chat",
+      "files": [
+        "feature/smart-suggestions.js",
+        "feature/smart-suggestions.css"
+      ],
+      "summary": "The new-chat empty state used to show four fixed prompt cards. Now it shows four suggestions worked out on the machine from where you are: the branch, uncommitted changes, recent chats, open comment tasks, issues, docs, canvases, agent runs and the time of day.",
+      "features": [
+        {
+          "name": "Suggestions from where you are",
+          "what": "Before: four fixed cards (Walk me through how Tempo works, Create a design system canvas, Write a PRD, Scaffold a prototype). Now: four cards ranked by local rules, one per topic, e.g. a comment task waiting for you, a failed task, an interrupted chat or a large set of uncommitted changes.",
+          "how": "Open a new chat. The cards appear under the composer, in the same style as the native ones.",
+          "media": [],
+          "video": "pending: not captured yet"
+        },
+        {
+          "name": "One click sends the prompt",
+          "what": "Before: clicking a card only filled the composer. Now: the card fills the composer through the app's own path and then presses send for you.",
+          "how": "Click a card. To keep fill-only, set localStorage \"rtd.smartSuggestions.send\" to \"fill\".",
+          "media": [],
+          "video": "pending: not captured yet"
+        },
+        {
+          "name": "More… list",
+          "what": "Before: nothing beyond the four cards. Now: a fifth, discreet chip opens the full ranked list of 8 to 10 suggestions.",
+          "how": "Click More… next to the cards.",
+          "media": [],
+          "video": "pending: not captured yet"
+        },
+        {
+          "name": "Optional re-rank with the decision model",
+          "what": "Before: no ranking. Now: when the Decision model is set up and its suggestions automation is on, one call scores the candidates and moves close calls by up to 15 points, never burying an urgent one. Only names and counts are sent, never message text or paths.",
+          "how": "Settings › Decision model, turn on the suggestions automation.",
+          "media": [],
+          "video": "pending: needs the real app with a configured decision model"
+        },
+        {
+          "name": "Live refresh and off switch",
+          "what": "The cards refresh at once on a workspace or chat switch and after 2 s for other changes; only a card whose content changed cross-fades. Turning the mod off brings the native cards back.",
+          "how": "Set localStorage \"rtd.smartSuggestions\" to \"off\" to go back to the original cards.",
+          "media": [],
+          "video": "pending: not captured yet"
+        }
+      ]
+    },
+    {
+      "id": "canvas-chrome",
+      "title": "Canvas layout like pen.dev",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-chrome.js",
+        "feature/canvas-chrome.css"
+      ],
+      "summary": "The design canvas gets pen.dev's layout: a floating left card with tabs, a compact vertical tool rail, a composer at the bottom, a selection pill whose dropdown holds the properties, zoom at the bottom right and pills at the top. The app's own panels and buttons are reused, only placed differently.",
+      "features": [
+        {
+          "name": "Floating left card with tabs",
+          "what": "Before: the canvas's left panel was a fixed column. Now: it floats over the canvas as a rounded card with a tab row: Agent and Layers, then Prototype, Components and Library once a mod fills them. Layers is the native panel, untouched.",
+          "how": "Open or close it as before (the round toggle or Cmd+\\). Click a tab to switch.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--left-card-layers.png",
+              "type": "image",
+              "caption": "Left card on the Layers tab, with the tool rail beside it (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-chrome--left-card-closed.png",
+              "type": "image",
+              "caption": "Left card closed: the rail moves to the left edge (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Agent tab with the canvas chat",
+          "what": "Before: the canvas chat lived in a Chat tab of the right panel. Now: the Agent tab of the left card shows that same chat view, drawn over the tab, and the right panel's Chat tab is hidden meanwhile.",
+          "how": "Click Agent in the left card. If the chat is not mounted yet, click Open chat.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--agent-tab.png",
+              "type": "image",
+              "caption": "Agent tab showing the canvas chat and its composer (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Compact vertical tool rail",
+          "what": "Before: the Design tools bar sat at the bottom centre. Now: the same buttons, shortcuts and menus form a compact rail with pen.dev's sizes, next to the left card. Tools with options show a small corner mark and open their menu on a long press. If the rail does not fit, the horizontal bar stays above the composer.",
+          "how": "Use the tools as before. Press and hold a tool with a corner mark to see its options.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--rail-vs-pen.png",
+              "type": "image",
+              "caption": "pen.dev's rail (left) next to the new rail (right) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-chrome--align-vs-pen.png",
+              "type": "image",
+              "caption": "Card closed: pen.dev (left) and the new layout (right) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Composer and chat chip at the bottom",
+          "what": "Before: prompts went through the chat panel only. Now: a floating composer (\"Design anything…\", effort, model, send) sits at the bottom centre, with a chip above it: the chat button, the active chat's title and the agents working on comments. Enter sends an agent task anchored to the selection; Cmd+Enter sends to the canvas chat.",
+          "how": "Type in the composer at the bottom and press Enter, or Cmd+Enter for the chat. Shift+Enter adds a line.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--composer-vs-pen.png",
+              "type": "image",
+              "caption": "pen.dev's composer (top) and the new one with its chip (bottom) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-chrome--top-pill-composer.png",
+              "type": "image",
+              "caption": "Whole view: top pills, rail, composer and zoom (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Selection pill with the properties dropdown",
+          "what": "Before: the right panel was a docked column. Now: a pill at the top right shows the selection's icon and title, and its toggle opens the properties as an animated dropdown under it, in pen.dev's order: Alignment, Position, Layout, Appearance, Typography, Fill, Stroke, Effects, Transforms, then Code and Export.",
+          "how": "Select something, then click the panel icon in the selection pill.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--selection-vs-pen.png",
+              "type": "image",
+              "caption": "Selection pill: pen.dev (left) and the new one (right) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-chrome--dropdown-vs-pen.png",
+              "type": "image",
+              "caption": "Properties dropdown: pen.dev (left) and the new one (right) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Zoom and the top pills",
+          "what": "Before: zoom was a button in the canvas controls. Now: \"-  116%  +\" sits at the bottom right and the level opens the native zoom menu. The top left pill shows the canvas name, and the top right pill holds Share plus actions other mods add, such as the browser globe.",
+          "how": "Click - or +, or click the level for Zoom to fit, 50%, 100%, 200% and Snap to guides.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--zoom-menu.png",
+              "type": "image",
+              "caption": "Zoom menu opened from the level at the bottom right (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-chrome--style-pen-vs-pen.png",
+              "type": "image",
+              "caption": "Overall look: pen.dev (left) and the new canvas (right) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Off switch and API for other mods",
+          "what": "Setting the flag off gives back the previous layout at once. Other mods add tabs, right-panel sections, tools and top-right buttons through registerLeftTab, registerRightSection, registerTool and registerTopAction.",
+          "how": "localStorage \"rtd.canvasChrome\" = \"off\" turns the layout off.",
+          "media": [
+            {
+              "src": "media/updates/canvas-chrome--flag-off.png",
+              "type": "image",
+              "caption": "With the flag off: the native layout, tools back at the bottom (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: a flag and an API, no motion to show"
+        }
+      ]
+    },
+    {
+      "id": "canvas-webpanel",
+      "title": "Browser card inside the canvas",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-webpanel.js",
+        "feature/canvas-webpanel.css"
+      ],
+      "summary": "A globe in the canvas's top right pill opens pen.dev's side browser as a card floating inside the canvas. From it a page, one element or a screenshot can be brought onto the canvas.",
+      "features": [
+        {
+          "name": "Browser card and globe button",
+          "what": "Before: browsing meant a separate Browser tab or a browser frame placed on the canvas. Now: the globe opens a card 12 px inside the canvas edges, the canvas stays visible around it and the floating pieces on the right move left. It works on the Design route, in chat canvas tabs and in panes.",
+          "how": "Click the globe in the top right pill, or press Option+Cmd+B with a canvas on screen. Esc inside the card closes it.",
+          "media": [
+            {
+              "src": "media/updates/canvas-webpanel--globe-tooltip.png",
+              "type": "image",
+              "caption": "The globe's tooltip in the top right pill (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-webpanel--page-loaded.png",
+              "type": "image",
+              "caption": "A page open in the card, next to the storyboard (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-webpanel--vs-pen.png",
+              "type": "image",
+              "caption": "pen.dev's side browser (left) and the new card (right) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Import full page, element or screenshot",
+          "what": "Import the full page adds a browser frame and, when the page can be read, an editable storyboard copy. Import an element lets you pick one element in the page and drops it as an editable copy. The camera drops a screenshot as an image storyboard.",
+          "how": "Pick a mode in the empty card or use Import and the camera in the bar. In element mode, hover and click; Esc cancels.",
+          "media": [
+            {
+              "src": "media/updates/canvas-webpanel--empty-card.png",
+              "type": "image",
+              "caption": "Empty card: Import from the web and the three modes (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Recent pages",
+          "what": "The empty card lists the last 10 pages with Clear All, and offers localhost:3000 and localhost:5173 while the list is empty.",
+          "how": "Click a recent page to open it again.",
+          "media": [
+            {
+              "src": "media/updates/canvas-webpanel--recent.png",
+              "type": "image",
+              "caption": "Recent list in the empty card (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Resize, expand, mobile or desktop",
+          "what": "The card's left edge and bottom can be dragged, and Expand makes it cover the whole canvas view. The address bar switches between a mobile (390 px) and a desktop (1280 px) viewport, and the … menu has Open in browser, Copy URL and Reset width.",
+          "how": "Drag the left or bottom edge, click Expand, or use the phone icon in the address field.",
+          "media": [
+            {
+              "src": "media/updates/canvas-webpanel--mobile.png",
+              "type": "image",
+              "caption": "Mobile viewport in the card (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-webpanel--expanded.png",
+              "type": "image",
+              "caption": "Expanded card over the whole canvas view (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-webpanel--more-menu.png",
+              "type": "image",
+              "caption": "The … menu (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-webpanel--chat-canvas-tab.png",
+              "type": "image",
+              "caption": "The card in a chat canvas tab (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        }
+      ]
+    },
+    {
+      "id": "canvas-export",
+      "title": "Code and Export in the canvas panel",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-export.js",
+        "feature/canvas-export.css"
+      ],
+      "summary": "With one storyboard selected, the canvas's right panel gets pen.dev's Code and Export sections: copy or export its HTML (Tailwind, plain CSS or React), import a web page as a browser frame, and export the storyboard as PNG, JPEG, WebP or PDF at 1x to 3x.",
+      "features": [
+        {
+          "name": "Code section",
+          "what": "Before: no way to get a storyboard's code from the panel. Now: pick HTML + Tailwind, HTML + CSS or React (JSX), then Copy HTML or Export HTML. Export writes a standalone page into the canvas's exports folder, with its CSS inlined and images embedded.",
+          "how": "Select a storyboard, pick the format in Code, then click Copy HTML or Export HTML. The gear has Copy as a full page, Embed images and Open exports folder.",
+          "media": [
+            {
+              "src": "media/updates/canvas-export--sections.png",
+              "type": "image",
+              "caption": "The new Code and Export sections after Effects (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-export--code-options.png",
+              "type": "image",
+              "caption": "Code options behind the gear (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-export--html-css-export.png",
+              "type": "image",
+              "caption": "An exported HTML + CSS page opened in a browser (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Import a web page via Browser",
+          "what": "Now: a small popover asks for a URL and creates a browser frame on the canvas, right of the storyboard and with the same width.",
+          "how": "Click Import Web via Browser, type the address, then Import.",
+          "media": [
+            {
+              "src": "media/updates/canvas-export--import-popover.png",
+              "type": "image",
+              "caption": "The Import web page popover (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-export--import-created.png",
+              "type": "image",
+              "caption": "The browser frame created next to the storyboard (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Export layer as PNG, JPEG, WebP or PDF",
+          "what": "Before: no image export of a storyboard. Now: pick 1x, 2x or 3x and a format, then Export layer. Large storyboards are captured in tiles and stitched, and PDF pages match the storyboard's size.",
+          "how": "Pick the scale and format in Export, then click Export layer. Cmd+Shift+E jumps to Export.",
+          "media": [
+            {
+              "src": "media/updates/canvas-export--panel-on-canvas.png",
+              "type": "image",
+              "caption": "Selected storyboard with the panel on the right (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-export--pdf-export.png",
+              "type": "image",
+              "caption": "Page of the exported PDF (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        }
+      ]
+    },
+    {
+      "id": "canvas-notes",
+      "title": "Sticky notes that run as prompts",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-notes.js",
+        "feature/canvas-notes.css"
+      ],
+      "summary": "A Sticky note tool (key N), copied from pen.dev, drops notes on the canvas. A Prompt note has a Run button that sends its text to the agent as a canvas task, and the note then shows that task's status and summary.",
+      "features": [
+        {
+          "name": "Sticky note tool",
+          "what": "Before: no notes on the canvas. Now: press N and click to drop a note, or drag to draw one. A note is a Prompt (blue) or a Note (yellow), can be moved and resized, and Delete shows a 5 s Undo.",
+          "how": "Press N (or the Sticky note tool), click on the canvas and type. Double click a note to edit it again.",
+          "media": [
+            {
+              "src": "media/updates/canvas-notes--editing.png",
+              "type": "image",
+              "caption": "A Prompt note being written over a storyboard (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Run a note as a prompt",
+          "what": "Now: Run sends the note's text to the agent with the composer's model and effort. The note shows queued, running, needs input, done with a short summary, or failed with Retry, and follows the storyboard under it.",
+          "how": "Write the prompt and click Run. Click Open to see the task's panel.",
+          "media": [
+            {
+              "src": "media/updates/canvas-notes--task-done.png",
+              "type": "image",
+              "caption": "The note after Run: Done, with the agent's summary (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-notes--task-panel.png",
+              "type": "image",
+              "caption": "The task panel a note opens: before and after, plus the summary (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        }
+      ]
+    },
+    {
+      "id": "canvas-props",
+      "title": "Properties panel for frames and notes",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-props.js",
+        "feature/canvas-props.css"
+      ],
+      "summary": "Browser frames, shader frames and sticky notes get pen.dev's properties sections in the canvas's right panel, so they can be edited by hand without asking the agent. Each edit is written into the canvas file.",
+      "features": [
+        {
+          "name": "Position, size and appearance fields",
+          "what": "Before: these frames and notes could only be moved or resized with the mouse. Now: when one is selected, the right panel shows its name, X and Y, W and H with a ratio lock, and opacity, corner radius and clip content.",
+          "how": "Select a browser frame, shader frame or note, then type in a field. Drag a field's label sideways to scrub (Shift for x10), use the arrow keys to step, or type arithmetic such as 120+40.",
+          "media": [
+            {
+              "src": "media/updates/canvas-props--browser-selected.png",
+              "type": "image",
+              "caption": "A selected browser frame and its properties on the right (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-props--browser-panel.png",
+              "type": "image",
+              "caption": "Position, Dimensions, Appearance and Browser sections (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Browser, Shader and Note sections",
+          "what": "Each kind gets its own section. Browser has the URL, \"name follows the page title\", Reload and Open in browser. Shader has the preset, speed and Edit GLSL. Note has Prompt or Note, model, effort and the text.",
+          "how": "Select the frame or note and use its section under Appearance.",
+          "media": [
+            {
+              "src": "media/updates/canvas-props--note-selected.png",
+              "type": "image",
+              "caption": "A selected note with its Note section (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/canvas-props--note-panel.png",
+              "type": "image",
+              "caption": "Note section: type, model, effort and text (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Undo for manual edits",
+          "what": "The app's canvas undo does not know these nodes, so the mod keeps its own history of 20 steps. Arrow steps on the same field within 1 s count as one.",
+          "how": "Cmd+Z and Cmd+Shift+Z while a frame or note is selected or the panel has focus. localStorage \"rtd.canvasProps\" = \"off\" removes the panel.",
+          "media": [
+            {
+              "src": "media/updates/canvas-props--browser-panel.png",
+              "type": "image",
+              "caption": "The fields that undo applies to (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: keyboard history with no visual of its own"
+        }
+      ]
+    }
+  ]
+}

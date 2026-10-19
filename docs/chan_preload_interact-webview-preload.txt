@@ -1,0 +1,11 @@
+canvas-frames:ack
+canvas-frames:activity
+canvas-frames:demand
+canvas-frames:frame
+canvas-frames:port
+canvas-frames:removed
+canvas-frames:start
+combined-projection:command
+combined-projection:update
+tempo:interact-key
+tempo:interact-wheel

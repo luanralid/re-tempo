@@ -1,0 +1,251 @@
+{
+  "area": "chat",
+  "items": [
+    {
+      "id": "voice-input",
+      "title": "Voice dictation",
+      "group": "chat",
+      "files": [
+        "feature/voice-input.js",
+        "feature/voice-input.css"
+      ],
+      "summary": "A microphone button in the composer lets you dictate: words appear while you speak. It runs on the Mac itself, with no cloud and no API key. A new Settings page controls it.",
+      "features": [
+        {
+          "name": "Live dictation in the composer",
+          "what": "Before: no voice input in the composer. Now: a mic button next to Send starts recording, and the words show up in the editor while you speak (grey text is still being corrected). Click again to stop; the final text stays at the cursor and is NOT sent.",
+          "how": "Click the mic button, or tap Space (under 250 ms) in the empty, focused composer. Tap Space or click again to stop. Option-click on the mic switches between PT and EN.",
+          "media": [
+            {
+              "src": "media/chat/voice-input--live-dictation.mp4",
+              "type": "video",
+              "caption": "Words appear while dictating; the speech engine is simulated (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--live-dictation.gif",
+              "type": "gif",
+              "caption": "Words appear while dictating; the speech engine is simulated (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--live-dictation.png",
+              "type": "image",
+              "caption": "Words appear while dictating; the speech engine is simulated (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--mic-button.png",
+              "type": "image",
+              "caption": "The mic button in the composer toolbar (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Settings > Dictation",
+          "what": "Before: no dictation settings. Now: a new Dictation item in the Personal group of Settings lets you pick the engine (Apple Speech or Apple Dictation), the language, and test the microphone for 3 seconds.",
+          "how": "Open Settings > Dictation, or right-click the mic button in the composer. Press Test to record 3 seconds and see the text.",
+          "media": [
+            {
+              "src": "media/chat/voice-input--settings-dictation.mp4",
+              "type": "video",
+              "caption": "Opening Settings > Dictation and running the microphone test (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--settings-dictation.gif",
+              "type": "gif",
+              "caption": "Opening Settings > Dictation and running the microphone test (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--settings-dictation.png",
+              "type": "image",
+              "caption": "Opening Settings > Dictation and running the microphone test (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/voice-input--settings-engine-language.png",
+              "type": "image",
+              "caption": "Engine and language controls (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "effort-levels",
+      "title": "Extra High effort and model names",
+      "group": "chat",
+      "files": [
+        "feature/effort-levels.js"
+      ],
+      "summary": "Adds an Extra High effort level for Opus 5 and removes the \" 1M\" suffix from model names, showing a small \"1M ctx\" tag only when needed.",
+      "features": [
+        {
+          "name": "Extra High effort for Opus 5",
+          "what": "Before: the Effort menu stops at High and Max for Opus 5. Now: an Extra High item sits between High and Max; picking it is saved like the other levels and the button shows \"Extra High\".",
+          "how": "Pick Opus 5 in the composer, open the Effort menu and choose Extra High.",
+          "media": [
+            {
+              "src": "media/chat/effort-levels--extra-high-option.mp4",
+              "type": "video",
+              "caption": "Effort menu with the new Extra High item (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/effort-levels--extra-high-option.gif",
+              "type": "gif",
+              "caption": "Effort menu with the new Extra High item (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/effort-levels--extra-high-option.png",
+              "type": "image",
+              "caption": "Effort menu with the new Extra High item (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/effort-levels--extra-high-picked.png",
+              "type": "image",
+              "caption": "The effort button after picking Extra High (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Model names without \" 1M\"",
+          "what": "Before: names like \"Opus 5 1M\" mix the model with its context size. Now the suffix is hidden; when both Opus 5 and Opus 5 1M exist, the 1M one gets a small \"1M ctx\" tag so the two items are not identical.",
+          "how": "Automatic, in the model menus and buttons of the composer, Agents editor and Settings.",
+          "media": [
+            {
+              "src": "media/chat/effort-levels--model-name-1m.mp4",
+              "type": "video",
+              "caption": "Model menu with the \"1M ctx\" tag (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/effort-levels--model-name-1m.gif",
+              "type": "gif",
+              "caption": "Model menu with the \"1M ctx\" tag (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/effort-levels--model-name-1m.png",
+              "type": "image",
+              "caption": "Model menu with the \"1M ctx\" tag (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "bg-tasks",
+      "title": "Background tasks in the chat",
+      "group": "chat",
+      "files": [
+        "feature/bg-tasks.js",
+        "feature/bg-tasks.css"
+      ],
+      "summary": "Background tasks now show inside the conversation as a block at the end of the transcript, not only in the composer pill.",
+      "features": [
+        {
+          "name": "Task block that updates live",
+          "what": "Before: running tasks were only in the \"N Tasks Running\" pill. Now: a block after the last message lists each task with a spinner, a type chip (bash, agent, workflow...) and a live timer. Finished tasks show their result and duration for 8 seconds.",
+          "how": "Automatic while background tasks run.",
+          "media": [
+            {
+              "src": "media/chat/bg-tasks--block-updating.mp4",
+              "type": "video",
+              "caption": "Tasks running, then finishing (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/bg-tasks--block-updating.gif",
+              "type": "gif",
+              "caption": "Tasks running, then finishing (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/bg-tasks--block-updating.png",
+              "type": "image",
+              "caption": "Tasks running, then finishing (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/bg-tasks--final-states.png",
+              "type": "image",
+              "caption": "Final states of finished tasks (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Folded summary line",
+          "what": "Before: nothing remained after tasks ended. Now: finished tasks fold into one line like \"3 background tasks done - 1 failed\" that stays until your next message. Click it to see the rows again.",
+          "how": "Click the summary line to expand it.",
+          "media": [
+            {
+              "src": "media/chat/bg-tasks--folded-summary.png",
+              "type": "image",
+              "caption": "Folded summary line (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: shown in the block-updating clip"
+        }
+      ]
+    },
+    {
+      "id": "agent-runs-panel",
+      "title": "Agent Runs panel",
+      "group": "chat",
+      "files": [
+        "feature/agent-runs-panel.js"
+      ],
+      "summary": "A floating, read-only panel shows your agent runs: totals, status breakdown, average duration and cost.",
+      "features": [
+        {
+          "name": "Open with Cmd+Shift+A",
+          "what": "Before: no overview of agent runs. Now: Cmd+Shift+A opens a panel with total runs, active now, average duration, total cost and a bar per status (completed, failed, running, queued, cancelled). It only reads data from your logged-in account.",
+          "how": "Press Cmd+Shift+A to open or close. Esc or the X closes it.",
+          "media": [
+            {
+              "src": "media/chat/agent-runs-panel--open-with-shortcut.mp4",
+              "type": "video",
+              "caption": "Opening the panel with Cmd+Shift+A (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/agent-runs-panel--open-with-shortcut.gif",
+              "type": "gif",
+              "caption": "Opening the panel with Cmd+Shift+A (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/agent-runs-panel--open-with-shortcut.png",
+              "type": "image",
+              "caption": "Opening the panel with Cmd+Shift+A (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/chat/agent-runs-panel--loading.png",
+              "type": "image",
+              "caption": "Loading state while data is fetched (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    }
+  ]
+}

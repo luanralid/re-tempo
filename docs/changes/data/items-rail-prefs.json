@@ -1,0 +1,582 @@
+{
+  "area": "rail-prefs",
+  "items": [
+    {
+      "id": "rail-menu",
+      "title": "Gear menu (Settings, Help, Report a bug)",
+      "group": "rail",
+      "files": [
+        "feature/rail-menu.js",
+        "feature/rail-menu.css"
+      ],
+      "summary": "The narrow left rail used to show a bug button, a help button and the settings gear. Now the rail keeps only the gear and your avatar, and the gear opens one small menu with everything else.",
+      "features": [
+        {
+          "name": "One gear menu",
+          "what": "Before: three separate buttons in the rail footer (Report a bug, Help, Settings). Now: only the gear and the avatar stay; clicking the gear opens a menu with Settings... (Cmd+,), Help and Report a bug (Cmd+Shift+B). The original buttons are only hidden, so each menu item just clicks the real one.",
+          "how": "Click the gear. Use the arrow keys, Enter, Esc or the first letter of an item. Shift+click on the gear opens Settings directly. When the project sidebar is expanded, its own gear and avatar open the same menu.",
+          "media": [
+            {
+              "src": "media/rail-prefs/rail-menu--before-rail.png",
+              "type": "image",
+              "caption": "Before: bug button, help button and gear stacked in the rail footer (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--after-rail.png",
+              "type": "image",
+              "caption": "After: only the gear and the avatar are left (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--gear-menu.mp4",
+              "type": "video",
+              "caption": "Opening the gear menu and moving through its items (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--gear-menu.gif",
+              "type": "gif",
+              "caption": "Opening the gear menu and moving through its items (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--gear-menu.png",
+              "type": "image",
+              "caption": "Opening the gear menu and moving through its items (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Help submenu",
+          "what": "Before: Help was its own rail button with Keyboard Shortcuts, Documentation and Community. Now: Help is an item in the gear menu that opens the same original list next to it.",
+          "how": "Open the gear menu, then click Help (or press the right arrow on it).",
+          "media": [
+            {
+              "src": "media/rail-prefs/rail-menu--help-submenu.mp4",
+              "type": "video",
+              "caption": "The Help item opens the original Help list (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--help-submenu.gif",
+              "type": "gif",
+              "caption": "The Help item opens the original Help list (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/rail-menu--help-submenu.png",
+              "type": "image",
+              "caption": "The Help item opens the original Help list (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "title-crumb",
+      "title": "Header breadcrumb",
+      "group": "rail",
+      "files": [
+        "feature/title-crumb.js",
+        "feature/title-crumb.css"
+      ],
+      "summary": "The title in the middle of the window header showed only the branch name. Now it shows a full path: owner / project / branch, with the same diff badge.",
+      "features": [
+        {
+          "name": "owner / project / branch",
+          "what": "Before: the header showed only the branch name, for example \"main\". Now: it shows \"jdoe / seed-tracker / main\". The icon, the copy-branch click and the +/- diff badge keep working as before.",
+          "how": "Automatic. Click the branch part to copy the branch name like before. Turn it off with localStorage rtd.titleCrumb = \"off\".",
+          "media": [
+            {
+              "src": "media/rail-prefs/title-crumb--before-native.png",
+              "type": "image",
+              "caption": "Before: only the branch name in the header (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--breadcrumb.mp4",
+              "type": "video",
+              "caption": "After: the breadcrumb follows the selected branch (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--breadcrumb.gif",
+              "type": "gif",
+              "caption": "After: the breadcrumb follows the selected branch (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--breadcrumb.png",
+              "type": "image",
+              "caption": "After: the breadcrumb follows the selected branch (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--worktree-branch.png",
+              "type": "image",
+              "caption": "A worktree branch (jdoe/mango) does not repeat the owner (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Fits narrow windows",
+          "what": "Before: not applicable (a single short name). Now: the crumb never covers the left or right header groups. When space is short it cuts the middle of the longest parts with an ellipsis, project first, then owner, then branch.",
+          "how": "Automatic. Resize the window.",
+          "media": [
+            {
+              "src": "media/rail-prefs/title-crumb--narrow-ellipsis.mp4",
+              "type": "video",
+              "caption": "The same crumb at different widths (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--narrow-ellipsis.gif",
+              "type": "gif",
+              "caption": "The same crumb at different widths (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--narrow-ellipsis.png",
+              "type": "image",
+              "caption": "The same crumb at different widths (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--wide-full.png",
+              "type": "image",
+              "caption": "Wide window: the full path is shown (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Click the project name",
+          "what": "Before: the title was not clickable except to copy the branch. Now: clicking the project part opens that project's design home, like clicking the project in the sidebar (needs the project sidebar mod).",
+          "how": "Click the project name in the header.",
+          "media": [
+            {
+              "src": "media/rail-prefs/title-crumb--project-click.mp4",
+              "type": "video",
+              "caption": "Clicking the project segment (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--project-click.gif",
+              "type": "gif",
+              "caption": "Clicking the project segment (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/title-crumb--project-click.png",
+              "type": "image",
+              "caption": "Clicking the project segment (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "home-title",
+      "title": "Home heading text",
+      "group": "rail",
+      "files": [
+        "feature/home-title.js"
+      ],
+      "summary": "On the logged-out home screen the big heading \"Let's Cook.\" now says \"Let's do it\".",
+      "features": [
+        {
+          "name": "Custom home heading",
+          "what": "Before: the heading read \"Let's Cook.\". Now: it reads \"Let's do it\". The mod only rewrites the text in the page, and does it again if the app redraws the heading.",
+          "how": "Automatic. To change the words, edit the TARGET line at the top of feature/home-title.js and save.",
+          "media": [
+            {
+              "src": "media/rail-prefs/home-title--before.png",
+              "type": "image",
+              "caption": "Before: the original heading (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/home-title--heading.mp4",
+              "type": "video",
+              "caption": "The heading is swapped, and swapped again after the app redraws it (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/home-title--heading.gif",
+              "type": "gif",
+              "caption": "The heading is swapped, and swapped again after the app redraws it (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/home-title--after.png",
+              "type": "image",
+              "caption": "After: the new heading (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "zoom",
+      "title": "Zoom level toast and Cmd+=",
+      "group": "rail",
+      "files": [
+        "feature/zoom.js",
+        "feature/zoom.css",
+        "tools/enable-zoom-shortcut.sh"
+      ],
+      "summary": "Tempo already has View > Zoom In/Out, but gives no feedback and Zoom In needs Cmd+Shift+=. Now a small toast shows the new zoom level, and Cmd+= zooms in.",
+      "features": [
+        {
+          "name": "Zoom level toast",
+          "what": "Before: zooming changed the size with no message. Now: a small badge at the bottom right shows the new level (for example 140%) for one second. The zoom itself is still the app's own, so it scales everything.",
+          "how": "Press Cmd+= (in), Cmd+- (out) or Cmd+0 (reset).",
+          "media": [
+            {
+              "src": "media/rail-prefs/zoom--before-100.png",
+              "type": "image",
+              "caption": "Before: normal size, no message (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/zoom--toast.mp4",
+              "type": "video",
+              "caption": "Zoom steps with the level shown in the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/zoom--toast.gif",
+              "type": "gif",
+              "caption": "Zoom steps with the level shown in the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/zoom--toast.png",
+              "type": "image",
+              "caption": "Zoom steps with the level shown in the toast (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/zoom--toast-140.png",
+              "type": "image",
+              "caption": "The toast at 140% (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Cmd+= shortcut",
+          "what": "Before: Zoom In only worked with Cmd+Shift+= (Cmd++). Now: a small script remaps the menu item to plain Cmd+=, like in VS Code. It only touches RE-TEMPO, never the original Tempo.",
+          "how": "Run tools/enable-zoom-shortcut.sh once and restart RE-TEMPO. Use --status to check and --undo to remove it.",
+          "media": [
+            {
+              "src": "media/rail-prefs/zoom--shortcut-script.png",
+              "type": "image",
+              "caption": "Usage text of the shortcut script (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: it is a keyboard shortcut mapping done by macOS; the visible result is the toast above"
+        }
+      ]
+    },
+    {
+      "id": "profile-page",
+      "title": "Profile page and Settings API",
+      "group": "prefs",
+      "files": [
+        "feature/profile-page.js",
+        "feature/profile-page.css"
+      ],
+      "summary": "Settings gets a new RE-TEMPO group in its left list, and its first page is Profile: your photo and a calm, read-only summary of your own work. The mod also offers a small API so other mods can add their own Settings pages.",
+      "features": [
+        {
+          "name": "RE-TEMPO group in Settings",
+          "what": "Before: Settings had only Personal items (Preferences, Chat, Billing...) and Organizations. Now: a RE-TEMPO group sits right after Personal, with Profile first and any page added by other mods (such as Decision model) below it. It uses the same look as the original items.",
+          "how": "Open Settings and click an item under RE-TEMPO. For mod authors: window.__RE_TEMPO_SETTINGS__.registerSection({ id, label, render }).",
+          "media": [
+            {
+              "src": "media/rail-prefs/profile-page--before-original-settings.png",
+              "type": "image",
+              "caption": "Before: the original Settings screen, no RE-TEMPO group",
+              "origin": "real-app"
+            },
+            {
+              "src": "media/rail-prefs/profile-page--settings-nav.png",
+              "type": "image",
+              "caption": "After: the RE-TEMPO group with Profile and Decision model (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static list; the Profile video below opens it"
+        },
+        {
+          "name": "Profile page with level and stats",
+          "what": "Before: no profile page. Now: your name, a level ring (Newcomer up to Luminary) based on finished work, and tiles for chats, agent runs, comment tasks and plan usage. No streaks, no points, no ranking: progress only goes up.",
+          "how": "Settings > RE-TEMPO > Profile, or Profile in the avatar menu. Click the avatar on the page to add a photo (kept on this Mac only).",
+          "media": [
+            {
+              "src": "media/rail-prefs/profile-page--profile-scroll.mp4",
+              "type": "video",
+              "caption": "Opening Profile from Settings and scrolling the whole page (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/profile-page--profile-scroll.gif",
+              "type": "gif",
+              "caption": "Opening Profile from Settings and scrolling the whole page (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/profile-page--profile-top.png",
+              "type": "image",
+              "caption": "Top of the page: level ring and stat tiles (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Activity heatmap and your month",
+          "what": "Before: nothing like it. Now: a heatmap with one cell per day of the last weeks, work by type, milestones and a \"Your month\" recap that is built only when you ask.",
+          "how": "Scroll down on the Profile page.",
+          "media": [
+            {
+              "src": "media/rail-prefs/profile-page--profile-heatmap.png",
+              "type": "image",
+              "caption": "Activity heatmap and totals (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/profile-page--profile-month.png",
+              "type": "image",
+              "caption": "Bottom of the page: milestones and Your month (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "decision-model",
+      "title": "Decision model settings (TypeSafe Jev)",
+      "group": "prefs",
+      "files": [
+        "feature/decision-model.js",
+        "feature/decision-model.css"
+      ],
+      "summary": "A new Settings page connects a hosted decision model (TypeSafe AI, \"Jev\") that answers short typed questions with a choice, a score or a yes/no and a confidence. RE-TEMPO uses it to sort new comment tasks (effort, ask first, urgency).",
+      "features": [
+        {
+          "name": "Settings > Decision model",
+          "what": "Before: no such setting. Now: a page with the base URL, API key, model, timeout, confidence threshold, what to do when the model is unsure, one switch per automation and a privacy note. The key is saved only on this Mac and is never shown again.",
+          "how": "Settings > RE-TEMPO > Decision model. Type the key, then press Test connection.",
+          "media": [
+            {
+              "src": "media/rail-prefs/decision-model--before-original-settings.png",
+              "type": "image",
+              "caption": "Before: the original Settings screen, no Decision model page",
+              "origin": "real-app"
+            },
+            {
+              "src": "media/rail-prefs/decision-model--settings.mp4",
+              "type": "video",
+              "caption": "Opening the page, scrolling it and testing the connection (a fake local server answers) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/decision-model--settings.gif",
+              "type": "gif",
+              "caption": "Opening the page, scrolling it and testing the connection (a fake local server answers) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/decision-model--settings-top.png",
+              "type": "image",
+              "caption": "Top of the page: connection settings and the saved key (hidden) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Test connection and decision log",
+          "what": "Before: nothing. Now: Test connection shows if it worked, the model, the time and the tokens used; a log lists the last 20 decisions (question, answer, confidence, speed) without any comment text.",
+          "how": "Press Test connection; scroll to the log at the bottom.",
+          "media": [
+            {
+              "src": "media/rail-prefs/decision-model--test-connection.png",
+              "type": "image",
+              "caption": "A successful test: Connected, model, 14 ms, tokens (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/decision-model--settings-bottom.png",
+              "type": "image",
+              "caption": "Lower part of the page: thresholds, switches, privacy and log (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "inject-index",
+      "title": "inject-index (load the mods)",
+      "group": "infra",
+      "files": [
+        "tools/inject-index.mjs"
+      ],
+      "summary": "A small script that adds every mod to the app's index.html, in a fixed order, so the app loads them. It can be run again and again without making duplicates.",
+      "features": [
+        {
+          "name": "Idempotent mod loader",
+          "what": "Before: the original app loads no mods. Now: one marked block before </body> loads each feature/<mod>.css and .js through ./mod/. It backs up index.html once, removes old or hand-made tags and rewrites only that block.",
+          "how": "node tools/inject-index.mjs [--dry-run] <path to index.html>. --dry-run only prints what would change.",
+          "media": [
+            {
+              "src": "media/rail-prefs/inject-index--dry-run.png",
+              "type": "image",
+              "caption": "Dry run on a fake index.html: nothing is written, the added lines are listed (fixture) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/inject-index--result.png",
+              "type": "image",
+              "caption": "The index.html after a real run on the fake file (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: command-line tool, no visible UI"
+        }
+      ]
+    },
+    {
+      "id": "live-reload",
+      "title": "live-reload (instant updates)",
+      "group": "infra",
+      "files": [
+        "tools/live-reload.mjs"
+      ],
+      "summary": "A watcher with no dependencies: save a feature/ file and the open RE-TEMPO window updates by itself. CSS changes are swapped in without a reload; JS changes reload the window.",
+      "features": [
+        {
+          "name": "Hot CSS, reload on JS",
+          "what": "Before: changing the app means rebuilding and restarting. Now: the watcher talks to the app through its debug port, hot-swaps the stylesheet on a .css save (the page keeps its state) and reloads the window on a .js save.",
+          "how": "It starts with tools/start-live.sh. Edit and save any feature/*.js or *.css.",
+          "media": [
+            {
+              "src": "media/rail-prefs/live-reload--header.png",
+              "type": "image",
+              "caption": "Header of tools/live-reload.mjs (the script was not run) (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: background tool; it needs the real app's debug port"
+        }
+      ]
+    },
+    {
+      "id": "start-live",
+      "title": "start-live (one command)",
+      "group": "infra",
+      "files": [
+        "tools/start-live.sh"
+      ],
+      "summary": "One command that sets up and starts the whole live loop: links the mods, injects them, launches RE-TEMPO in its own profile and starts the watcher.",
+      "features": [
+        {
+          "name": "Start everything in one step",
+          "what": "Before: several manual steps. Now: it links out/renderer/mod to the repo's feature/ folder, runs inject-index, opens RE-TEMPO with a debug port and an isolated profile (your real Tempo data is not touched), then runs live-reload. Ctrl+C stops both.",
+          "how": "tools/start-live.sh",
+          "media": [
+            {
+              "src": "media/rail-prefs/start-live--header.png",
+              "type": "image",
+              "caption": "Header of tools/start-live.sh (the script was not run) (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: starts the real app, so it was not recorded"
+        }
+      ]
+    },
+    {
+      "id": "bootstrap-local",
+      "title": "bootstrap-local (editable app)",
+      "group": "infra",
+      "files": [
+        "scripts/bootstrap-local.sh"
+      ],
+      "summary": "Builds the editable copy, RE-TEMPO.app, from your own installed Tempo. Nothing is uploaded and the original app is not changed.",
+      "features": [
+        {
+          "name": "Make RE-TEMPO.app",
+          "what": "Before: the installed Tempo cannot be edited. Now: the script clones the app, unpacks app.asar into a folder, renames it to RE-TEMPO (own bundle id), turns off auto-update, re-signs it and writes run-isolated.sh to start it in its own profile.",
+          "how": "Run scripts/bootstrap-local.sh once, with Tempo installed in /Applications.",
+          "media": [
+            {
+              "src": "media/rail-prefs/bootstrap-local--steps.png",
+              "type": "image",
+              "caption": "The six steps printed by the script (it was not run) (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: one-time setup script, no visible UI"
+        }
+      ]
+    },
+    {
+      "id": "qa-harness",
+      "title": "QA harness (qa/)",
+      "group": "infra",
+      "files": [
+        "qa/run.mjs",
+        "qa/instance.mjs",
+        "qa/login.mjs",
+        "qa/clean.mjs",
+        "qa/ps.mjs",
+        "qa/lib/",
+        "qa/suites/"
+      ],
+      "summary": "An automated test kit that starts several isolated RE-TEMPO copies, drives them through the debug port, and writes a report with screenshots. It never touches your visible window or your real profile.",
+      "features": [
+        {
+          "name": "Multi-instance test runner",
+          "what": "Before: no automated tests. Now: run.mjs launches N isolated instances (or logged-in test profiles) in parallel, runs a suite on each, and saves a JSON and Markdown report with screenshots. ps.mjs and clean.mjs list and clean the instances.",
+          "how": "cd qa && npm install, then node run.mjs --suite 00-smoke --instances 3. Details in docs/qa/03-harness.md.",
+          "media": [
+            {
+              "src": "media/rail-prefs/qa-harness--commands.png",
+              "type": "image",
+              "caption": "The commands from qa/README.md (fixture) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/rail-prefs/qa-harness--layout.png",
+              "type": "image",
+              "caption": "Files of the harness (fixture) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: runs the real app headlessly; not run for this document"
+        }
+      ]
+    }
+  ]
+}

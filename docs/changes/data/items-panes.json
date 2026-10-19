@@ -1,0 +1,511 @@
+{
+  "area": "panes",
+  "items": [
+    {
+      "id": "pane-dock",
+      "title": "Free pane layout (panes and decks)",
+      "group": "panes",
+      "files": [
+        "feature/pane-dock.js",
+        "feature/pane-dock.css"
+      ],
+      "summary": "Orca-style free layout: drag tabs into panes that split in any direction, with resizable dividers, decks, undo, per-pane + menus, a Solo mode and placeholders for tabs moved to another window. It uses the app's own popout tab store, so the app bundle is not edited.",
+      "features": [
+        {
+          "name": "Drop overlay with edge splits",
+          "what": "Before: the center is one block and a tab can only be reordered or popped out into a separate window. Now: dragging a tab over a pane shows a drop overlay. The edges (25% of the pane) preview a split in that direction, and dropping there puts the tab in a new pane.",
+          "how": "Drag a tab from the tab bar to the left, right, top or bottom edge of a pane, then let go.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--edge-split.mp4",
+              "type": "video",
+              "caption": "A tab dragged to the right edge opens a new pane (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--edge-split.gif",
+              "type": "gif",
+              "caption": "A tab dragged to the right edge opens a new pane (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--edge-split-preview.png",
+              "type": "image",
+              "caption": "The edge shows where the new pane will appear (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--edge-split-result.png",
+              "type": "image",
+              "caption": "Result: the tab lives in its own pane on the right (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Drop on a pane's tab bar",
+          "what": "Before: no panes, so tabs could only be reordered in one bar. Now: dropping a tab on another pane's tab bar opens a slot under the pointer and the tab joins that pane between its tabs. Dropping over the pane body adds it at the end and the pane gets a thin accent outline.",
+          "how": "Drag a tab over another pane's tab bar (slot opens), or over its body (center), then drop.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--tab-bar-drop.mp4",
+              "type": "video",
+              "caption": "A tab dropped on another pane's tab bar (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--tab-bar-drop.gif",
+              "type": "gif",
+              "caption": "A tab dropped on another pane's tab bar (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--tab-bar-drop-slot.png",
+              "type": "image",
+              "caption": "A slot opens where the tab will land (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--tab-bar-drop-result.png",
+              "type": "image",
+              "caption": "Result: the tab sits between the pane's tabs (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Nested splits",
+          "what": "Before: at most the app's own two-panel split view. Now: splits can be nested without limit, mixing rows and columns, and every pane has its own tab bar.",
+          "how": "Repeat the edge drop inside any pane, or use the split button at the right end of a pane's header.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--nested-splits.png",
+              "type": "image",
+              "caption": "One tall pane on the left, a pane with three tabs and a pane below it on the right (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: built by repeating the edge-split clip; the divider clip shows a nested layout"
+        },
+        {
+          "name": "Resizable dividers",
+          "what": "Before: the split view had one fixed divider. Now: every divider between panes can be dragged, vertical and horizontal ones alike.",
+          "how": "Hover a divider (it turns blue) and drag.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--resize-divider.mp4",
+              "type": "video",
+              "caption": "Dragging a vertical and then a horizontal divider (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--resize-divider.gif",
+              "type": "gif",
+              "caption": "Dragging a vertical and then a horizontal divider (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--resize-divider-wide.png",
+              "type": "image",
+              "caption": "The left pane is made narrower; the divider is highlighted (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--resize-divider.png",
+              "type": "image",
+              "caption": "The right column re-split after the drag (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Closing a pane, undo and redo",
+          "what": "Before: no panes to close or undo. Now: a pane left without tabs collapses. Cmd+Z (Ctrl+Z) undoes the last layout or deck change (a split, a tab moved between panes, a pane closed, a deck created, removed, renamed or reordered), several presses undo several, and Cmd+Shift+Z (Ctrl+Shift+Z, Ctrl+Y) redoes. Each workspace has its own history. The shortcut only acts when nothing else owns it (typing, the canvas, a webview).",
+          "how": "Close the last tab of a pane, then press Cmd+Z. Cmd+Shift+Z goes forward again.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--close-undo.mp4",
+              "type": "video",
+              "caption": "Closing a pane's only tab collapses it, Cmd+Z brings it back (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--close-undo.gif",
+              "type": "gif",
+              "caption": "Closing a pane's only tab collapses it, Cmd+Z brings it back (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--close-undo-collapsed.png",
+              "type": "image",
+              "caption": "The bottom pane collapsed after its last tab closed (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--close-undo-restored.png",
+              "type": "image",
+              "caption": "After Cmd+Z the pane is back (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Decks: several arrangements per workspace",
+          "what": "Before: one set of tabs per workspace. Now: each workspace keeps several named decks. A deck is a whole arrangement (the layout, which tab sits in which pane, the tabs the center shows and its active chat). Switching hides the other decks' tabs (they are not closed). A tab belongs to one deck only, a new deck starts with a new chat, a deck left without tabs goes away (except the workspace's last one), and decks are saved and come back on reload. Decks have numbered names (Deck 01, Deck 02...). Other mods use window.__RE_TEMPO_DECKS__.",
+          "how": "Create a deck from the sidebar's deck cards and click a card to switch. The clip uses a small stand-in bar for those cards.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--decks.mp4",
+              "type": "video",
+              "caption": "Create Deck 02, then switch back to Deck 01 with its split (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--decks.gif",
+              "type": "gif",
+              "caption": "Create Deck 02, then switch back to Deck 01 with its split (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--decks-first.png",
+              "type": "image",
+              "caption": "Deck 01: center tabs plus a pane on the right (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--decks-new.png",
+              "type": "image",
+              "caption": "Deck 02: only its own new chat is visible (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--decks-switch.png",
+              "type": "image",
+              "caption": "Back on Deck 01: its tabs and its split are back (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "A + button in every pane",
+          "what": "Before: only the center had a + menu. Now: each pane has its own + right after its last tab, with the same items (New Chat, Canvas, Doc, Issue, Terminal, Browser, and Open for existing canvases, docs, issues and files). The app's own action runs and the new tab lands in that pane. The Open in split view button sits at the right end of the header.",
+          "how": "Click the + in a pane's header and pick an item.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--pane-plus.mp4",
+              "type": "video",
+              "caption": "Pane + menu, then New Chat opens inside that pane (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--pane-plus.gif",
+              "type": "gif",
+              "caption": "Pane + menu, then New Chat opens inside that pane (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--pane-plus-menu.png",
+              "type": "image",
+              "caption": "The pane's + menu (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--pane-plus-result.png",
+              "type": "image",
+              "caption": "The new chat tab is inside the pane (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Pane header look",
+          "what": "Before: the split view had its own plain headers. Now: every pane header looks like the center's: same tab shape, active tab highlight, close buttons, + and split buttons.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--pane-header.png",
+              "type": "image",
+              "caption": "Center header (left) and a pane header with three tabs (right) (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static styling, visible in every pane clip"
+        },
+        {
+          "name": "Several canvases at once",
+          "what": "Before: one canvas on screen at a time. Now: any number of canvases can be open in different panes, each with its own view, selection and undo. Opening a canvas that is already on screen gives the new pane its own second copy instead of moving the first one. The chat's canvas selection follows the last clicked canvas.",
+          "how": "Use a pane's + > Open and pick a canvas, or Open in split view on a canvas tab.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--several-canvases.mp4",
+              "type": "video",
+              "caption": "Four different canvases, then a second copy of one (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--several-canvases.gif",
+              "type": "gif",
+              "caption": "Four different canvases, then a second copy of one (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--several-canvases.png",
+              "type": "image",
+              "caption": "Four canvases in four panes (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--several-canvases-copy.png",
+              "type": "image",
+              "caption": "The same canvas (beta) open in two panes (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Drop a chat on + to start a new workspace",
+          "what": "Before: no way to branch a chat into a workspace by dragging. Now: dropping a chat tab on a + (a pane's or the center's) turns the + into a New workspace pill, the tab flies into it, a new workspace is created with a copy of that chat and a toast offers Undo.",
+          "how": "Drag a chat tab over a + and drop it there.",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--new-workspace.mp4",
+              "type": "video",
+              "caption": "A chat dragged onto a pane's + becomes a new workspace (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--new-workspace.gif",
+              "type": "gif",
+              "caption": "A chat dragged onto a pane's + becomes a new workspace (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--new-workspace-pill.png",
+              "type": "image",
+              "caption": "The + grows into the New workspace pill (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--new-workspace-toast.png",
+              "type": "image",
+              "caption": "Toast after the drop, with Undo (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Layout is saved and restored",
+          "what": "Before: nothing to save. Now: the panes, their sizes and tabs are saved per workspace (localStorage) and come back when the window reloads.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--layout-persist.mp4",
+              "type": "video",
+              "caption": "The same panes come back after a reload (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--layout-persist.gif",
+              "type": "gif",
+              "caption": "The same panes come back after a reload (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--layout-saved.png",
+              "type": "image",
+              "caption": "Layout before the reload (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--layout-restored.png",
+              "type": "image",
+              "caption": "Layout after the reload (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Panes only on the chat route",
+          "what": "The dock works only on the chat route with a workspace open. On other routes the panes are hidden and the app looks normal; they return when you come back to chat.",
+          "how": "",
+          "media": [
+            {
+              "src": "media/panes/pane-dock--route-chat.png",
+              "type": "image",
+              "caption": "Chat route: panes visible (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/pane-dock--route-other.png",
+              "type": "image",
+              "caption": "Another route: no panes (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: static switch with no motion"
+        },
+        {
+          "name": "Solo mode",
+          "what": "Before: no way to focus one pane. Now: one pane, or the center, fills the whole area for a while. The other panes are hidden, not closed, and Exit solo brings the layout back as it was.",
+          "how": "Press Cmd+Shift+Enter, or click the solo button in a pane's header. Esc or Exit solo leaves.",
+          "media": [
+            {
+              "src": "media/updates/pane-dock--solo-pane.png",
+              "type": "image",
+              "caption": "A pane in solo, with Exit solo at the top right (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/pane-dock--solo-center.png",
+              "type": "image",
+              "caption": "The center in solo (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Placeholder for a tab in an external window",
+          "what": "Before: a tab torn out into a popout window simply left its pane. Now: its spot shows Open in external window with Bring back and Focus window, and the tab returns to the same pane and position when that window closes.",
+          "how": "Click Bring back to return the tab, or Focus window to jump to it.",
+          "media": [
+            {
+              "src": "media/updates/pane-dock--external-placeholder.png",
+              "type": "image",
+              "caption": "Placeholder in a pane for a tab open in another window (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/updates/pane-dock--external-placeholder-center.png",
+              "type": "image",
+              "caption": "The same placeholder in the center (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Canvas popovers stay in their pane",
+          "what": "Before: a canvas in a pane drew its comment composer, menus and tooltips relative to the whole window. Now: they stay inside that pane.",
+          "how": "Open a canvas in a pane and comment or open a menu: it opens in that pane.",
+          "media": [
+            {
+              "src": "media/updates/pane-dock--canvas-popover-in-pane.png",
+              "type": "image",
+              "caption": "A comment composer kept inside the right pane (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: no clip recorded yet (new feature, 2026-10-18)"
+        },
+        {
+          "name": "Empty panes and decks",
+          "what": "A pane without tabs collapses and its neighbours take the room. The center hides when none of its tabs is left. A deck is never empty: a new deck starts with a new chat and a deck left without tabs goes away.",
+          "how": "Close the last tab of a pane or deck.",
+          "media": [
+            {
+              "src": "media/updates/pane-dock--center-hidden-when-empty.png",
+              "type": "image",
+              "caption": "Center hidden: the remaining pane fills the area (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: the close-and-undo clip shows a pane collapsing"
+        },
+        {
+          "name": "Deck API: Close all and Move tabs",
+          "what": "Other mods can now close every tab of a deck (closeAll) or move tabs to another deck (moveTabs) through window.__RE_TEMPO_DECKS__, with undo. The project sidebar uses it for its deck menu.",
+          "how": "In the sidebar, open a deck's menu and pick Move tabs to or Close all tabs.",
+          "media": [
+            {
+              "src": "media/updates/pane-dock--deck-api-menu.png",
+              "type": "image",
+              "caption": "Deck menu in the sidebar with Move tabs to and Close all tabs (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "n/a: an API; the deck menu clip in the sidebar shows it"
+        }
+      ]
+    },
+    {
+      "id": "tab-close",
+      "title": "Close button on the primary chat tab",
+      "group": "panes",
+      "files": [
+        "feature/tab-close.js",
+        "feature/tab-close.css"
+      ],
+      "summary": "Every center tab gets a close button, including the first chat tab, which the original app shows without one. Closing never deletes the chat.",
+      "features": [
+        {
+          "name": "Close button on the primary chat tab",
+          "what": "Before: the first (primary) chat tab of the center bar has no close button and middle click does nothing. Now it has the same x as other tabs. Closing it only hides the tab: the chat, its session and its sidebar row are kept. The neighbour tab opens, and the tab comes back when you open the chat again (sidebar click, shortcut, or the app falling back to it). A middle click does the same.",
+          "how": "Click the x on the first tab, or middle click it.",
+          "media": [
+            {
+              "src": "media/panes/tab-close--primary-close.mp4",
+              "type": "video",
+              "caption": "Closing the primary tab hides it, picking the chat again brings it back (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/tab-close--primary-close.gif",
+              "type": "gif",
+              "caption": "Closing the primary tab hides it, picking the chat again brings it back (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/tab-close--primary-close-button.png",
+              "type": "image",
+              "caption": "The first tab now shows a close x (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/tab-close--primary-hidden.png",
+              "type": "image",
+              "caption": "After closing: the tab is hidden and a neighbour is open (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Closing the only tab opens a fresh chat",
+          "what": "Before: nothing happened (no button). Now: when the primary tab is the only tab in the bar, closing it opens a fresh New Chat (an existing empty draft is reused) like the app does when the last chat goes away. The old chat is not deleted. On an empty draft alone in its workspace, the tab just shakes.",
+          "how": "Click the x on a chat tab that has no other tabs next to it.",
+          "media": [
+            {
+              "src": "media/panes/tab-close--last-tab-new-chat.mp4",
+              "type": "video",
+              "caption": "Closing the lone chat tab opens a New Chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/tab-close--last-tab-new-chat.gif",
+              "type": "gif",
+              "caption": "Closing the lone chat tab opens a New Chat (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/panes/tab-close--last-tab-new-chat.png",
+              "type": "image",
+              "caption": "The bar now holds a New Chat with a close x (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    }
+  ]
+}

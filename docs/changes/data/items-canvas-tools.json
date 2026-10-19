@@ -1,0 +1,374 @@
+{
+  "area": "canvas-tools",
+  "items": [
+    {
+      "id": "canvas-keys",
+      "title": "Canvas keys",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-keys.js"
+      ],
+      "summary": "Adds the few single-key canvas shortcuts the original Tempo is missing. It never re-binds keys the app already owns, so nothing fires twice.",
+      "features": [
+        {
+          "name": "C opens the Comment tool",
+          "what": "Before: the Comment tool could only be picked with the mouse in the bottom toolbar. Now: one key press toggles it, like clicking the button.",
+          "how": "Press C while the canvas is on screen and focus is not in a text field.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.mp4",
+              "type": "video",
+              "caption": "Pressing C, Shift+0 and ? on the canvas, with a key badge (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.gif",
+              "type": "gif",
+              "caption": "Pressing C, Shift+0 and ? on the canvas, with a key badge (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--comment-tool.png",
+              "type": "image",
+              "caption": "The Comment tool armed after pressing C (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Shift+0 zooms to 100%",
+          "what": "Before: zoom to 100% needed the zoom menu. Now: Shift+0 opens the menu and runs the app's own \"Zoom to 100%\" item.",
+          "how": "Press Shift+0 on the canvas.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.mp4",
+              "type": "video",
+              "caption": "Shift+0 resets the canvas zoom to 100% (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.gif",
+              "type": "gif",
+              "caption": "Shift+0 resets the canvas zoom to 100% (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--zoom-100.png",
+              "type": "image",
+              "caption": "Canvas at 100% after Shift+0 (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "? shortcut sheet",
+          "what": "Before: no quick list of canvas shortcuts. Now: a small card lists the native and the added shortcuts, with a link to the app's full shortcuts dialog.",
+          "how": "Press ?. Close with Esc, ?, a click outside or the close button.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.mp4",
+              "type": "video",
+              "caption": "The ? sheet listing all canvas shortcuts (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcuts.gif",
+              "type": "gif",
+              "caption": "The ? sheet listing all canvas shortcuts (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-keys--shortcut-sheet.png",
+              "type": "image",
+              "caption": "The canvas shortcut sheet (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "canvas-snap",
+      "title": "Canvas snap and Alt measurements",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-snap.js",
+        "feature/canvas-snap.css"
+      ],
+      "summary": "Holding Alt/Option with a storyboard selected shows exact distances to other storyboards, like Figma. The app's own snapping is left as it is.",
+      "features": [
+        {
+          "name": "Alt shows the distance to another storyboard",
+          "what": "Before: Alt measurements only worked for elements inside one storyboard. Now: hover a second storyboard while holding Alt and see the gaps between them in canvas px, as small red labels on thin red lines.",
+          "how": "Select a storyboard, hold Alt/Option, hover another storyboard. Release Alt to hide.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure.mp4",
+              "type": "video",
+              "caption": "Alt held over a second storyboard shows the gaps (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure.gif",
+              "type": "gif",
+              "caption": "Alt held over a second storyboard shows the gaps (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure.png",
+              "type": "image",
+              "caption": "Red distance labels between two storyboards (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure-side.png",
+              "type": "image",
+              "caption": "Distance to a storyboard placed to the side (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Alt on empty canvas shows the nearest neighbours",
+          "what": "Before: nothing. Now: with Alt held over empty canvas, the distance to the nearest storyboard in each of the four directions is shown.",
+          "how": "Select a storyboard, hold Alt, move the mouse over empty canvas.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure.mp4",
+              "type": "video",
+              "caption": "Alt over empty canvas, nearest storyboard per direction (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-measure.gif",
+              "type": "gif",
+              "caption": "Alt over empty canvas, nearest storyboard per direction (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-snap--alt-empty-canvas.png",
+              "type": "image",
+              "caption": "Distances to the nearest storyboard in each direction (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "canvas-browser",
+      "title": "Browser frame on the canvas",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-browser.js",
+        "feature/canvas-browser.css"
+      ],
+      "summary": "Places a live web page on the canvas next to the storyboards, with its own address bar. It pans and zooms with the canvas and is saved per canvas.",
+      "features": [
+        {
+          "name": "Add a Browser frame",
+          "what": "Before: web pages lived only in the Browser tab. Now: a Browser tool in the bottom toolbar (or the + menu item \"Browser on Canvas\") adds a frame. An empty frame asks for a URL, then loads the page.",
+          "how": "Click the globe tool or press W, then click for a 1280x840 frame or drag to draw one. Type an address and press Enter.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-browser--add-frame.mp4",
+              "type": "video",
+              "caption": "Drawing a Browser frame and loading a page (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--add-frame.gif",
+              "type": "gif",
+              "caption": "Drawing a Browser frame and loading a page (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--toolbar-tool.png",
+              "type": "image",
+              "caption": "The Browser tool in the bottom toolbar (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--empty-prompt.png",
+              "type": "image",
+              "caption": "A new frame asks for a URL (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--frame-loaded.png",
+              "type": "image",
+              "caption": "The page loaded in the frame (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Move, resize and zoom like a storyboard",
+          "what": "Before: not possible. Now: the frame moves, resizes and zooms with the canvas, with the same blue outline, handles and size label as storyboards.",
+          "how": "Drag the header or the bar to move. Drag an edge or corner to resize (Shift keeps the ratio). Ctrl+wheel zooms the canvas. Arrows nudge, Delete removes with Undo.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-browser--move-resize.mp4",
+              "type": "video",
+              "caption": "Moving and resizing a Browser frame (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--move-resize.gif",
+              "type": "gif",
+              "caption": "Moving and resizing a Browser frame (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--moved.png",
+              "type": "image",
+              "caption": "Frame moved next to the storyboards (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--resizing.png",
+              "type": "image",
+              "caption": "Resizing with the size label (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-browser--zoomed.png",
+              "type": "image",
+              "caption": "Frame scaled with the canvas zoom (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        }
+      ]
+    },
+    {
+      "id": "canvas-shader",
+      "title": "Shader frame on the canvas",
+      "group": "canvas",
+      "files": [
+        "feature/canvas-shader.js",
+        "feature/canvas-shader.css"
+      ],
+      "summary": "Adds a live WebGL \"Shader frame\" to the canvas, with a side panel to edit it and export it. Idea and shader rules copied from pen.dev.",
+      "features": [
+        {
+          "name": "Add an animated Shader frame",
+          "what": "Before: no shaders on the canvas. Now: a Shader tool adds a frame that renders a live GLSL shader. 8 presets are included. The frame moves, resizes and zooms with the canvas.",
+          "how": "Click the sparkle tool or press S, then click (800x500) or drag to draw. Drag to move, edges to resize, double-click the title to rename.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-shader--add-frame.mp4",
+              "type": "video",
+              "caption": "Drawing a Shader frame, it animates, then moving it (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--add-frame.gif",
+              "type": "gif",
+              "caption": "Drawing a Shader frame, it animates, then moving it (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--toolbar-tool.png",
+              "type": "image",
+              "caption": "The Shader tool in the toolbar (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--frame-on-canvas.png",
+              "type": "image",
+              "caption": "A mesh gradient frame running on the canvas (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--three-frames.png",
+              "type": "image",
+              "caption": "Three different shader frames at once (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--presets.png",
+              "type": "image",
+              "caption": "The 8 built-in presets (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "Side panel controls",
+          "what": "Before: none. Now: selecting a frame opens a panel with preset, speed, play/pause and one control per shader uniform (sliders, colours, toggles, textures). The frame updates live.",
+          "how": "Click a shader frame, then drag a slider, type a colour hex or change the speed.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-shader--panel-controls.mp4",
+              "type": "video",
+              "caption": "Changing Distortion, a colour and Speed in the panel (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--panel-controls.gif",
+              "type": "gif",
+              "caption": "Changing Distortion, a colour and Speed in the panel (animated) (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--panel-control.png",
+              "type": "image",
+              "caption": "Panel with a slider being changed (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--controls-panel.png",
+              "type": "image",
+              "caption": "Panel with all control types (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "done"
+        },
+        {
+          "name": "GLSL editor",
+          "what": "Before: none. Now: a live editor shows the shader code with a compiler log. Errors are listed by line and the frame keeps showing the last working version.",
+          "how": "Select a frame and click Edit GLSL (or double-click the frame body). Esc closes it.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-shader--glsl-editor.png",
+              "type": "image",
+              "caption": "GLSL editor with a compile error in the log (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: panel and editor typing already covered by the controls clip; editor needs a text-entry clip"
+        },
+        {
+          "name": "Export PNG, WebM and embed code",
+          "what": "Before: none. Now: the panel exports the current image as PNG, a 5 s WebM recording, or a standalone HTML embed snippet.",
+          "how": "Select a frame and click PNG, WebM or Embed in the Export section.",
+          "media": [
+            {
+              "src": "media/canvas-tools/canvas-shader--export-png.png",
+              "type": "image",
+              "caption": "PNG export of a glass shader frame (fixture)",
+              "origin": "fixture"
+            },
+            {
+              "src": "media/canvas-tools/canvas-shader--embed-standalone.png",
+              "type": "image",
+              "caption": "The embed snippet running on its own (fixture)",
+              "origin": "fixture"
+            }
+          ],
+          "video": "pending: exports are file downloads, nothing to film"
+        }
+      ]
+    }
+  ]
+}

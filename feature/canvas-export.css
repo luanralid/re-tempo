@@ -1,0 +1,487 @@
+/*
+ * RE-TEMPO · canvas-export (user MOD layer): the "Code" and "Export" sections
+ * of the canvas's right panel, their menu, URL prompt and toast.
+ * Everything is scoped under rtcx- classes and uses the app's tokens
+ * (--color-*, --font-sans, --shadow-dialog), so light and dark follow the app.
+ * The section header/body also carry the app's own section classes (A$); the
+ * rules here repeat their metrics so the sections look the same without them.
+ */
+
+/* After the app's sections and canvas-shader's Effects (the body is a flex
+   column; this node is never moved once inside it). */
+.rtcx-wrap {
+  order: 1;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+.rtcx-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 0;
+  transition: background-color 600ms ease-out;
+}
+.rtcx-section[data-flash] {
+  background-color: color-mix(in srgb, var(--color-accent, #e0e0e0) 9%, transparent);
+  transition: none;
+}
+.rtcx-head {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 8px 12px;
+}
+.rtcx-head-row {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+.rtcx-title {
+  overflow: hidden;
+  color: var(--color-text-secondary, #bababa);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtcx-tools {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  gap: 8px;
+}
+.rtcx-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icons-secondary, #bababa);
+  cursor: pointer;
+}
+.rtcx-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+.rtcx-icon-btn:hover,
+.rtcx-icon-btn[aria-expanded="true"] {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcx-icon-btn:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcx-icon-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcx-body {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 16px;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+}
+.rtcx-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+/* Fields: the app's 28 px rows */
+.rtcx-select {
+  position: relative;
+  min-width: 0;
+}
+.rtcx-select-el {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 32px 0 12px;
+  border: 0;
+  border-radius: 8px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rtcx-select-el:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcx-select-el:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 0;
+}
+.rtcx-select-el option {
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtcx-select-ic {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
+  color: var(--color-icons-secondary, #bababa);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.rtcx-btn {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rtcx-btn:hover:not(:disabled) {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcx-btn:active:not(:disabled) {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcx-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 2px;
+}
+.rtcx-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.rtcx-btn[aria-busy="true"] {
+  opacity: 1;
+  color: var(--color-text-secondary, #bababa);
+  cursor: progress;
+}
+.rtcx-btn-wide {
+  width: 100%;
+}
+.rtcx-btn-primary {
+  background: var(--color-accent, #e0e0e0);
+  color: var(--color-surface-container-lowest, #080808);
+  font-weight: 500;
+}
+.rtcx-btn-primary:hover:not(:disabled) {
+  background: var(--color-accent, #e0e0e0);
+  filter: brightness(1.08);
+}
+.rtcx-btn-primary:active:not(:disabled) {
+  background: var(--color-accent, #e0e0e0);
+  filter: brightness(0.92);
+}
+.rtcx-hint {
+  margin-top: -2px;
+  overflow: hidden;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtcx-hint:empty {
+  display: none;
+}
+
+/* Gear menu (as canvas-shader's "Add effect" menu) */
+.rtcx-menu {
+  position: fixed;
+  z-index: 4300;
+  min-width: 224px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--color-surface-container, #191919);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 13px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.rtcx-menu[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtcx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rtcx-menu-item:hover:not(:disabled) {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcx-menu-item:active:not(:disabled) {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcx-menu-item:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcx-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.rtcx-menu-check {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtcx-ic {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
+}
+.rtcx-menu-label {
+  flex: 1 1 auto;
+}
+.rtcx-menu-sep {
+  height: 1px;
+  margin: 8px 0;
+  background: var(--color-border-secondary, #232323);
+}
+
+/* URL prompt (Import Web via Browser) */
+.rtcx-pop {
+  position: fixed;
+  z-index: 4300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 296px;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--color-surface-container, #191919);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.rtcx-pop[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtcx-pop-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+.rtcx-pop-hint {
+  margin-top: -4px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  line-height: 16px;
+}
+.rtcx-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  background: var(--color-surface-container-low, #0e0e0e);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+}
+.rtcx-input:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+}
+.rtcx-input::placeholder {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtcx-pop-error {
+  color: var(--color-text-error, #ff7a7a);
+  font-size: 12px;
+  line-height: 16px;
+}
+.rtcx-pop-error[hidden] {
+  display: none;
+}
+.rtcx-pop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Toast (as canvas-shader's) */
+.rtcx-toast {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 4px 4px 4px 12px;
+  box-sizing: border-box;
+  border-radius: 24px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.rtcx-toast[data-plain] {
+  padding: 8px 16px;
+}
+.rtcx-toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.rtcx-toast[data-kind="error"] .rtcx-toast-text::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 8px 1px 0;
+  border-radius: 50%;
+  background: var(--color-text-error, #ff7a7a);
+}
+.rtcx-toast-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtcx-toast-action {
+  flex: none;
+  height: 24px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  cursor: pointer;
+}
+.rtcx-toast-action:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtcx-toast-action:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 2px;
+}
+
+/* While a layer is captured: input on the canvas is blocked (transparent,
+   so it never shows in the capture) and overlays that would cover the
+   storyboard are hidden. */
+.rtcx-blocker {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: transparent;
+  cursor: progress;
+}
+html.rtcx-capturing .rtcx-toast,
+html.rtcx-capturing .rtcx-menu,
+html.rtcx-capturing .rtcx-pop,
+html.rtcx-capturing .rtsh-toast,
+html.rtcx-capturing [data-canvas-handle-layer],
+html.rtcx-capturing [data-testid="canvas-comment-pin-layer"],
+html.rtcx-capturing [data-testid="canvas-comment-popover"],
+html.rtcx-capturing .rtcb-panel,
+html.rtcx-capturing [data-rtcb-root],
+html.rtcx-capturing .rtcb-tip,
+html.rtcx-capturing .rtcb-lb,
+html.rtcx-capturing [data-rcca-root] {
+  visibility: hidden !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtcx-section,
+  .rtcx-menu,
+  .rtcx-pop,
+  .rtcx-toast {
+    transition: none;
+  }
+}
+
+/* Hosted by canvas-chrome's Properties card: the chrome draws the section
+   header and the body's padding and rule, so the body drops its own. */
+.rtcx-body.rtcx-in-chrome {
+  padding: 0;
+  border-bottom: 0;
+  gap: var(--rcc-space, 8px);
+}
+.rcc-section-actions .rtcx-icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+.rcc-section-actions .rtcx-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.rcc-section[data-rcc-section^="canvas-export-"] {
+  transition: background-color 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rcc-section[data-rcc-section^="canvas-export-"][data-flash] {
+  background-color: color-mix(in srgb, var(--color-accent, #e0e0e0) 9%, transparent);
+  transition: none;
+}

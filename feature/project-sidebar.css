@@ -1,0 +1,4992 @@
+/*
+ * RE-TEMPO · project-sidebar (user MOD layer) — styles
+ * One project-oriented sidebar over the native rail. Tempo tokens only
+ * (--color-*, --text-*, --radius-*, --font-sans), so light/dark follow the app.
+ */
+
+/* ---------------------------------------------------------- native layout */
+/* The sidebar is a column of its own: the workspace panel group (parent of the
+   center panel) moves right by the sidebar width. The rail stays, with its
+   footer (usage, bug report, help, settings, avatar/org); only its five route
+   buttons hide, and only while the sidebar is on screen (html.rtps-placed). */
+[data-rtps-push] {
+  margin-left: var(--rtps-w, 264px) !important;
+  width: calc(100% - var(--rtps-w, 264px)) !important;
+  max-width: calc(100% - var(--rtps-w, 264px)) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+/* the rail's route buttons stay visible now (they used to hide here) */
+/* Native route sidebars hide while the project sidebar is on screen (opt out
+   with localStorage rtd.projectSidebar.hideNative = "off"):
+   chat + agents: the shell's left panel and its resize handle;
+   docs: docs-view-sidebar; issues: the issues-views-sidebar panel + handle;
+   design home: canvas-sidebar. The canvas editor's own panel stays. */
+[data-rtps-hidden],
+html.rtps-hide-native [data-tempo-workspace-panel="left"],
+html.rtps-hide-native [data-tempo-workspace-panel="left"] + :not([data-tempo-workspace-panel]):not([data-panel]),
+html.rtps-hide-native [data-resize-handle][aria-controls="workspace-left"],
+html.rtps-hide-native [data-testid="docs-view-sidebar"],
+html.rtps-hide-native #issues-views-sidebar,
+html.rtps-hide-native [data-resize-handle][aria-controls="issues-views-sidebar"],
+html.rtps-hide-native aside[data-testid="issues-sidebar"],
+html.rtps-hide-native aside[data-testid="canvas-sidebar"] {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ boot
+   From the first frame (html.rtps-boot*, put by the script while index.html is
+   parsed) until the first tick hands over to the classes above and below: the
+   layout this sidebar ends with, so the native rail and route sidebars never
+   flash on launch. The rail leaves the shell's grid (as rtps-rail-hidden), the
+   workspace group (the center panel's parent, as [data-rtps-push]) moves right
+   by the sidebar's width, except when the sidebar was collapsed last time
+   (rtps-boot-collapsed); rtps-boot-native hides the native route sidebars (as
+   rtps-hide-native). The script drops them if the sidebar does not mount. */
+html.rtps-boot [data-testid="workspace-navbar"],
+html.rtps-boot-collapsed [data-testid="workspace-navbar"] {
+  display: none !important;
+}
+html.rtps-boot :has(> [data-testid="workspace-navbar"]),
+html.rtps-boot-collapsed :has(> [data-testid="workspace-navbar"]) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  transition: none !important;
+}
+html.rtps-boot :has(> [data-tempo-workspace-panel="center"]) {
+  margin-left: var(--rtps-w, 264px) !important;
+  width: calc(100% - var(--rtps-w, 264px)) !important;
+  max-width: calc(100% - var(--rtps-w, 264px)) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+html.rtps-boot-native [data-tempo-workspace-panel="left"],
+html.rtps-boot-native [data-tempo-workspace-panel="left"] + :not([data-tempo-workspace-panel]):not([data-panel]),
+html.rtps-boot-native [data-resize-handle][aria-controls="workspace-left"],
+html.rtps-boot-native [data-testid="docs-view-sidebar"],
+html.rtps-boot-native #issues-views-sidebar,
+html.rtps-boot-native [data-resize-handle][aria-controls="issues-views-sidebar"],
+html.rtps-boot-native aside[data-testid="issues-sidebar"],
+html.rtps-boot-native aside[data-testid="canvas-sidebar"] {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- sidebar */
+.rtps {
+  --rtps-row-h: 26px;
+  --rtps-indent: 12px;
+  --rtps-hover: var(--surface-sidebar-item-hover, var(--color-surface-menu-hover));
+  --rtps-active: var(--color-surface-container-high);
+  position: fixed;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  width: var(--rtps-w, 264px);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 6px 6px 0 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: var(--text-body, 13px);
+  line-height: 18px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rtps[hidden] {
+  display: none;
+}
+.rtps *,
+.rtps *::before,
+.rtps *::after {
+  box-sizing: border-box;
+}
+.rtps-ic {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: var(--color-icons-secondary, currentColor);
+}
+
+/* top: search + shortcuts (Orca-style) */
+.rtps-top {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 8px;
+}
+.rtps-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 9px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-lg, 8px);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-surface-container);
+  cursor: text;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.rtps-search:focus-within {
+  border-color: var(--color-border-focus, var(--color-border-primary));
+  background: var(--color-surface-container-low, var(--color-surface-container));
+}
+.rtps-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+}
+.rtps-search input::placeholder {
+  color: var(--color-text-tertiary);
+}
+.rtps-search input::-webkit-search-cancel-button {
+  filter: grayscale(1) opacity(0.6);
+}
+.rtps-nav {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.rtps-nav:hover {
+  background: var(--rtps-hover);
+  color: var(--color-text-primary);
+}
+.rtps-nav[data-active] {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-nav .rtps-ic {
+  transition: transform 150ms ease-out;
+}
+.rtps-nav:hover .rtps-ic {
+  transform: scale(1.111);
+}
+.rtps-nav[data-route="issues"] .rtps-ic {
+  color: var(--mustard-600, var(--color-icons-secondary));
+}
+.rtps-nav[data-route="agents"] .rtps-ic {
+  color: var(--salmon-600, var(--color-icons-secondary));
+}
+.rtps-nav[data-route="docs"] .rtps-ic {
+  color: var(--blueberry-700, var(--color-icons-secondary));
+}
+.rtps-nav:focus-visible,
+.rtps-icon-btn:focus-visible,
+.rtps-row:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+
+/* section head */
+.rtps-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 6px 4px 0 9px;
+  border-top: 0.5px solid var(--color-border-secondary);
+}
+.rtps-head-label {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.rtps-head-count {
+  flex: 1;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  opacity: 0.7;
+}
+.rtps-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.rtps-icon-btn:hover {
+  background: var(--rtps-hover);
+  color: var(--color-text-primary);
+}
+.rtps-icon-btn .rtps-ic {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+.rtps-spin .rtps-ic {
+  animation: rtps-spin 700ms linear infinite;
+}
+@keyframes rtps-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* tree */
+.rtps-tree {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 0 12px;
+  scrollbar-width: thin;
+  outline: 0;
+}
+.rtps-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--rtps-row-h);
+  padding: 0 8px 0 calc(4px + var(--d, 0) * var(--rtps-indent));
+  border-radius: var(--radius-md, 6px);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.rtps-row:hover {
+  background: var(--rtps-hover);
+  color: var(--color-text-primary);
+}
+.rtps-row[aria-selected="true"] {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtps-chev {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin-right: -3px;
+  border-radius: 4px;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-chev .rtps-ic {
+  width: 12px;
+  height: 12px;
+  color: currentColor;
+  transition: transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.rtps-row[aria-expanded="true"] > .rtps-chev .rtps-ic {
+  transform: rotate(90deg);
+}
+.rtps-chev:hover {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-chev-none {
+  visibility: hidden;
+}
+
+/* project rows: a warm colored tile with the initial, like the rail's own icons */
+.rtps-project {
+  height: 30px;
+  margin-top: 4px;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-proj {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--c);
+  color: #fff;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.12);
+  transition: transform 150ms ease-out;
+}
+.rtps-project:hover .rtps-proj {
+  transform: scale(1.111) rotate(-4deg);
+}
+.rtps-org {
+  height: 30px;
+  margin-top: 10px;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+/* group headers (Branches, Canvases, Docs, Issues, Agents) */
+.rtps-group {
+  height: 22px;
+  margin-top: 2px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.02em;
+}
+.rtps-group:hover {
+  color: var(--color-text-secondary);
+}
+.rtps-count {
+  margin-left: auto;
+  padding: 0 5px;
+  min-width: 18px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--color-surface-container);
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.rtps-chat .rtps-ic,
+.rtps-canvas .rtps-ic,
+.rtps-doc .rtps-ic {
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-canvas .rtps-ic {
+  color: var(--lavender-400, var(--color-icons-tertiary));
+}
+.rtps-row[aria-selected="true"] > .rtps-ic {
+  color: var(--color-text-primary);
+}
+.rtps-meta {
+  flex: none;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  font-variant-numeric: tabular-nums;
+}
+.rtps-issue .rtps-meta {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+}
+.rtps-emoji {
+  width: 15px;
+  flex: none;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: center;
+}
+.rtps-status {
+  width: 9px;
+  height: 9px;
+  margin: 0 3px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-status[data-tone="doing"] {
+  border-color: var(--mustard-600, #d9a521);
+  background: conic-gradient(var(--mustard-600, #d9a521) 0 50%, transparent 50% 100%);
+}
+.rtps-status[data-tone="done"] {
+  border-color: var(--kiwi-700, #5aa35a);
+  background: var(--kiwi-700, #5aa35a);
+}
+.rtps-issue:has(.rtps-status[data-tone="done"]) .rtps-label {
+  color: var(--color-text-tertiary);
+}
+.rtps-agent-tile {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--c) 22%, transparent);
+}
+.rtps-agent-tile .rtps-ic {
+  width: 12px;
+  height: 12px;
+  color: var(--c);
+}
+.rtps-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-accent, var(--salmon-600));
+}
+.rtps-more,
+.rtps-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+}
+.rtps-more:hover {
+  color: var(--color-text-primary);
+}
+.rtps-empty {
+  cursor: default;
+}
+.rtps-empty:hover {
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+div.rtps-empty {
+  padding: 14px 10px;
+  line-height: 16px;
+  white-space: normal;
+}
+
+/* branch cards (Orca): one per workspace, chats inside */
+.rtps-card {
+  margin: 4px 0 6px calc(2px + var(--d, 0) * 8px);
+  padding: 2px;
+  border-radius: var(--radius-lg, 8px);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-surface-container-lowest, transparent);
+}
+.rtps-card[data-current] {
+  border-color: var(--color-border-primary, var(--color-border-secondary));
+  background: var(--color-surface-container-low, var(--color-surface-container));
+}
+.rtps-card .rtps-row {
+  padding-left: calc(6px + var(--d, 0) * var(--rtps-indent));
+}
+.rtps-cardhead {
+  height: auto;
+  min-height: 38px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  align-items: center;
+}
+@keyframes rtps-pulse {
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--mustard-600, #d9a521) 6%, transparent);
+  }
+}
+.rtps-card-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+.rtps-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.rtps-card-title .rtps-label {
+  flex: 0 1 auto;
+}
+.rtps-card-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  line-height: 14px;
+}
+.rtps-badge {
+  flex: none;
+  padding: 0 5px;
+  height: 15px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--kiwi-700, #5aa35a) 16%, transparent);
+  color: var(--kiwi-700, #5aa35a);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 15px;
+}
+.rtps-diff i {
+  color: var(--kiwi-700, #5aa35a);
+  font-style: normal;
+}
+.rtps-diff b {
+  color: var(--salmon-600, #e8775f);
+  font-weight: inherit;
+}
+.rtps-row-btn {
+  display: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+  cursor: pointer;
+}
+.rtps-row:hover > .rtps-row-btn,
+.rtps-row:focus-visible > .rtps-row-btn {
+  display: grid;
+}
+.rtps-row:hover > .rtps-diff {
+  display: none;
+}
+.rtps-row-btn:hover {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-row-btn .rtps-ic {
+  width: 13px;
+  height: 13px;
+  color: currentColor;
+}
+
+/* card sections (Chats, Canvases, Docs, Issues: always open) and chat rows */
+.rtps-chats,
+.rtps-section {
+  height: 22px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-chat,
+.rtps-subchat {
+  gap: 5px;
+  padding-right: 6px;
+}
+.rtps-st,
+.rtps-prov {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.rtps-st .rtps-ic,
+.rtps-prov .rtps-ic {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+.rtps-st[data-status="done"] {
+  color: var(--kiwi-700, #5aa35a);
+}
+.rtps-st[data-status="running"] {
+  color: var(--mustard-600, #d9a521);
+}
+.rtps-st[data-status="running"] .rtps-ic {
+  animation: rtps-spin 2.4s linear infinite;
+}
+.rtps-st[data-status="waiting"] {
+  color: var(--mustard-600, #d9a521);
+}
+.rtps-st[data-status="interrupted"] {
+  color: var(--salmon-600, #e8775f);
+}
+.rtps-st[data-status="new"] {
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-prov {
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+.rtps-prov[data-provider="claude"] {
+  color: #d97757;
+}
+.rtps-prov[data-provider="claude"] .rtps-ic {
+  stroke-width: 2.4;
+}
+.rtps-chat .rtps-label {
+  color: var(--color-text-primary);
+}
+.rtps-chat[data-status="done"]:not([aria-selected="true"]) .rtps-label,
+.rtps-chat[data-status="new"]:not([aria-selected="true"]) .rtps-label {
+  color: var(--color-text-secondary);
+}
+.rtps-time {
+  flex: none;
+  min-width: 18px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rtps-where {
+  flex: none;
+  padding: 0 4px;
+  height: 14px;
+  border-radius: 4px;
+  border: 0.5px solid var(--color-border-secondary);
+  color: var(--color-text-tertiary);
+  font-size: 9.5px;
+  line-height: 13px;
+  letter-spacing: 0.02em;
+}
+.rtps-chev.rtps-round {
+  width: 15px;
+  height: 15px;
+  margin-right: 0;
+  border-radius: 50%;
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-surface-container);
+}
+.rtps-chev.rtps-round .rtps-ic {
+  width: 10px;
+  height: 10px;
+}
+.rtps-kids {
+  position: relative;
+}
+.rtps-kids::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 6px;
+  left: calc(13px + var(--rtps-indent) * 0);
+  border-left: 0.5px solid var(--color-border-secondary);
+}
+.rtps-subchat {
+  height: 24px;
+  font-size: 12px;
+}
+.rtps-subchat .rtps-label {
+  color: var(--color-text-secondary);
+}
+.rtps-bullet {
+  width: 5px;
+  height: 5px;
+  margin: 0 5px 0 4px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+
+.rtps-section {
+  margin-top: 4px;
+  cursor: default;
+}
+.rtps-chats:hover,
+.rtps-section:hover {
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+.rtps-card .rtps-count {
+  background: transparent;
+}
+
+/* the view: panels on screen (terminal, browser, canvas...) and the action
+   that archives the chats that are not on screen */
+.rtps-panel {
+  gap: 6px;
+  padding-right: 6px;
+}
+.rtps-panel > .rtps-ic {
+  margin-left: 1px;
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+.rtps-panel .rtps-label {
+  color: var(--color-text-primary);
+}
+.rtps-panel[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-accent, var(--salmon-600, #e8775f));
+}
+
+/* chat identity: draft tag, creation clock, the chat you are on */
+.rtps-tag {
+  flex: none;
+  padding: 0 4px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  color: var(--color-text-tertiary);
+  font-size: 9.5px;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+}
+.rtps-time[data-stamp] {
+  letter-spacing: -0.01em;
+}
+.rtps-chat[data-draft="empty"]:not([aria-selected="true"]) .rtps-label {
+  color: var(--color-text-tertiary);
+}
+.rtps-chat[data-draft="text"] .rtps-label {
+  font-style: italic;
+}
+.rtps-chat[aria-selected="true"]::before,
+.rtps-subchat[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-accent, var(--salmon-600, #e8775f));
+}
+.rtps-drafts {
+  height: 24px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+.rtps-drafts .rtps-ic {
+  width: 13px;
+  height: 13px;
+}
+
+/* bell count + filters menu */
+.rtps-icon-btn {
+  position: relative;
+}
+.rtps-icon-btn[aria-pressed="true"],
+.rtps-icon-btn[aria-expanded="true"] {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-bell-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--mustard-600, #d9a521);
+  color: #1a1a1a;
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 13px;
+  text-align: center;
+}
+.rtps-bell-count:empty {
+  display: none;
+}
+.rtps-menu {
+  position: absolute;
+  z-index: 10;
+  right: 8px;
+  width: 210px;
+  padding: 4px;
+  border-radius: var(--radius-lg, 8px);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-surface-menu, var(--color-surface-container-high));
+  box-shadow: var(--shadow-dropdown, 0 8px 24px rgb(0 0 0 / 0.25));
+}
+.rtps-menu[hidden] {
+  display: none;
+}
+.rtps-menu-label {
+  padding: 4px 8px 2px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+}
+.rtps-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rtps-menu button:hover,
+.rtps-menu button:focus-visible {
+  background: var(--color-surface-menu-hover, var(--rtps-hover));
+  color: var(--color-text-primary);
+  outline: 0;
+}
+.rtps-check {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 0.5px solid var(--color-border-primary, var(--color-border-secondary));
+}
+.rtps-check .rtps-ic {
+  width: 11px;
+  height: 11px;
+  opacity: 0;
+}
+.rtps-menu [aria-checked="true"] .rtps-check {
+  background: var(--color-accent-subtle, var(--rtps-active));
+}
+.rtps-menu [aria-checked="true"] .rtps-check .rtps-ic {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
+.rtps-menu-sep {
+  height: 0.5px;
+  margin: 4px 6px;
+  background: var(--color-border-secondary);
+}
+
+/* multiple branches: "+" on a project (new worktree from a branch), the card
+   you are on */
+.rtps-row > .rtps-row-btn.rtps-row-btn-on {
+  display: grid;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-row:hover > .rtps-row-btn.rtps-row-btn-on {
+  color: var(--color-text-primary);
+}
+.rtps-card[data-current] {
+  box-shadow: inset 2px 0 0 var(--color-accent, var(--salmon-600, #e8775f));
+}
+.rtps-menu.rtps-bm {
+  left: 6px;
+  right: 6px;
+  width: auto;
+  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+}
+.rtps-menu.rtps-bm[hidden] {
+  display: none;
+}
+.rtps-bm-search {
+  height: 28px;
+  margin: 2px 2px 4px;
+}
+.rtps-bm-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+.rtps-bm-list button .rtps-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-bm-list button .rtps-ic {
+  width: 13px;
+  height: 13px;
+}
+
+/* footer */
+.rtps-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0 8px;
+  border-top: 0.5px solid var(--color-border-secondary);
+}
+.rtps-foot-btn {
+  flex: 1;
+  color: var(--color-text-tertiary);
+}
+.rtps-foot-btn kbd {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  font: inherit;
+  font-size: var(--text-label, 11px);
+  opacity: 0.8;
+}
+
+/* toast */
+.rtps-toast {
+  position: fixed;
+  z-index: 2147483000;
+  left: 50%;
+  bottom: 28px;
+  padding: 7px 12px;
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-menu, var(--color-surface-container-high));
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-popover, 0 8px 24px rgb(0 0 0 / 0.25));
+  font: 500 12px/16px var(--font-sans, -apple-system, sans-serif);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition: opacity 160ms ease, transform 200ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.rtps-toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtps *,
+  .rtps-toast {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------ branch card (Orca layout)
+   line 1: dot + name + "primary"; line 2: branch + terminal / files;
+   "N on screen" + chevron, the rows; collapsed: one summary pill */
+.rtps-card {
+  margin: 4px 0 8px calc(2px + var(--d, 0) * 8px);
+  padding: 4px 2px 6px;
+  border: 0.5px solid transparent;
+  border-radius: 10px;
+  background: var(--color-surface-container-low, var(--color-surface-container));
+  box-shadow: none;
+}
+.rtps-card[data-current] {
+  border-color: var(--color-border-secondary);
+  box-shadow: none;
+}
+.rtps-row.rtps-cardhead {
+  align-items: flex-start;
+  min-height: 46px;
+  padding-top: 6px;
+  padding-bottom: 2px;
+  background: transparent;
+}
+.rtps-row.rtps-cardhead:hover,
+.rtps-row.rtps-cardhead[aria-selected="true"] {
+  background: transparent;
+}
+.rtps-cardhead .rtps-card-text {
+  gap: 3px;
+}
+.rtps-cardhead .rtps-card-title {
+  gap: 7px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-cardhead .rtps-badge {
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border-primary, var(--color-border-secondary));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+.rtps-cardhead .rtps-row-btn {
+  margin-left: auto;
+}
+.rtps-cardhead:hover .rtps-row-btn,
+.rtps-cardhead:focus-visible .rtps-row-btn {
+  display: grid;
+}
+.rtps-cardhead .rtps-card-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+.rtps-card-branch {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-card-tools {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+.rtps-tool {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  cursor: pointer;
+}
+.rtps-tool:hover {
+  background: var(--rtps-active);
+  color: var(--color-text-primary);
+}
+.rtps-tool .rtps-ic {
+  width: 15px;
+  height: 15px;
+  color: currentColor;
+}
+/* "N on screen" + chevron on the right */
+.rtps-card .rtps-chats {
+  height: 26px;
+  margin-top: 2px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-tertiary);
+}
+.rtps-card .rtps-chats:hover {
+  color: var(--color-text-primary);
+}
+.rtps-chev.rtps-chev-end {
+  margin: 0 0 0 auto;
+}
+.rtps-chev.rtps-chev-down .rtps-ic,
+.rtps-row[aria-expanded="false"] > .rtps-chev-end .rtps-ic {
+  transform: rotate(90deg);
+}
+.rtps-row[aria-expanded="true"] > .rtps-chev-end .rtps-ic {
+  transform: rotate(-90deg);
+}
+/* chat rows: status · provider · title · time */
+.rtps-card .rtps-chat,
+.rtps-card .rtps-panel {
+  height: 28px;
+}
+.rtps-card .rtps-prov[data-provider="claude"] .rtps-ic {
+  width: 15px;
+  height: 15px;
+}
+.rtps-card .rtps-subchat {
+  height: 26px;
+  padding-left: 26px;
+}
+.rtps-card .rtps-kids::before {
+  left: 13px;
+}
+/* collapsed: the summary pill */
+.rtps-row.rtps-pill-row,
+.rtps-row[data-kind="pill"] {
+  height: auto;
+  padding: 2px 4px 2px;
+  background: transparent;
+}
+.rtps-row[data-kind="pill"]:hover {
+  background: transparent;
+}
+.rtps-pillbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px 4px 10px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: 8px;
+  background: var(--color-surface-container, rgb(255 255 255 / 0.04));
+}
+.rtps-row[data-kind="pill"]:hover .rtps-pillbox {
+  border-color: var(--color-border-primary, var(--color-border-secondary));
+}
+.rtps-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rtps-pill-group > .rtps-ic {
+  width: 14px;
+  height: 14px;
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+.rtps-prov.rtps-prov-chip {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface-container-high, rgb(255 255 255 / 0.08));
+}
+.rtps-pill-more {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.rtps-pill-open {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-pill-open .rtps-ic {
+  width: 13px;
+  height: 13px;
+  color: currentColor;
+}
+/* project row (Orca: avatar + name): the chevron shows on hover */
+.rtps-project > .rtps-chev {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.rtps-project:hover > .rtps-chev,
+.rtps-project:focus-visible > .rtps-chev,
+.rtps-project[aria-expanded="false"] > .rtps-chev {
+  opacity: 1;
+}
+.rtps-project .rtps-label {
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+/* ------------------------------------------------------------- fine pass
+   4px grid; one 12px left edge inside a card for the status dot, the branch,
+   the pill and the sections; one 1px border per card and none inside it */
+.rtps-card {
+  --rtps-card-x: 12px;
+  --rtps-fill-1: color-mix(in srgb, var(--color-text-primary, #fff) 4%, transparent);
+  --rtps-fill-2: color-mix(in srgb, var(--color-text-primary, #fff) 8%, transparent);
+  margin: 4px 0 8px 4px;
+  padding: 4px 0 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  background: var(--color-surface-container-low, var(--color-surface-container));
+}
+.rtps-card[data-current] {
+  border-color: var(--color-border-primary, var(--color-border-secondary));
+}
+/* rows sit 4px inside the card (their hover/selection never touches its
+   border); content keeps the 12px edge */
+.rtps-card .rtps-row {
+  margin-left: 4px;
+  margin-right: 4px;
+  padding-left: calc(var(--rtps-card-x) - 4px);
+  padding-right: calc(var(--rtps-card-x) - 4px);
+}
+.rtps-card .rtps-chev-none {
+  display: none;
+}
+.rtps-card .rtps-row:focus-visible {
+  outline: none;
+  background: var(--rtps-fill-1);
+}
+/* head: line 1 dot + name (15 semibold) + primary; line 2 branch (13) + tools (16) */
+.rtps-row.rtps-cardhead {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 4px;
+}
+.rtps-cardhead .rtps-card-text {
+  gap: 0;
+  width: 100%;
+}
+.rtps-cardhead .rtps-card-title {
+  height: 24px;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: var(--font-weight-semibold, 600);
+}
+.rtps-cardhead .rtps-badge {
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--color-border-primary, var(--color-border-secondary));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 18px;
+}
+.rtps-cardhead .rtps-card-sub {
+  height: 24px;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 24px;
+}
+.rtps-card-tools {
+  gap: 4px;
+  margin-right: -4px; /* the 16px icons line up with the pill's right edge */
+}
+.rtps-tool {
+  width: 24px;
+  height: 24px;
+}
+.rtps-tool .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+/* "N on screen" header and rows */
+.rtps-card .rtps-chats {
+  height: 28px;
+  margin-top: 4px;
+}
+.rtps-card .rtps-chat,
+.rtps-card .rtps-panel {
+  height: 28px;
+  gap: 8px;
+}
+.rtps-card .rtps-subchat {
+  height: 28px;
+  padding-left: calc(var(--rtps-card-x) + 16px);
+}
+.rtps-card .rtps-kids::before {
+  left: calc(var(--rtps-card-x) + 7px);
+}
+.rtps-card .rtps-chat[aria-selected="true"]::before,
+.rtps-card .rtps-subchat[aria-selected="true"]::before,
+.rtps-card .rtps-panel[aria-selected="true"]::before {
+  left: 0;
+}
+/* collapsed pill: no stroke, fill +4%, radius 8, 12px inset; chips +8% */
+.rtps-row[data-kind="pill"] {
+  height: auto;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.rtps-row[data-kind="pill"]:focus-visible {
+  background: transparent;
+}
+.rtps-pillbox {
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--rtps-fill-1);
+  transition: background-color 120ms ease;
+}
+.rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  background: var(--rtps-fill-2);
+}
+.rtps-pill-group {
+  gap: 6px;
+}
+.rtps-pillbox .rtps-st {
+  width: 16px;
+  height: 16px;
+}
+.rtps-pillbox .rtps-st .rtps-ic {
+  width: 15px;
+  height: 15px;
+}
+.rtps-pillbox .rtps-chip {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  background: var(--rtps-fill-2);
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+.rtps-pillbox .rtps-chip .rtps-ic {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+.rtps-pillbox .rtps-chip[data-provider="claude"] {
+  color: #d97757;
+}
+.rtps-pill-more {
+  margin-left: -2px;
+  font-size: 12px;
+}
+.rtps-pill-open {
+  margin-left: auto;
+  margin-right: -2px;
+}
+/* sections: 12px uppercase with tracking, count on the right, no lines */
+.rtps-card .rtps-section {
+  height: 28px;
+  margin-top: 8px;
+  border: 0;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.rtps-card .rtps-section .rtps-count {
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  letter-spacing: 0;
+  font-size: 12px;
+}
+.rtps-card .rtps-canvas,
+.rtps-card .rtps-doc,
+.rtps-card .rtps-issue {
+  height: 28px;
+  gap: 8px;
+}
+/* archive action and "not on screen": discreet text */
+.rtps-row.rtps-linkrow {
+  height: 28px;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+}
+.rtps-row.rtps-linkrow:hover {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.rtps-link {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: text-decoration-color 120ms ease, color 120ms ease;
+}
+.rtps-row.rtps-linkrow:hover .rtps-link {
+  color: var(--color-text-primary);
+  text-decoration-color: currentColor;
+}
+.rtps-card .rtps-panel > .rtps-ic {
+  margin-left: 0;
+}
+
+/* card sections fold from the header: count, then ˅ (open) / › (folded) */
+.rtps-card .rtps-section {
+  cursor: pointer;
+}
+.rtps-card .rtps-section:hover {
+  color: var(--color-text-primary);
+}
+.rtps-card .rtps-section .rtps-count {
+  margin-left: auto;
+}
+.rtps-chev.rtps-chev-sec {
+  margin: 0 -2px 0 8px;
+}
+.rtps-row[aria-expanded="true"] > .rtps-chev-sec .rtps-ic {
+  transform: rotate(90deg);
+}
+.rtps-row[aria-expanded="false"] > .rtps-chev-sec .rtps-ic {
+  transform: none;
+}
+
+/* decks: the active deck names the "on screen" group; the other decks are
+   compact pills; "+ New deck" closes the group */
+.rtps-deck-name {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.rtps-chats .rtps-deck-name {
+  cursor: text;
+}
+.rtps-pillbox .rtps-deck-name {
+  flex: none;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.rtps-row[data-kind="deck"] {
+  height: auto;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background: transparent;
+}
+.rtps-row[data-kind="deck"]:hover,
+.rtps-row[data-kind="deck"]:focus-visible {
+  background: transparent;
+}
+.rtps-row[data-kind="deck"] .rtps-pillbox {
+  min-height: 32px;
+  background: var(--rtps-fill-1);
+}
+.rtps-row[data-kind="deck"]:hover .rtps-pillbox,
+.rtps-row[data-kind="deck"]:focus-visible .rtps-pillbox {
+  background: var(--rtps-fill-2);
+}
+/* collapsed: the active deck's name reads brighter than the others' */
+.rtps-row[data-kind="pill"] .rtps-deck-name {
+  color: var(--color-text-primary);
+}
+.rtps-row[data-kind="newdeck"] {
+  height: 28px;
+  gap: 8px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+.rtps-row[data-kind="newdeck"] > .rtps-ic {
+  width: 13px;
+  height: 13px;
+}
+.rtps-row[data-kind="newdeck"]:hover {
+  background: transparent;
+  color: var(--color-text-primary);
+}
+.rtps-deck-input {
+  width: 112px;
+  height: 20px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  outline: 1px solid var(--color-border-focus, var(--color-border-primary));
+  background: var(--rtps-fill-2, var(--color-surface-container));
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+/* a pill never overflows: the groups shrink and clip, the chevron stays */
+.rtps-pillbox {
+  min-width: 0;
+  overflow: hidden;
+}
+.rtps-pill-groups {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+.rtps-pill-groups > .rtps-pill-more {
+  flex: none;
+}
+.rtps-pill-group {
+  flex: none;
+}
+.rtps-pill-open,
+.rtps-pillbox .rtps-deck-name {
+  flex: none;
+}
+
+/* card head: one line (dot, name, primary, +); the list comes right below */
+.rtps-row.rtps-cardhead {
+  padding-top: 8px;
+  padding-bottom: 0;
+}
+.rtps-card .rtps-chats,
+.rtps-card .rtps-row[data-kind="pill"] {
+  margin-top: 2px;
+}
+
+/* =============================================================== hierarchy
+   project > branch cards > decks (siblings) > panes. One hover for every
+   clickable row; active = lighter fill + marker, inactive = secondary text,
+   disabled = tertiary text with no hover. */
+.rtps {
+  --rtps-hover-bg: color-mix(in srgb, var(--color-text-primary, #fff) 5%, transparent);
+  --rtps-accent-line: color-mix(in srgb, var(--color-accent, #d4d4d4) 30%, transparent);
+}
+/* project: chevron always there; its branches live in a container tied to it */
+.rtps-project > .rtps-chev,
+.rtps-project:hover > .rtps-chev {
+  opacity: 1;
+}
+.rtps-projkids {
+  position: relative;
+  margin: 2px 0 6px 13px;
+  padding-left: 10px;
+}
+.rtps-projkids::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 10px;
+  border-left: 1px solid var(--color-border-primary, var(--color-border-secondary));
+  border-radius: 1px;
+}
+.rtps-projkids > .rtps-card {
+  margin-left: 0;
+}
+/* branch card: inactive = quiet border; the branch you are on = accent border */
+.rtps-card {
+  border-color: var(--color-border-secondary);
+}
+.rtps-card[data-current] {
+  border-color: var(--rtps-accent-line);
+}
+.rtps-card:not([data-current]) .rtps-cardhead .rtps-card-title {
+  color: var(--color-text-secondary);
+}
+/* decks: sibling blocks, same inset and width */
+.rtps-deckblock {
+  position: relative;
+  margin: 2px 4px 0;
+  border-radius: 8px;
+}
+.rtps-deckblock + .rtps-deckblock {
+  margin-top: 4px;
+}
+.rtps-deckblock[data-active] {
+  padding-bottom: 2px;
+  background: var(--rtps-fill-1);
+}
+.rtps-deckblock[data-active]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-accent, #d4d4d4);
+}
+.rtps-card .rtps-deckblock > .rtps-row,
+.rtps-card .rtps-deckblock > .rtps-kids {
+  margin-left: 0;
+  margin-right: 0;
+}
+.rtps-card .rtps-deckblock .rtps-chats,
+.rtps-card .rtps-deckblock .rtps-row[data-kind="deck"] {
+  height: 32px;
+  margin-top: 0;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-tertiary);
+}
+.rtps-deckmark {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-deckmark[data-on] {
+  border-color: var(--color-accent, #d4d4d4);
+  background: var(--color-accent, #d4d4d4);
+}
+.rtps-deckblock .rtps-deck-name {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-deckblock[data-active] .rtps-deck-name {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.rtps-deck-meta {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-regular, 400);
+}
+.rtps-row[data-kind="deck"] .rtps-pill-groups {
+  margin-left: auto;
+  gap: 8px;
+}
+.rtps-row[data-kind="deck"] .rtps-pill-groups .rtps-chip {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--rtps-fill-2);
+}
+.rtps-row[data-kind="deck"] .rtps-pill-groups .rtps-chip .rtps-ic {
+  width: 13px;
+  height: 13px;
+}
+.rtps-row[data-kind="deck"] .rtps-chev-end {
+  margin-left: 4px;
+}
+.rtps-row[data-kind="deck"] .rtps-label {
+  flex: 0 1 auto;
+}
+/* one hover: same fill, same radius, pointer; chevrons only change color */
+.rtps-card .rtps-row {
+  border-radius: 6px;
+}
+.rtps-row:not([data-disabled]):hover,
+.rtps-row.rtps-cardhead:hover,
+.rtps-row[data-kind="deck"]:hover,
+.rtps-card .rtps-chats:hover,
+.rtps-card .rtps-section:hover {
+  background: var(--rtps-hover-bg);
+}
+.rtps-row:not([data-disabled]) {
+  cursor: pointer;
+}
+.rtps-chev:hover {
+  background: transparent;
+}
+.rtps-row:hover .rtps-chev,
+.rtps-row:hover .rtps-chev-end {
+  color: var(--color-text-primary);
+}
+/* disabled: tertiary text, no hover, only the link reacts */
+.rtps-row[data-disabled] {
+  cursor: default;
+  color: var(--color-text-tertiary);
+}
+.rtps-row[data-disabled]:hover {
+  background: transparent;
+}
+.rtps-row[data-disabled] .rtps-link {
+  cursor: pointer;
+}
+
+.rtps-projkids {
+  margin-left: 11px;
+  padding-left: 8px;
+}
+.rtps-row[data-kind="deck"] .rtps-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rtps-row[data-kind="deck"] .rtps-pill-groups {
+  margin-left: 0;
+  flex: 0 1 auto;
+}
+
+/* a deck lists every tab of the bars on screen: the one in front of its bar
+   reads primary, the ones behind it secondary */
+.rtps-card .rtps-chat .rtps-label,
+.rtps-card .rtps-subchat .rtps-label,
+.rtps-card .rtps-panel .rtps-label {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-card .rtps-row[data-behind] .rtps-label {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular, 400);
+}
+.rtps-card .rtps-row[data-behind] .rtps-prov,
+.rtps-card .rtps-row[data-behind] > .rtps-ic {
+  opacity: 0.7;
+}
+/* the card's "+" (new deck) is always there */
+.rtps-cardhead .rtps-row-btn.rtps-row-btn-on {
+  display: grid;
+  margin-left: auto;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-cardhead:hover .rtps-row-btn.rtps-row-btn-on,
+.rtps-cardhead .rtps-row-btn.rtps-row-btn-on:hover {
+  color: var(--color-text-primary);
+}
+/* on-screen highlight of the tab / pane a row stands for */
+.rtps-flash {
+  position: fixed;
+  z-index: 2147482000;
+  pointer-events: none;
+  /* per-corner radius copied from the target by the JS (placeFlash) */
+  border-radius: var(--rtps-flash-tl, 8px) var(--rtps-flash-tr, 8px) var(--rtps-flash-br, 8px) var(--rtps-flash-bl, 8px);
+  /* inset ring only: it follows the corners and never spills past them */
+  box-shadow: inset 0 0 0 2px var(--color-focus, var(--color-accent, #d4d4d4));
+  animation: rtps-flash 600ms ease-out forwards;
+}
+.rtps-flash.rtps-flash-soft {
+  animation: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-focus, var(--color-accent, #d4d4d4)) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent, #d4d4d4) 4%, transparent);
+}
+@keyframes rtps-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtps-flash {
+    animation: none;
+  }
+}
+
+.rtps-card .rtps-chats .rtps-deck-count {
+  margin-left: auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.rtps-card .rtps-chats .rtps-deck-count + .rtps-chev-end {
+  margin-left: 8px;
+}
+
+/* ===================================================================== grid
+   Inside a card, every row starts 12px from the card edge and uses the same
+   columns: [16 status / marker][8][16 icon][8][title][meta]. A child row is the
+   same grid +16px. Card head and deck headers put their dot in the first
+   column and their name in the icon column. 4px rhythm throughout. */
+.rtps-card {
+  --g-pad: 8px; /* row padding inside the 4px row inset = 12px content edge */
+  --g-col: 16px;
+  --g-gap: 8px;
+}
+.rtps-card .rtps-row {
+  gap: var(--g-gap);
+  padding-left: var(--g-pad);
+  padding-right: var(--g-pad);
+}
+.rtps-card .rtps-st,
+.rtps-card .rtps-prov,
+.rtps-card .rtps-ico,
+.rtps-card .rtps-deckmark {
+  display: grid;
+  place-items: center;
+  width: var(--g-col);
+  height: var(--g-col);
+  flex: none;
+  margin: 0;
+}
+.rtps-card .rtps-st .rtps-ic,
+.rtps-card .rtps-prov .rtps-ic,
+.rtps-card .rtps-ico .rtps-ic {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  color: currentColor;
+}
+.rtps-card .rtps-ico {
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+.rtps-card .rtps-prov:not([data-provider]) {
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-card .rtps-panel > .rtps-ic {
+  display: none; /* the icon lives in .rtps-ico now */
+}
+/* child rows: the same grid, one step (16px) in */
+.rtps-card .rtps-subchat {
+  padding-left: calc(var(--g-pad) + var(--g-col));
+}
+.rtps-card .rtps-subchat .rtps-bullet {
+  width: 5px;
+  height: 5px;
+  margin: 0;
+}
+.rtps-card .rtps-kids::before {
+  left: calc(var(--g-pad) + var(--g-col) / 2);
+  top: 2px;
+  bottom: 8px;
+}
+/* deck marker: a 16px slot with the dot centered */
+.rtps-card .rtps-deckmark {
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.rtps-card .rtps-deckmark::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-card .rtps-deckmark[data-on]::before {
+  border-color: var(--color-accent, #d4d4d4);
+  background: var(--color-accent, #d4d4d4);
+}
+/* card head: [branch 16][8][name] */
+.rtps-cardhead .rtps-card-title {
+  gap: var(--g-gap);
+}
+/* empty line inside a deck: text on the title column */
+.rtps-card .rtps-empty[data-disabled]:not(.rtps-linkrow) {
+  padding-left: calc(var(--g-pad) + 2 * var(--g-col) + 2 * var(--g-gap));
+}
+/* top shortcuts + project row on the same 4px grid: icon column at 8px */
+.rtps-nav {
+  gap: 8px;
+  padding: 0 8px;
+}
+.rtps-nav .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-row.rtps-project {
+  gap: 8px;
+  padding-left: 4px;
+}
+.rtps-project > .rtps-chev {
+  width: 16px;
+  margin-right: -4px;
+}
+.rtps-card .rtps-deckblock .rtps-row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* ========================================================== design system
+   The native tree's row (workspace-sidebar): 13px/18px, weight 400, secondary
+   text, 8px left padding, 5px vertical (28px rows), 8px gap, 16px icons, 4px
+   hover radius on --tree-item-hover-bg, 12px per level, 10px/13px meta. Pane
+   rows: [icon 16][8][title][indicator][meta]; nothing left of the icon. */
+.rtps-card {
+  --g-pad: 8px;
+  --g-col: 16px;
+  --g-gap: 8px;
+  --g-indent: var(--tree-item-indent, 12px);
+}
+.rtps-card .rtps-row,
+.rtps-card .rtps-chat,
+.rtps-card .rtps-subchat,
+.rtps-card .rtps-panel,
+.rtps-card .rtps-chats,
+.rtps-card .rtps-row[data-kind="deck"],
+.rtps-card .rtps-deckblock .rtps-chats,
+.rtps-card .rtps-deckblock .rtps-row[data-kind="deck"] {
+  height: 28px;
+  min-height: 28px;
+  padding: 5px 4px 5px var(--g-pad);
+  gap: var(--g-gap);
+  border-radius: 4px;
+  font-size: var(--tree-label-size, 13px);
+  line-height: var(--tree-label-line-height, 18px);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+.rtps-card .rtps-row:not([data-disabled]):hover,
+.rtps-card .rtps-chats:hover,
+.rtps-card .rtps-row[data-kind="deck"]:hover {
+  background: var(--tree-item-hover-bg, #191919);
+  color: var(--color-text-primary);
+}
+.rtps-card .rtps-prov,
+.rtps-card .rtps-ico {
+  width: 16px;
+  height: 16px;
+}
+.rtps-card .rtps-prov .rtps-ic,
+.rtps-card .rtps-ico .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-card .rtps-prov[data-provider="claude"] .rtps-ic {
+  width: 15px;
+  height: 15px;
+}
+/* titles: the tab in front of its bar primary, the ones behind secondary */
+.rtps-card .rtps-chat .rtps-label,
+.rtps-card .rtps-subchat .rtps-label,
+.rtps-card .rtps-panel .rtps-label {
+  color: var(--color-text-primary);
+  font-weight: 400;
+}
+.rtps-card .rtps-row[data-behind] .rtps-label {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+/* right side: one indicator (status or unread), then the time */
+.rtps-card .rtps-chat .rtps-st,
+.rtps-card .rtps-subchat .rtps-st {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+}
+.rtps-card .rtps-chat .rtps-st .rtps-ic,
+.rtps-card .rtps-subchat .rtps-st .rtps-ic {
+  width: 13px;
+  height: 13px;
+}
+.rtps-card .rtps-time {
+  min-width: 0;
+  font-size: var(--text-caption, 10px);
+  line-height: var(--leading-caption, 13px);
+  color: var(--color-text-tertiary);
+}
+/* a child: the same row, one level (12px) in, no bullet */
+.rtps-card .rtps-subchat {
+  padding-left: calc(var(--g-pad) + var(--g-indent));
+}
+.rtps-card .rtps-kids::before {
+  left: calc(var(--g-pad) + var(--g-col) / 2);
+  top: 0;
+  bottom: 6px;
+}
+/* deck headers: number on the icon column; active = accent bar + fill + primary */
+.rtps-card .rtps-deckblock .rtps-deck-name {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+.rtps-card .rtps-deckblock[data-active] .rtps-deck-name {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-card .rtps-deckblock .rtps-deck-meta,
+.rtps-card .rtps-chats .rtps-deck-count {
+  font-size: var(--text-caption, 10px);
+  color: var(--color-text-tertiary);
+}
+.rtps-card .rtps-deckblock[data-active]::before {
+  top: 6px;
+  bottom: 6px;
+}
+/* card head: [branch 16][8][name 13/500][primary 11] */
+.rtps-row.rtps-cardhead {
+  height: auto;
+  padding: 6px 4px 2px var(--g-pad);
+}
+.rtps-cardhead .rtps-card-title {
+  height: 18px;
+  font-size: var(--tree-label-size, 13px);
+  line-height: var(--tree-label-line-height, 18px);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-cardhead .rtps-badge {
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: var(--text-label, 11px);
+  line-height: 14px;
+  font-weight: 400;
+}
+.rtps-card[data-current] .rtps-cardhead .rtps-card-title {
+  color: var(--color-text-primary);
+}
+.rtps-card:not([data-current]) .rtps-cardhead .rtps-card-title {
+  color: var(--color-text-secondary);
+}
+/* pills in deck rows: no bigger than the row */
+.rtps-row[data-kind="deck"] .rtps-pill-groups .rtps-chip {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+.rtps-row[data-kind="deck"] .rtps-pill-groups .rtps-chip .rtps-ic {
+  width: 12px;
+  height: 12px;
+}
+/* project row + top shortcuts: 13px, 28px rows, 4px radius */
+.rtps-row.rtps-project {
+  height: 28px;
+  font-size: var(--tree-label-size, 13px);
+}
+.rtps-nav {
+  height: 28px;
+  border-radius: 4px;
+  font-size: var(--tree-label-size, 13px);
+}
+
+/* ============================================================ Orca layout
+   Projects are plain rows (no box, no rail, no side bar). Each worktree is ONE
+   bordered card; inside it the rows have no box of their own. The only
+   resting strokes in the tree: the card, the collapsed pillbox (and its group
+   dividers) and the "primary" chip. Hover and the open row change fill only. */
+.rtps-tree .rtps-projkids {
+  margin: 0 0 6px;
+  padding-left: 0;
+}
+.rtps-tree .rtps-projkids::before,
+.rtps-tree .rtps-kids::before,
+.rtps-tree .rtps-card .rtps-kids::before {
+  content: none;
+  display: none;
+}
+.rtps-tree .rtps-proj {
+  box-shadow: none;
+}
+.rtps-tree .rtps-card,
+.rtps-tree .rtps-card[data-current],
+.rtps-tree .rtps-projkids > .rtps-card {
+  margin: 4px 8px 8px;
+  padding: 6px 4px 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  background: var(--color-surface-container-low, var(--color-surface-container));
+  box-shadow: none;
+}
+.rtps-tree .rtps-card[data-current] {
+  border-color: var(--color-border-primary, var(--color-border-secondary));
+}
+.rtps-tree .rtps-card > .rtps-cardhead,
+.rtps-tree .rtps-card[data-current] > .rtps-cardhead {
+  background: transparent;
+}
+.rtps-tree .rtps-card > .rtps-cardhead:hover {
+  background: var(--rtps-hover-bg);
+}
+/* "primary" chip: the one bordered chip */
+.rtps-tree .rtps-cardhead .rtps-badge,
+.rtps-tree .rtps-where {
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border-primary, var(--color-border-secondary));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.rtps-tree .rtps-chev.rtps-round {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+/* open row: tonal fill only; hover must not hide it */
+.rtps-tree .rtps-chat[aria-selected="true"]::before,
+.rtps-tree .rtps-subchat[aria-selected="true"]::before,
+.rtps-tree .rtps-panel[aria-selected="true"]::before,
+.rtps-tree .rtps-card .rtps-chat[aria-selected="true"]::before,
+.rtps-tree .rtps-card .rtps-subchat[aria-selected="true"]::before,
+.rtps-tree .rtps-card .rtps-panel[aria-selected="true"]::before,
+.rtps-tree .rtps-deckblock[data-active]::before,
+.rtps-tree .rtps-card .rtps-deckblock[data-active]::before {
+  content: none;
+  display: none;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-active] {
+  padding: 2px 0 4px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 4%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+.rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="deck"]:not(:hover) {
+  background: transparent;
+}
+.rtps-tree .rtps-card .rtps-row[aria-selected="true"] {
+  background: var(--color-surface-container, var(--rtps-active));
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-card .rtps-row[aria-selected="true"]:hover {
+  background: var(--rtps-active);
+}
+.rtps-tree .rtps-card .rtps-deckmark::before {
+  border: 0;
+  background: color-mix(in srgb, var(--color-icons-tertiary, var(--color-text-tertiary)) 55%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckmark[data-on]::before {
+  background: var(--color-accent, #d4d4d4);
+}
+/* collapsed line: one bordered pillbox a tone below the card, chevron outside */
+.rtps-tree .rtps-row[data-kind="pill"] {
+  overflow: visible;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  position: relative;
+  width: calc(100% - 20px);
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  background: var(--color-surface-container-lowest, color-mix(in srgb, #000 28%, var(--color-surface-container-low, transparent)));
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  margin: 0;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+}
+.rtps-tree .rtps-pillbox .rtps-pill-groups {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-group {
+  padding: 0 10px;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-group:first-child {
+  padding-left: 0;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-group + .rtps-pill-group {
+  border-left: 1px solid var(--color-border-secondary);
+}
+.rtps-tree .rtps-pillbox .rtps-chip,
+.rtps-tree .rtps-row[data-kind="deck"] .rtps-pill-groups .rtps-chip,
+.rtps-tree .rtps-prov.rtps-prov-chip {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.rtps-tree .rtps-row:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open .rtps-ic {
+  width: 14px;
+  height: 14px;
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="pill"] {
+  margin-bottom: 4px;
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="pill"] {
+  height: auto;
+  min-height: 36px;
+  padding: 0 4px 0 8px;
+  overflow: visible;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox {
+  overflow: visible;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-active] .rtps-row[aria-selected="true"] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 9%, transparent);
+}
+
+/* ---- Orca pass 2: border only on the current worktree, more air, one rail
+   per project (centered under the project's chevron; the cards sit 12px right
+   of it, so no row background can reach it) */
+.rtps-tree .rtps-card,
+.rtps-tree .rtps-projkids > .rtps-card {
+  margin: 0 8px 10px 0;
+  padding: 8px 8px 10px;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.rtps-tree .rtps-card[data-current],
+.rtps-tree .rtps-projkids > .rtps-card[data-current] {
+  border-color: var(--color-border-primary, var(--color-border-secondary));
+}
+.rtps-tree .rtps-projkids {
+  position: relative;
+  margin: 2px 0 22px 17px;
+  padding-left: 12px;
+}
+.rtps-tree .rtps-projkids > .rtps-card:last-child {
+  margin-bottom: 0;
+}
+.rtps-tree .rtps-projkids::before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  border: 0;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--color-border-primary, var(--color-border-secondary)) 70%, transparent);
+  pointer-events: none;
+}
+
+/* ---- one radius scale for the whole tree (inner = outer - padding) ---- */
+.rtps-tree {
+  --rtps-r-card: 12px;
+  --rtps-r-block: 8px;
+  --rtps-r-row: 6px;
+  --rtps-r-chip: 6px;
+}
+.rtps-tree .rtps-card,
+.rtps-tree .rtps-projkids > .rtps-card {
+  border-radius: var(--rtps-r-card);
+}
+.rtps-tree .rtps-row.rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-cardhead,
+.rtps-tree .rtps-card .rtps-deckblock,
+.rtps-tree .rtps-card .rtps-deckblock[data-active],
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox {
+  border-radius: var(--rtps-r-block);
+}
+/* header and active block: the same inset inside the card */
+.rtps-tree .rtps-card > .rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-deckblock {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.rtps-tree .rtps-row,
+.rtps-tree .rtps-card .rtps-row,
+.rtps-tree .rtps-card .rtps-chat,
+.rtps-tree .rtps-card .rtps-subchat,
+.rtps-tree .rtps-card .rtps-panel,
+.rtps-tree .rtps-card .rtps-chats,
+.rtps-tree .rtps-card .rtps-section,
+.rtps-tree .rtps-card .rtps-deckblock .rtps-row,
+.rtps-tree .rtps-nav {
+  border-radius: var(--rtps-r-row);
+}
+.rtps-tree .rtps-row.rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-cardhead {
+  border-radius: var(--rtps-r-block);
+}
+.rtps-tree .rtps-proj {
+  border-radius: var(--rtps-r-row);
+}
+.rtps-tree .rtps-cardhead .rtps-badge,
+.rtps-tree .rtps-where,
+.rtps-tree .rtps-chev.rtps-round,
+.rtps-tree .rtps-tag {
+  border-radius: var(--rtps-r-chip);
+}
+
+/* ---- worktree header: clickable (selects the workspace); its "+" has its own hover ---- */
+.rtps-tree .rtps-cardhead .rtps-row-btn,
+.rtps-tree .rtps-cardhead:hover .rtps-row-btn,
+.rtps-tree .rtps-cardhead .rtps-row-btn.rtps-row-btn-on {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  border: 0;
+  border-radius: var(--rtps-r-row);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  opacity: 1;
+  cursor: pointer;
+}
+.rtps-tree .rtps-cardhead .rtps-row-btn:hover,
+.rtps-tree .rtps-cardhead:hover .rtps-row-btn:hover {
+  background: var(--rtps-hover-bg);
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-cardhead .rtps-row-btn:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+
+/* ---- stability: nothing moves when a deck opens or closes ---- */
+.rtps-tree .rtps-card .rtps-deckblock,
+.rtps-tree .rtps-card .rtps-deckblock[data-active] {
+  margin: 2px 4px 0;
+  padding: 2px 0 4px;
+}
+.rtps-tree .rtps-card .rtps-deckblock + .rtps-deckblock {
+  margin-top: 2px;
+}
+/* header of an open deck and a collapsed deck: same 28px row, same slots */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="deck"],
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] {
+  height: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 0 0 8px;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] {
+  padding-right: 4px;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] {
+  padding-left: 0;
+  padding-right: 0;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  box-sizing: border-box;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 0 0 7px;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open {
+  left: calc(100% + 2px);
+  width: 14px;
+}
+/* chevron column: 14px wide, 4px from the row edge, in both states */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] .rtps-chev-end {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+/* the active fill is the marker; no leading dot column to push the name */
+.rtps-tree .rtps-card .rtps-deckblock .rtps-deckmark {
+  display: none;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open {
+  left: calc(100% + 3px);
+}
+
+/* ---- top bar: search + one row of icon buttons (routes left, actions right) ---- */
+.rtps {
+  --rtps-r-block: 8px;
+  --rtps-r-row: 6px;
+}
+.rtps-top {
+  gap: 0;
+  padding-bottom: 6px;
+}
+.rtps-top .rtps-search {
+  height: 32px;
+  margin-bottom: 0;
+  padding: 0 10px;
+  border-radius: var(--rtps-r-block);
+}
+.rtps-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 4px 0 4px;
+  border: 0;
+}
+.rtps-head-label,
+.rtps-head-count {
+  display: none;
+}
+.rtps-head .rtps-icon-btn {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--rtps-r-row);
+}
+.rtps-head .rtps-icon-btn .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-head .rtps-icon-btn[data-route] + .rtps-icon-btn:not([data-route]) {
+  margin-left: auto;
+}
+.rtps-head .rtps-icon-btn[data-active] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 6%, transparent);
+  color: var(--color-text-primary);
+}
+.rtps-head .rtps-icon-btn[data-active]:hover {
+  background: var(--rtps-hover);
+}
+.rtps-head .rtps-icon-btn:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+.rtps-head .rtps-bell-count {
+  top: 2px;
+  right: 1px;
+}
+
+/* open but not active deck: same box as the active block, quieter colors */
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  border-radius: var(--rtps-r-block);
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 2%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:not([aria-selected="true"]) {
+  color: var(--color-text-secondary);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:not([aria-selected="true"]) .rtps-label {
+  color: var(--color-text-secondary);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="chats"]:not(:hover) {
+  background: transparent;
+}
+
+/* rows inside an open deck sit 12px in from the deck header (no rail) */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row:not([data-kind="chats"]):not([data-kind="deck"]):not([data-kind="pill"]) {
+  padding-left: 20px;
+}
+.rtps-tree .rtps-card .rtps-deckblock .rtps-kids > .rtps-row {
+  padding-left: 32px;
+}
+
+/* ---- native rail group: search, project avatars, add (injected by the JS) ---- */
+.rtps-top .rtps-search {
+  width: 100%;
+  margin-right: 0;
+}
+.rtps-head:empty {
+  display: none;
+}
+.rtps-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+.rtps-rail::before,
+.rtps-rail::after {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: var(--color-border-secondary);
+}
+.rtps-rail-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.rtps-rail-btn:hover {
+  background: var(--rtps-hover-bg, var(--color-surface-container));
+  color: var(--color-text-primary);
+}
+.rtps-rail-btn:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+.rtps-rail-btn > svg,
+.rtps-rail-btn .rtps-ic {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+}
+.rtps-rail-av {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--c);
+  color: #fff;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+}
+.rtps-rail-proj[data-active] {
+  background: var(--color-surface-container-high, var(--color-surface-container));
+  box-shadow: 0 0 0 1.5px var(--color-accent, #d4d4d4);
+}
+.rtps-rail-proj[data-open]:not([data-active]) {
+  color: var(--color-text-primary);
+}
+
+/* no footer: the tree runs to the bottom edge of the sidebar */
+.rtps-foot {
+  display: none;
+}
+.rtps .rtps-tree {
+  padding-bottom: 8px;
+}
+
+/* ---- expanded sidebar top: search + add-project on one line ---- */
+.rtps-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.rtps-top .rtps-search {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+}
+.rtps-rail[data-mode="expanded"] {
+  display: none;
+}
+
+/* the rail's five route buttons hide while the panel is placed (then the rail
+   itself is hidden too); when a push fails the rail is back with the mod's
+   compact group AND its route buttons, so navigation never depends on the
+   panel that could not be placed. */
+html.rtps-on.rtps-placed [data-testid="workspace-navbar-chat-button"],
+html.rtps-on.rtps-placed [data-testid="workspace-navbar-design-button"],
+html.rtps-on.rtps-placed [data-testid="workspace-navbar-docs-button"],
+html.rtps-on.rtps-placed [data-testid="workspace-navbar-issues-button"],
+html.rtps-on.rtps-placed [data-testid="workspace-navbar-agents-button"] {
+  display: none !important;
+}
+
+/* ---- stronger selected states.
+   Colors only: no size, padding or border width changes. ---- */
+.rtps-tree .rtps-card .rtps-deckblock[data-active] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 8%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 4%, transparent);
+}
+.rtps-tree .rtps-card .rtps-row[aria-selected="true"],
+.rtps-tree .rtps-card .rtps-deckblock[data-active] .rtps-row[aria-selected="true"] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 15%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--color-text-primary, #fff) 60%, transparent);
+  outline-offset: -1px;
+}
+.rtps-tree .rtps-card .rtps-row[aria-selected="true"]:hover,
+.rtps-tree .rtps-card .rtps-deckblock[data-active] .rtps-row[aria-selected="true"]:hover {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 19%, transparent);
+}
+.rtps-tree .rtps-card[data-current],
+.rtps-tree .rtps-projkids > .rtps-card[data-current] {
+  border-color: color-mix(in srgb, var(--color-text-primary, #fff) 26%, transparent);
+}
+.rtps-rail-proj[data-active] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 14%, transparent);
+}
+
+/* ---- focus order: active deck > current worktree > the rest. Colors and
+   opacity only; no metric changes. ---- */
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 2%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-label,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-deck-name {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-ic,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-prov,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-time,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-chev,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-count {
+  opacity: 0.5;
+}
+/* hover brings that one row back to full brightness */
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-label,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-deck-name {
+  color: var(--color-text-primary);
+  opacity: 1;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-ic,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-prov,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-time,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-chev,
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-count {
+  opacity: 1;
+}
+/* worktrees that are not the current one: one step quieter */
+.rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-label {
+  color: var(--color-text-secondary);
+}
+.rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-badge {
+  opacity: 0.75;
+}
+
+/* ---- tree guide for the active deck: starts under the header (2px block
+   padding + 28px header), runs along every child row. Above the row
+   backgrounds, never covered by hover; no layout impact. ---- */
+.rtps-tree .rtps-card .rtps-deckblock[data-active]::before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 2;
+  top: 30px;
+  bottom: 4px;
+  left: 10px;
+  width: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 58%, transparent);
+  pointer-events: none;
+}
+
+/* project row "+" (new worktree): only on hover / focus / while its popover
+   is open. opacity, not display, so the slot never moves. */
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"] {
+  opacity: 0;
+  transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+.rtps-tree .rtps-project:hover > .rtps-row-btn[data-row-act="newWorktree"],
+.rtps-tree .rtps-project:focus-within > .rtps-row-btn[data-row-act="newWorktree"],
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"]:focus-visible,
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][aria-expanded="true"] {
+  opacity: 1;
+}
+
+/* ============================================================ Orca polish
+   Same metrics in every state (rest, hover, selected, current): borders are
+   always 1px (transparent when not shown), heights never depend on state. */
+.rtps-tree {
+  --rtps-r-card: 14px;
+}
+/* worktree card: only the current one is drawn; the others keep the same
+   box (padding, border width) so nothing moves when the current one changes */
+.rtps-tree .rtps-card,
+.rtps-tree .rtps-projkids > .rtps-card {
+  margin: 0 8px 8px 0;
+  padding: 6px 8px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--rtps-r-card);
+  background: transparent;
+}
+.rtps-tree .rtps-card[data-current],
+.rtps-tree .rtps-projkids > .rtps-card[data-current] {
+  background: var(--color-surface-container-low, var(--color-surface-container));
+}
+/* header: 32px title row, a status dot instead of the branch icon */
+.rtps-tree .rtps-row.rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-cardhead {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 4px 0 8px;
+}
+.rtps-tree .rtps-cardhead .rtps-card-text {
+  height: 32px;
+  justify-content: center;
+}
+.rtps-tree .rtps-cardhead .rtps-card-title {
+  height: 32px;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-card-title {
+  color: var(--color-text-secondary);
+}
+.rtps-tree .rtps-cardhead .rtps-badge,
+.rtps-tree .rtps-where {
+  height: 20px;
+  padding: 0 7px;
+  font-size: 12px;
+  line-height: 18px;
+}
+/* deck header = dropdown pill; collapsed deck = the same pill */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover) {
+  box-sizing: border-box;
+  width: calc(100% - 20px);
+  height: 32px;
+  min-height: 32px;
+  padding: 0 9px 0 9px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--rtps-r-block);
+  background: transparent;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"] {
+  border-color: color-mix(in srgb, var(--color-text-primary, #fff) 22%, transparent);
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] .rtps-deck-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] .rtps-count {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] .rtps-chev-end {
+  position: absolute;
+  left: calc(100% + 3px);
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  transform: translateY(-50%);
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] {
+  height: 32px;
+  min-height: 32px;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 0 0 9px;
+  border-color: var(--color-border-secondary);
+}
+/* rhythm: 4px between rows, 8px between decks */
+.rtps-tree .rtps-card .rtps-deckblock {
+  margin-top: 4px;
+}
+.rtps-tree .rtps-card .rtps-deckblock + .rtps-deckblock {
+  margin-top: 8px;
+}
+.rtps-tree .rtps-card .rtps-deckblock .rtps-row + .rtps-row,
+.rtps-tree .rtps-card .rtps-deckblock .rtps-kids,
+.rtps-tree .rtps-card .rtps-deckblock .rtps-kids + .rtps-row {
+  margin-top: 4px;
+}
+.rtps-tree .rtps-card .rtps-deckblock .rtps-kids > .rtps-row + .rtps-row {
+  margin-top: 4px;
+}
+/* session rows: 32px, 16px icon, 13/500 title, 12px time */
+.rtps-tree .rtps-card .rtps-chat,
+.rtps-tree .rtps-card .rtps-subchat,
+.rtps-tree .rtps-card .rtps-panel {
+  height: 32px;
+  min-height: 32px;
+}
+.rtps-tree .rtps-card .rtps-chat .rtps-label,
+.rtps-tree .rtps-card .rtps-subchat .rtps-label,
+.rtps-tree .rtps-card .rtps-panel .rtps-label {
+  font-weight: 500;
+}
+.rtps-tree .rtps-card .rtps-time {
+  font-size: 12px;
+  line-height: 16px;
+}
+/* the active deck's guide starts under the 32px header (+2px pad, +4px gap) */
+.rtps-tree .rtps-card .rtps-deckblock[data-active]::before {
+  top: 38px;
+}
+
+/* The Orca layer (the only look; CSS nesting, Chromium 148 in the app). Its
+   blocks sit under "html:root", which always matches and weighs (0,1,1), the
+   weight these rules were written against: keep it when adding rules that
+   must beat them. */
+html:root {
+/* ============================================================ Orca 1:1
+   Final layer for the flat-chats markup. Everything here sets its properties
+   explicitly, so older rules above lose by order. Tokens only (--color-*);
+   fills and borders are mixes of the primary text color. */
+/* "Projects" header */
+.rtps-head {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  gap: 0;
+  border: 0;
+}
+.rtps-head .rtps-head-label {
+  display: block;
+  flex: 1;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: 0;
+  line-height: 20px;
+  text-transform: none;
+}
+.rtps-head .rtps-head-count {
+  display: none;
+}
+.rtps-head .rtps-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.rtps-head .rtps-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md, 6px);
+}
+.rtps-head .rtps-icon-btn .rtps-ic {
+  width: 18px;
+  height: 18px;
+}
+/* project row: avatar + name, no chevron, no rail */
+.rtps-tree .rtps-row[data-kind="project"] {
+  height: 40px;
+  margin-top: 8px;
+  padding: 0 10px;
+  gap: 8px;
+  color: var(--color-text-primary);
+  font-size: var(--text-base, 16px);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 20px;
+}
+.rtps-tree .rtps-row[data-kind="project"] > .rtps-chev {
+  display: none;
+}
+.rtps-tree .rtps-proj-avatar,
+.rtps-tree .rtps-row[data-kind="project"] .rtps-proj {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-xs, 12px);
+  object-fit: cover;
+}
+.rtps-tree .rtps-projkids {
+  margin: 0 0 8px;
+  padding-left: 0;
+}
+.rtps-tree .rtps-projkids::before {
+  content: none;
+  display: none;
+}
+/* worktree: the current one is the only drawn card */
+.rtps-tree .rtps-card,
+.rtps-tree .rtps-projkids > .rtps-card {
+  margin: 4px 4px 4px 4px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl, 12px);
+  background: transparent;
+  box-shadow: none;
+}
+.rtps-tree .rtps-card[data-current],
+.rtps-tree .rtps-projkids > .rtps-card[data-current] {
+  border-color: var(--color-border-primary);
+  background: var(--color-surface-container-low, var(--color-surface-container));
+}
+.rtps-tree .rtps-card > .rtps-row,
+.rtps-tree .rtps-card .rtps-row {
+  margin-left: 0;
+  margin-right: 0;
+}
+.rtps-tree .rtps-row.rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-cardhead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  background: transparent;
+}
+.rtps-tree .rtps-cardhead .rtps-dot {
+  position: static;
+  width: 8px;
+  height: 8px;
+  margin: 0 8px 0 0;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-icons-tertiary, var(--color-text-tertiary));
+  box-shadow: none;
+  animation: none;
+}
+.rtps-tree .rtps-cardhead .rtps-dot[data-state="primary"],
+.rtps-tree .rtps-cardhead .rtps-dot[data-state="running"] {
+  background: var(--color-success);
+}
+.rtps-tree .rtps-cardhead .rtps-label {
+  flex: 0 1 auto;
+  color: var(--color-text-primary);
+  font-size: var(--text-base, 16px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 20px;
+}
+.rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-label {
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-cardhead .rtps-badge {
+  height: 22px;
+  padding: 2px 8px;
+  flex: none;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface-container);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 16px;
+  text-transform: none;
+}
+.rtps-tree .rtps-cardhead .rtps-row-btn {
+  margin-left: auto;
+}
+.rtps-tree .rtps-cardsub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 0 0 24px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body, 13px);
+  line-height: 18px;
+}
+.rtps-tree .rtps-cardsub > :first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-cardsub .rtps-ic {
+  width: 16px;
+  height: 16px;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-cardsub button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  cursor: pointer;
+}
+.rtps-tree .rtps-cardsub button:hover {
+  background: var(--color-surface-container);
+  color: var(--color-text-primary);
+}
+/* decks: no block fill, no guide line; the header and the rows carry it */
+.rtps-tree .rtps-card .rtps-deckblock,
+.rtps-tree .rtps-card .rtps-deckblock[data-active],
+.rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  margin: 8px 0 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.rtps-tree .rtps-card .rtps-deckblock[data-active]::before {
+  content: none;
+  display: none;
+}
+/* deck header = pill (36px) */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover) {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-container);
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:hover {
+  background: var(--color-surface-container-high);
+}
+.rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-num {
+  color: var(--color-text-primary);
+  font-size: var(--text-body, 13px);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-count {
+  margin-left: auto;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm, 14px);
+  background: transparent;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] .rtps-chev-end {
+  position: static;
+  width: 16px;
+  height: 16px;
+  margin: 0 0 0 8px;
+  transform: none;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-row[data-kind="chats"] .rtps-chev-end .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+/* collapsed deck: number, then one bordered pillbox with the groups */
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"],
+.rtps-tree .rtps-card > .rtps-row[data-kind="pill"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  min-height: 36px;
+  margin: 8px 0 0;
+  padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-deck-num {
+  flex: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-body, 13px);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  position: static;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  width: auto;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  gap: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-container);
+}
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox {
+  background: var(--color-surface-container-high);
+}
+.rtps-tree .rtps-pillbox .rtps-pillgroup,
+.rtps-tree .rtps-pillbox .rtps-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+}
+.rtps-tree .rtps-pillbox .rtps-pillsep {
+  width: 1px;
+  height: 16px;
+  flex: none;
+  margin: 0 4px;
+  background: var(--color-border-secondary);
+}
+.rtps-tree .rtps-pillbox .rtps-pill-group + .rtps-pill-group {
+  border: 0;
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open,
+.rtps-tree .rtps-pillbox .rtps-chev {
+  position: static;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin: 0 0 0 auto;
+  transform: none;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-pillbox .rtps-pill-open .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+/* session rows */
+.rtps-tree .rtps-card .rtps-row[data-kind="chat"],
+.rtps-tree .rtps-card .rtps-row[data-kind="subchat"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  min-height: 32px;
+  margin: 2px 0 0;
+  padding: 0 8px;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  outline: none;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] + .rtps-row[data-kind="chat"] {
+  margin-top: 6px;
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="chat"]:hover,
+.rtps-tree .rtps-card .rtps-row[data-kind="subchat"]:hover {
+  background: var(--rtps-hover);
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="chat"][aria-selected="true"],
+.rtps-tree .rtps-card .rtps-row[data-kind="subchat"][aria-selected="true"],
+.rtps-tree .rtps-card .rtps-deckblock[data-active] .rtps-row[aria-selected="true"] {
+  background: var(--color-surface-container-high);
+  outline: none;
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="chat"]:focus-visible,
+.rtps-tree .rtps-card .rtps-row[data-kind="subchat"]:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+.rtps-tree .rtps-row .rtps-status {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-success);
+}
+.rtps-tree .rtps-row .rtps-status .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-tree .rtps-row .rtps-status[data-status="running"] {
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-row .rtps-status[data-status="waiting"] {
+  color: var(--color-warning);
+}
+.rtps-tree .rtps-row .rtps-status[data-status="unread"] {
+  color: var(--color-accent, var(--salmon-600, #e8775f));
+}
+.rtps-tree .rtps-row[data-kind="chat"] > .rtps-ic,
+.rtps-tree .rtps-row[data-kind="chat"] .rtps-prov-ic {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.rtps-tree .rtps-row .rtps-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 20px;
+}
+.rtps-tree .rtps-card .rtps-deckblock:not([data-active]) .rtps-row .rtps-title {
+  color: var(--color-text-secondary);
+}
+.rtps-tree .rtps-row .rtps-prov {
+  width: auto;
+  height: auto;
+  flex: none;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm, 14px);
+  font-weight: 400;
+}
+.rtps-tree .rtps-row[data-kind="chat"] .rtps-time {
+  margin-left: auto;
+  flex: none;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs, 12px);
+  line-height: 16px;
+}
+.rtps-tree .rtps-row .rtps-status {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* session rows: the suffix gives way before the title; time and icons never shrink */
+.rtps-tree .rtps-row[data-kind="chat"] .rtps-label,
+.rtps-tree .rtps-row[data-kind="subchat"] .rtps-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.rtps-tree .rtps-row .rtps-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-row .rtps-prov {
+  flex: 0 3 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-row .rtps-time,
+.rtps-tree .rtps-row .rtps-status,
+.rtps-tree .rtps-row > .rtps-ic {
+  flex-shrink: 0;
+}
+/* worktree header: dot, name (truncates), chip inline right after it, "+" far right */
+.rtps-tree .rtps-cardhead .rtps-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-cardhead .rtps-badge {
+  flex: none;
+}
+
+/* ---- native scale: text-sm (14) and text-xs (12) only; 4px-grid heights ---- */
+.rtps-head {
+  height: 36px;
+}
+.rtps-head .rtps-head-label {
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 20px;
+}
+.rtps-tree .rtps-row[data-kind="project"] {
+  height: 36px;
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 20px;
+}
+.rtps-tree .rtps-proj-avatar,
+.rtps-tree .rtps-row[data-kind="project"] .rtps-proj {
+  width: 20px;
+  height: 20px;
+  font-size: var(--text-xs, 12px);
+}
+.rtps-tree .rtps-row.rtps-cardhead,
+.rtps-tree .rtps-card > .rtps-cardhead {
+  height: 28px;
+  min-height: 28px;
+}
+.rtps-tree .rtps-cardhead .rtps-label {
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 20px;
+}
+.rtps-tree .rtps-cardhead .rtps-badge {
+  height: 20px;
+  padding: 2px 8px;
+  font-size: var(--text-xs, 12px);
+  line-height: 16px;
+}
+.rtps-tree .rtps-cardsub {
+  height: 20px;
+  font-size: var(--text-xs, 12px);
+  line-height: 16px;
+}
+.rtps-tree .rtps-cardsub button {
+  width: 20px;
+  height: 20px;
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover) {
+  height: 32px;
+  min-height: 32px;
+}
+.rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-num,
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-deck-num {
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+}
+.rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-count,
+.rtps-tree .rtps-pillbox .rtps-pill-more {
+  font-size: var(--text-xs, 12px);
+}
+.rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"],
+.rtps-tree .rtps-card > .rtps-row[data-kind="pill"],
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+.rtps-tree .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+  height: 32px;
+  min-height: 32px;
+}
+.rtps-tree .rtps-card .rtps-row[data-kind="chat"],
+.rtps-tree .rtps-card .rtps-row[data-kind="subchat"] {
+  height: 28px;
+  min-height: 28px;
+}
+.rtps-tree .rtps-row .rtps-title {
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 20px;
+}
+.rtps-tree .rtps-row .rtps-prov,
+.rtps-tree .rtps-row[data-kind="chat"] .rtps-time {
+  font-size: var(--text-xs, 12px);
+  line-height: 16px;
+}
+
+/* ---- real markup of the flat-chats JS ---- */
+.rtps-tree .rtps-cardhead .rtps-card-text,
+.rtps-tree .rtps-cardhead .rtps-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+}
+.rtps-tree .rtps-cardsub-branch {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-cardsub-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: none;
+}
+.rtps-tree .rtps-cardsub-ic {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-cardsub-ic .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-tree .rtps-cardsub-ic:hover {
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-proj-avatar {
+  background: var(--c, var(--color-surface-container-high));
+  color: var(--color-white, #fff);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.rtps-tree .rtps-proj-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* session status: [data-state] done / running / unread */
+.rtps-tree .rtps-row .rtps-status[data-state] {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-success);
+}
+.rtps-tree .rtps-row .rtps-status[data-state="running"] {
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-row .rtps-status[data-state="waiting"] {
+  color: var(--color-warning);
+}
+.rtps-tree .rtps-row .rtps-status[data-state="unread"] {
+  color: var(--color-accent, var(--salmon-600, #e8775f));
+}
+.rtps-tree .rtps-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.rtps-tree .rtps-provic {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-provic .rtps-ic,
+.rtps-tree .rtps-pillgroup > .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-tree .rtps-provic[data-provider="claude"] {
+  color: var(--salmon-600, #d97757);
+}
+/* pill: groups, "+N", separators; the chevron sits inside the pill's right edge */
+.rtps-tree .rtps-row[data-kind="pill"] {
+  position: relative;
+}
+.rtps-tree .rtps-row[data-kind="pill"] > .rtps-label {
+  flex: none;
+}
+.rtps-tree .rtps-row[data-kind="pill"] .rtps-pillbox {
+  padding-right: 36px;
+}
+.rtps-tree .rtps-row[data-kind="pill"] > .rtps-chev {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  transform: translateY(-50%);
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-row[data-kind="pill"] > .rtps-chev .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-tree .rtps-pillgroup {
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+}
+.rtps-tree .rtps-pillgroup[data-state="done"] > .rtps-status {
+  color: var(--color-success);
+}
+.rtps-tree .rtps-pillgroup[data-state="running"] > .rtps-status {
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-pillmore {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs, 12px);
+  line-height: 16px;
+}
+.rtps-tree .rtps-pillgroup .rtps-status {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.rtps-tree .rtps-pillgroup .rtps-status .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+/* deck header: the label wraps the number */
+.rtps-tree .rtps-row[data-kind="chats"] > .rtps-label {
+  flex: 1;
+  min-width: 0;
+}
+/* lucide chevrons are drawn in their final direction: nothing rotates */
+.rtps-tree .rtps-row[data-kind="chats"] > .rtps-chev .rtps-ic,
+.rtps-tree .rtps-row[data-kind="pill"] > .rtps-chev .rtps-ic {
+  transform: none;
+}
+/* lucide icons: 16px by default, currentColor strokes (a rule with higher
+   specificity elsewhere keeps its own size) */
+.rtps-tree :where(svg.lucide.rtps-ic) {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+}
+.rtps-tree .rtps-status[data-state="running"] .lucide-loader-circle,
+.rtps-tree .rtps-pillgroup[data-state="running"] .lucide-loader-circle {
+  animation: rtps-spin 1s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtps-tree .rtps-status[data-state="running"] .lucide-loader-circle,
+  .rtps-tree .rtps-pillgroup[data-state="running"] .lucide-loader-circle {
+    animation: none;
+  }
+}
+/* icon colors come from the wrapper (state / provider), not the legacy .rtps-chat .rtps-ic */
+.rtps-tree .rtps-row .rtps-status .rtps-ic,
+.rtps-tree .rtps-row .rtps-provic .rtps-ic,
+.rtps-tree .rtps-pillgroup .rtps-ic {
+  color: currentColor;
+}
+.rtps-tree .rtps-row .rtps-prov {
+  flex: 0 1000 auto;
+}
+/* the suffix never shrinks; only the title truncates */
+.rtps-tree .rtps-row .rtps-prov {
+  flex: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.rtps-tree .rtps-row .rtps-title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.rtps-tree .rtps-row .rtps-time,
+.rtps-tree .rtps-row .rtps-status,
+.rtps-tree .rtps-row .rtps-provic {
+  flex-shrink: 0;
+}
+}
+
+/* collapsed deck that is the active one: same look as the active deck header */
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"] .rtps-pillbox,
+html:root .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][data-active] .rtps-pillbox {
+  border-color: var(--color-border-primary);
+  background: var(--color-surface-container-high);
+}
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"] .rtps-deck-num,
+html:root .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][data-active] .rtps-deck-num {
+  color: var(--color-text-primary);
+}
+
+/* active deck: one continuous tonal block around its header and every row.
+   All deck blocks get the same 4px padding, offset by the same negative margin,
+   so nothing moves when a deck becomes active; only the fill differs. */
+html:root .rtps-tree .rtps-card .rtps-deckblock,
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-active],
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  margin: 4px -4px -4px;
+  padding: 4px;
+  border-radius: var(--radius-lg, 8px);
+}
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-active] {
+  background: color-mix(in srgb, var(--color-text-primary, #fff) 4%, transparent);
+}
+html:root .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) {
+  background: transparent;
+}
+
+/* native type scale, measured in the app's own CSS (index-*.css):
+   tree item 13px/400, line-height 18px (--tree-item-font-size,
+   --tree-item-font-weight, --tree-label-line-height); section header 11px/600;
+   meta 10px/13px (--text-caption, --leading-caption); rows are 28px
+   (6px py + 18px line); 16px icons, 8px gap. */
+html:root {
+  .rtps-head .rtps-head-label {
+    font-size: var(--text-body, 13px);
+    font-weight: var(--font-weight-medium, 500);
+    line-height: 18px;
+  }
+  .rtps-tree .rtps-row[data-kind="project"] {
+    height: 32px;
+    font-size: var(--text-body, 13px);
+    font-weight: var(--font-weight-semibold, 600);
+    line-height: 18px;
+  }
+  .rtps-tree .rtps-cardhead .rtps-label {
+    font-size: var(--text-body, 13px);
+    font-weight: var(--font-weight-medium, 500);
+    line-height: 18px;
+  }
+  .rtps-tree .rtps-cardhead .rtps-badge,
+  .rtps-tree .rtps-pillbox .rtps-pillmore {
+    font-size: var(--text-label, 11px);
+    line-height: 14px;
+  }
+  .rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-num,
+  .rtps-tree .rtps-row[data-kind="pill"] .rtps-deck-num,
+  .rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-count {
+    font-size: var(--text-body, 13px);
+    line-height: 18px;
+  }
+  /* every session / pane row is 28px, with or without status and provider */
+  .rtps-tree .rtps-card .rtps-row[data-kind="chat"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="subchat"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--tree-label-size, 13px);
+    line-height: var(--tree-label-line-height, 18px);
+  }
+  .rtps-tree .rtps-row .rtps-title,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] .rtps-label {
+    font-size: var(--tree-item-font-size, 13px);
+    font-weight: var(--tree-item-font-weight, 400);
+    line-height: var(--tree-label-line-height, 18px);
+  }
+  .rtps-tree .rtps-row[aria-selected="true"] .rtps-title,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"][aria-selected="true"] .rtps-label {
+    font-weight: var(--font-weight-medium, 500);
+  }
+  .rtps-tree .rtps-row .rtps-prov {
+    font-size: var(--text-xs, 12px);
+    font-weight: 400;
+    line-height: 18px;
+  }
+  .rtps-tree .rtps-row[data-kind="chat"] .rtps-time,
+  .rtps-tree .rtps-row .rtps-meta {
+    font-size: var(--text-caption, 10px);
+    line-height: var(--leading-caption, 13px);
+  }
+  /* panes without status / provider keep their two 16px columns empty */
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] > .rtps-ico,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] > .rtps-ic {
+    margin-left: 24px;
+    width: 16px;
+    height: 16px;
+    flex: none;
+  }
+  .rtps-tree .rtps-row[data-kind="chat"] > .rtps-status,
+  .rtps-tree .rtps-row[data-kind="chat"] > .rtps-provic {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+  }
+}
+
+/* ---- one geometry for every deck header ------------------------------
+   The row itself is the box (border, radius, fill, 32px, padding 0 10px),
+   full width, in every state: the number sits inside on the left (24px slot),
+   the content in the middle (clipped by itself, never the box), the chevron on
+   the right (16px, never shrinks). Open decks wrap header + rows in one tonal
+   block; collapsed decks are just the box. */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"][aria-selected="true"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][aria-selected="true"] {
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    margin: 0;
+    padding: 0 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--radius-lg, 8px);
+    background: var(--color-surface-container);
+    outline: none;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:hover,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:hover {
+    background: var(--color-surface-container-high);
+  }
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][data-active],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][aria-selected="true"] {
+    border-color: var(--color-border-primary);
+    background: var(--color-surface-container-high);
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:focus-visible,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-visible {
+    outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+    outline-offset: -2px;
+  }
+  /* number: a fixed 24px slot inside the box, never clipped */
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] > .rtps-label,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] > .rtps-label {
+    flex: none;
+    width: 24px;
+    min-width: 24px;
+    overflow: visible;
+  }
+  /* pill content: a plain flex strip that clips itself with a short fade */
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] .rtps-pillbox,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:hover .rtps-pillbox,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-visible .rtps-pillbox {
+    position: static;
+    display: flex;
+    align-items: center;
+    flex: 1 1 0;
+    gap: 8px;
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    white-space: nowrap;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 12px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 12px), transparent);
+  }
+  .rtps-tree .rtps-pillbox .rtps-pillgroup {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .rtps-tree .rtps-pillbox .rtps-pillgroup:first-child {
+    flex: none;
+  }
+  .rtps-tree .rtps-pillbox .rtps-pillsep {
+    flex: none;
+    margin: 0;
+  }
+  /* chevron: in the box, on the right, always visible */
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] > .rtps-chev {
+    position: static;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    transform: none;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] > .rtps-deck-count {
+    margin-left: auto;
+    flex: none;
+  }
+  /* blocks: an open deck is header + rows in one tonal block (4px padding,
+     the same negative margin, so the header never moves); a collapsed deck
+     is only its box. 4px between collapsed decks, 8px around an open one. */
+  .rtps-tree .rtps-card .rtps-deckblock {
+    margin: 4px 0 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) {
+    margin: 4px -4px 0;
+    padding: 4px;
+    border-radius: var(--radius-lg, 8px);
+  }
+  .rtps-tree .rtps-card .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) {
+    background: color-mix(in srgb, var(--color-text-primary, #fff) 4%, transparent);
+  }
+  .rtps-tree .rtps-card .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="pill"]) {
+    background: transparent;
+  }
+  .rtps-tree .rtps-card .rtps-cardsub + .rtps-deckblock {
+    margin-top: 8px;
+  }
+  .rtps-tree .rtps-card .rtps-cardsub + .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) {
+    margin-top: 4px;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] + .rtps-row {
+    margin-top: 4px;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock .rtps-row + .rtps-row,
+  .rtps-tree .rtps-card .rtps-deckblock .rtps-kids,
+  .rtps-tree .rtps-card .rtps-deckblock .rtps-kids + .rtps-row {
+    margin-top: 2px;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] + .rtps-row[data-kind="chat"] {
+    margin-top: 4px;
+  }
+}
+
+/* empty deck and the "+N" overflow group */
+html:root {
+  .rtps-tree .rtps-pill-empty {
+    color: var(--color-text-tertiary);
+    font-size: var(--text-xs, 12px);
+    line-height: 16px;
+    white-space: nowrap;
+  }
+  .rtps-tree .rtps-pillgroup[data-state="more"] {
+    flex: none;
+    color: var(--color-text-secondary);
+  }
+  .rtps-tree .rtps-pillgroup[data-state="more"] .rtps-pillmore {
+    color: var(--color-text-secondary);
+  }
+  .rtps-tree .rtps-pillgroup[data-state="more"] .lucide-circle {
+    width: 16px;
+    height: 16px;
+    color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  }
+  /* icons + "+N" of a tabs group never get cut: 16px icons, 4px gaps */
+  .rtps-tree .rtps-pillgroup[data-state="tabs"] {
+    flex: none;
+    gap: 4px;
+  }
+}
+
+/* lighter type: same sizes, lower weights; highlight comes from fills only */
+html:root {
+  .rtps-head .rtps-head-label,
+  .rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-count,
+  .rtps-tree .rtps-row .rtps-title,
+  .rtps-tree .rtps-row[aria-selected="true"] .rtps-title,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"][aria-selected="true"] .rtps-label,
+  .rtps-tree .rtps-row[data-kind="chats"] .rtps-deck-num,
+  .rtps-tree .rtps-row[data-kind="pill"] .rtps-deck-num,
+  .rtps-tree .rtps-cardhead .rtps-label,
+  .rtps-tree .rtps-cardhead .rtps-badge,
+  .rtps-tree .rtps-pillmore {
+    font-weight: var(--font-weight-normal, 400);
+    letter-spacing: 0;
+  }
+  .rtps-tree .rtps-cardhead .rtps-label {
+    color: var(--color-text-primary);
+  }
+  .rtps-tree .rtps-row[data-kind="project"] {
+    font-weight: var(--font-weight-medium, 500);
+    letter-spacing: 0;
+  }
+  .rtps-tree .rtps-cardhead .rtps-badge {
+    font-size: var(--text-label, 11px);
+  }
+  .rtps-tree .rtps-row .rtps-prov,
+  .rtps-tree .rtps-cardsub {
+    font-size: var(--text-xs, 12px);
+    font-weight: var(--font-weight-normal, 400);
+    color: var(--color-text-tertiary);
+  }
+}
+
+/* deck chevrons: only on hover / focus; the 16px slot stays reserved */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] > .rtps-chev {
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-visible > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:focus-visible > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-within > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:focus-within > .rtps-chev {
+    opacity: 1;
+  }
+}
+
+/* a worktree that is not the current one has no card, so its deck boxes have
+   no fill either: just the hairline (border-primary when active), a subtle fill on hover */
+html:root {
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"],
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"][aria-selected="true"]:not(:hover) {
+    background: transparent;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"]:hover,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"]:hover {
+    background: var(--color-surface-container);
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) {
+    background: transparent;
+  }
+}
+
+/* stability: padding and negative margin belong to the SHAPE of a block (open
+   = header + rows in one block; collapsed = just the box), never to the
+   active/open flags, so activating or selecting a deck moves nothing */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="pill"]),
+  .rtps-tree .rtps-card .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="pill"]),
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]):has(> .rtps-row[data-kind="pill"]) {
+    margin: 4px 0 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .rtps-tree .rtps-card .rtps-cardsub + .rtps-deckblock:has(> .rtps-row[data-kind="pill"]) {
+    margin-top: 8px;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]),
+  .rtps-tree .rtps-card .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]),
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]):has(> .rtps-row[data-kind="chats"]) {
+    margin: 4px -4px 0;
+    padding: 4px;
+    border-radius: var(--radius-lg, 8px);
+  }
+  .rtps-tree .rtps-card .rtps-cardsub + .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) {
+    margin-top: 4px;
+  }
+}
+
+/* canvas icons use the app's design/canvas purple (--color-lavender, the
+   same --lavender-400 the design route and canvas tabs use) */
+.rtps-tree .rtps-cardsub-ic[data-type="canvas"],
+.rtps-tree .rtps-pillgroup[data-state="tabs"]:has(.lucide-frame),
+.rtps-tree .rtps-row[data-kind="panel"]:has(.lucide-frame) > .rtps-ico,
+.rtps-tree .rtps-row[data-kind="panel"]:has(.lucide-frame) > .rtps-ic,
+.rtps-tree .rtps-provic:has(.lucide-frame),
+.rtps-tree .rtps-ico:has(.lucide-frame) {
+  color: var(--color-lavender, var(--lavender-400, #a78bfa));
+}
+.rtps-tree svg.lucide-frame,
+.rtps-tree .rtps-ic.lucide-frame {
+  color: var(--color-lavender, var(--lavender-400, #a78bfa));
+  stroke: currentColor;
+}
+
+/* canvas icon colour keyed on the wrapper's data-type (lucide-frame stays as
+   the fallback above); terminal / globe / docs use the secondary icon colour */
+.rtps-tree [data-type="canvas"],
+.rtps-tree [data-type="canvas"] svg,
+.rtps-tree [data-type="canvas"] .rtps-ic {
+  color: var(--color-lavender, var(--lavender-400, #a78bfa));
+}
+.rtps-tree [data-type="terminal"],
+.rtps-tree [data-type="globe"],
+.rtps-tree [data-type="docs"],
+.rtps-tree [data-type="terminal"] svg,
+.rtps-tree [data-type="globe"] svg,
+.rtps-tree [data-type="docs"] svg {
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+}
+
+/* soft tonal elevation (no strokes): panel (surface-dim) < card
+   (--color-surface-container-low) < step 1 (--color-surface-container: hover,
+   resting pills) < step 2 (--color-surface-container-high: selected row, active
+   header / pill). Dark theme values: #040404 / #0e0e0e / #191919 / #232323.
+   Borders stay 1px but transparent, so nothing moves; only the "primary"
+   chip keeps a visible border. */
+html:root {
+  .rtps-tree .rtps-card,
+  .rtps-tree .rtps-card[data-current],
+  .rtps-tree .rtps-projkids > .rtps-card,
+  .rtps-tree .rtps-projkids > .rtps-card[data-current] {
+    border-color: transparent;
+  }
+  .rtps-tree .rtps-card[data-current],
+  .rtps-tree .rtps-projkids > .rtps-card[data-current] {
+    background: var(--color-surface-container-low, var(--color-surface-container));
+  }
+  /* deck boxes: no stroke anywhere */
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"][aria-selected="true"],
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"] {
+    border-color: transparent;
+  }
+  /* resting pills / headers in the current card: step 1; active: step 2 */
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover) {
+    background: var(--color-surface-container);
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock > .rtps-row[data-kind="pill"][aria-selected="true"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:hover,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:hover,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover) {
+    background: var(--color-surface-container-high);
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover) {
+    background: transparent;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active] > .rtps-row[data-kind="pill"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-active] > .rtps-row[data-kind="chats"]:not(:hover) {
+    background: var(--color-surface-container);
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) {
+    background: color-mix(in srgb, var(--color-text-primary, #fff) 3%, transparent);
+  }
+  /* rows: hover = step 1, selected = step 2, never an outline */
+  .rtps-tree .rtps-card .rtps-row[data-kind="chat"]:hover,
+  .rtps-tree .rtps-card .rtps-row[data-kind="subchat"]:hover,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"]:hover {
+    background: var(--color-surface-container);
+  }
+  .rtps-tree .rtps-card .rtps-row[data-kind="chat"][aria-selected="true"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="subchat"][aria-selected="true"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"][aria-selected="true"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="chat"][aria-selected="true"]:hover,
+  .rtps-tree .rtps-card .rtps-deckblock[data-active] .rtps-row[aria-selected="true"] {
+    background: var(--color-surface-container-high);
+    outline: none;
+  }
+}
+
+/* rows inside an open deck start at the same x as the header's number:
+   header = 1px border + 10px padding, so rows get 11px; children of a row one
+   16px step in; the right edge matches the header's too */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row:not([data-kind="chats"]):not([data-kind="pill"]),
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chat"],
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="panel"] {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock .rtps-kids > .rtps-row,
+  .rtps-tree .rtps-card .rtps-deckblock .rtps-row[data-kind="subchat"] {
+    padding-left: 27px;
+    padding-right: 11px;
+  }
+}
+
+/* minimal pane connector: a 1px line in the provider / type icon column that
+   runs from the bottom of one row's icon to the top of the next row's icon
+   (rows of the same pane, data-pane-pos first|middle). Column x = row padding
+   11 + status 16 + gap 8 + half the 16px icon. Nothing moves (pseudo only). */
+html:root {
+  .rtps-tree .rtps-card .rtps-row[data-pane-pos="first"],
+  .rtps-tree .rtps-card .rtps-row[data-pane-pos="middle"] {
+    position: relative;
+  }
+  .rtps-tree .rtps-card .rtps-row[data-pane-pos="first"]::after,
+  .rtps-tree .rtps-card .rtps-row[data-pane-pos="middle"]::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    left: 43px;
+    top: 24px;
+    width: 1px;
+    height: 10px;
+    background: var(--color-border-primary);
+    pointer-events: none;
+  }
+}
+
+/* hierarchy: what belongs to a worktree that is not the current one is quieter.
+   Only this rule dims (the dimming of inactive open decks is reset here so the
+   two never stack); hovering a block brings it back. */
+html:root {
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-cardsub-icons {
+    opacity: 0.55;
+    transition: opacity 120ms ease;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock:hover,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock:focus-within,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-cardsub-icons:hover {
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-label,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-deck-name,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-ic,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-prov,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-time,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-chev,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) .rtps-count {
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-status,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-provic,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-pillgroup .rtps-ic,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-cardsub-ic {
+    filter: saturate(0.6);
+  }
+  .rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-label {
+    color: var(--color-text-secondary);
+  }
+  .rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead .rtps-dot {
+    opacity: 0.6;
+  }
+}
+
+/* worktree header: the hover belongs to the whole (outermost) card, and only
+   to a worktree that is not the current one; the current one has no hover at
+   all. The title row and the subtitle only carry the pointer cursor. */
+html:root {
+  .rtps-tree .rtps-card > .rtps-cardhead,
+  .rtps-tree .rtps-card > .rtps-cardsub,
+  .rtps-tree .rtps-card > .rtps-cardhead:hover,
+  .rtps-tree .rtps-card > .rtps-cardsub:hover,
+  .rtps-tree .rtps-card > .rtps-cardhead:hover + .rtps-cardsub,
+  .rtps-tree .rtps-card > .rtps-cardhead:has(+ .rtps-cardsub:hover) {
+    background: transparent;
+    outline: none;
+    transition: none;
+  }
+  .rtps-tree .rtps-card:not([data-current]) > .rtps-cardhead,
+  .rtps-tree .rtps-card:not([data-current]) > .rtps-cardsub {
+    cursor: pointer;
+  }
+  .rtps-tree .rtps-card[data-current] > .rtps-cardhead,
+  .rtps-tree .rtps-card[data-current] > .rtps-cardsub {
+    cursor: default;
+  }
+  .rtps-tree .rtps-card:not([data-current]) {
+    transition: background-color 120ms ease;
+  }
+  .rtps-tree .rtps-card:not([data-current]):hover {
+    background: var(--color-surface-container-low, var(--color-surface-container));
+  }
+  /* while the card is hovered its children are back at full strength */
+  .rtps-tree .rtps-card:not([data-current]):hover .rtps-deckblock,
+  .rtps-tree .rtps-card:not([data-current]):hover .rtps-cardsub-icons {
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card > .rtps-cardhead:focus-visible,
+  .rtps-tree .rtps-card > .rtps-cardsub:focus-visible {
+    outline: 2px solid var(--color-focus, var(--color-border-focus, var(--color-accent)));
+    outline-offset: -2px;
+  }
+}
+
+/* fine pass: one hover surface for the worktree header + subtitle (same box as
+   the deck boxes below: top corners on the title row, bottom corners on the
+   subtitle row, no step), shared column x (dot / number / status = 11px in,
+   name / branch / provider icon = 35px in), shared right edge (11px in),
+   4px-grid gaps, one radius scale (card 12, block 8, row 8, chip/avatar/button 6) */
+html:root {
+  .rtps-tree .rtps-card > .rtps-cardhead {
+    padding: 0 11px;
+    border-radius: var(--radius-lg, 8px) var(--radius-lg, 8px) 0 0;
+  }
+  .rtps-tree .rtps-card > .rtps-cardsub {
+    padding: 0 11px 0 35px;
+    border-radius: 0 0 var(--radius-lg, 8px) var(--radius-lg, 8px);
+  }
+  .rtps-tree .rtps-card > .rtps-cardhead .rtps-row-btn {
+    margin-right: -4px;
+  }
+  .rtps-tree .rtps-row[data-kind="project"] {
+    height: 36px;
+  }
+  /* the project's "+" icon ends at the same x as the worktree's "+" and the subtitle icons */
+  .rtps-tree .rtps-row[data-kind="project"] > .rtps-row-btn {
+    margin-right: 15px;
+  }
+  .rtps-tree .rtps-proj-avatar,
+  .rtps-tree .rtps-row[data-kind="project"] .rtps-proj {
+    border-radius: var(--radius-md, 6px);
+  }
+  .rtps-tree .rtps-pillbox .rtps-pillgroup {
+    gap: 4px;
+  }
+}
+
+/* ============================================ rail hidden + panel footer
+   With the sidebar on and expanded the whole native rail goes away; the JS
+   sets html.rtps-rail-hidden and measures the workspace group again, so the
+   sidebar and the workspace slide left by the rail's width on their own. */
+html.rtps-on.rtps-rail-hidden [data-testid="workspace-navbar"] {
+  display: none !important;
+}
+/* title-bar tools (settings + account), right after the sidebar switch */
+html.rtps-on .rtps-titlebar-tools {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  margin-left: 4px;
+}
+html.rtps-on .rtps-titlebar-tools > button[data-act="settings"].rtps-icon-btn {
+  -webkit-app-region: no-drag;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-secondary, var(--color-text-secondary));
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+html.rtps-on .rtps-titlebar-tools > button[data-act="settings"].rtps-icon-btn:hover {
+  background: var(--color-surface-container);
+  color: var(--color-text-primary);
+}
+html.rtps-on .rtps-titlebar-tools > button[data-act="settings"].rtps-icon-btn svg,
+html.rtps-on .rtps-titlebar-tools > button[data-act="settings"].rtps-icon-btn .rtps-ic {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+html.rtps-on .rtps-titlebar-tools .rtps-foot-avatar {
+  -webkit-app-region: no-drag;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent, var(--color-white, #fff));
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+  cursor: pointer;
+}
+html.rtps-on .rtps-titlebar-tools .rtps-foot-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+html.rtps-on .rtps-titlebar-tools button:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: -1.5px;
+}
+/* footer: only the usage rings host (the settings / account row moved up) */
+.rtps .rtps-foot {
+  gap: 0;
+}
+.rtps .rtps-foot .rtps-foot-row {
+  display: none;
+}
+
+/* soft variant: the rail stays in the flow with zero width (no re-layout of
+   the native panel group), invisible and inert. The JS picks which class. */
+html.rtps-on.rtps-rail-hidden-soft [data-testid="workspace-navbar"] {
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* The shell lays the rail out as a grid column. Found in the app bundle
+   (FOa, index-*.js): the container is
+     class="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] grid-cols-[52px_minmax(0,1fr)]"
+   (grid-cols-[104px_minmax(0,1fr)] when the org is docked) with an inline
+   transition on grid-template-columns, and the rail is
+     class="relative flex w-[52px] flex-col items-center bg-surface-dim ..." (h-full).
+   Hidden with display:none the rail leaves the grid and the workspace would
+   fall into the first (52px) column, so the template drops it; hidden "soft"
+   (0 width, still a grid item) the first column becomes 0. */
+html.rtps-on.rtps-rail-hidden :has(> [data-testid="workspace-navbar"]) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html.rtps-on.rtps-rail-hidden-soft :has(> [data-testid="workspace-navbar"]) {
+  grid-template-columns: 0px minmax(0, 1fr) !important;
+}
+/* The workspace "group" IS the rounded frame: in the bundle (index-*.js, FOa)
+   the PanelGroup (id workspace-main) carries
+     class="min-h-0 min-w-0 flex-1 rounded-tl-[var(--radius-xl)] border-t border-l border-border-secondary"
+   plus inline border widths and overflow:clip, and it is the direct parent of
+   the left / center / right panels. The pane-dock panes live inside the center
+   panel, so the group's overflow:clip rounds whatever touches that corner.
+   Consistent corners in every state of the mod:
+   - nothing to the left of the frame (panel collapsed): square on both left
+     corners, no left border, margin or padding (content starts at x=0);
+   - our panel to the left (expanded): the junction is the top-left corner,
+     one stroke (the group's own border-t + border-l) drawn along the
+     --radius-xl arc; nothing of ours draws a straight border there. The bottom
+     corner stays square: the frame has no bottom border, so a curved bottom
+     corner would leave its stroke open (tapering) at the window edge. */
+html.rtps-on.rtps-collapsed :has(> [data-tempo-workspace-panel="center"]) {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left-width: 0 !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) {
+  border-top-left-radius: var(--radius-xl, 12px) !important;
+  border-bottom-left-radius: 0 !important;
+}
+/* Only the outer frame (the workspace-main group) is rounded. Everything laid
+   out inside it (the panels, the pane-dock layer and its panes, their header /
+   tab-bar hosts, the center's content host) is square on every corner, so no
+   second curve ever nests inside the frame's. */
+html.rtps-on [data-tempo-workspace-panel],
+html.rtps-on [data-tempo-workspace-panel="center"] > *,
+html.rtps-on .rtd-layer,
+html.rtps-on .rtd-panel,
+html.rtps-on .rtd-panel > div,
+html.rtps-on .rtd-panel header,
+html.rtps-on .rtd-panel > header > div {
+  border-radius: 0 !important;
+}
+
+/* The resize handles of the workspace group (react-resizable-panels,
+   [data-panel-resize-handle-id] / [data-resize-handle]; bundle: "relative flex
+   w-px ... bg-border after:absolute ... after:w-2") keep their hit area but
+   draw nothing while the sidebar is expanded, so the only stroke at the
+   sidebar / center junction is the group's own curved border. */
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-panel-resize-handle-id],
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-resize-handle] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-panel-resize-handle-id]::before,
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-panel-resize-handle-id]::after,
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-resize-handle]::before,
+html.rtps-on:not(.rtps-collapsed) :has(> [data-tempo-workspace-panel="center"]) > [data-resize-handle]::after {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Leftover native strokes beside the sidebar. Found in the bundle: the native
+   left sidebars are asides with "border-r border-border-secondary" (or
+   "border-r-[0.5px]") inside [data-tempo-workspace-panel="left"], which
+   html.rtps-hide-native already display:none's; on any route where one of them
+   stays mounted its right border goes transparent here (width kept). The title
+   bar's left section ("flex items-center gap-2") has no separator of its own. */
+html.rtps-on:not(.rtps-collapsed) [data-tempo-workspace-panel="left"],
+html.rtps-on:not(.rtps-collapsed) [data-tempo-workspace-panel="left"] aside,
+html.rtps-on:not(.rtps-collapsed) [data-tempo-workspace-panel="left"] > div,
+html.rtps-on:not(.rtps-collapsed) aside[data-testid$="-sidebar"],
+html.rtps-on:not(.rtps-collapsed) [data-testid="docs-view-sidebar"] {
+  border-right-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* three steps for a worktree card (dark theme: panel #040404):
+   rest, not selected   --color-surface-container-lowest  #080808
+   hover, not selected  --color-surface-container-low     #0e0e0e
+   selected             --color-surface-container-low + 2% of the text colour (~#121212)
+   Deck pills inside a card stay one step above it (--color-surface-container,
+   #191919), the active pill / selected row two (--color-surface-container-high). */
+html:root {
+  .rtps-tree .rtps-card:not([data-current]),
+  .rtps-tree .rtps-projkids > .rtps-card:not([data-current]) {
+    background: var(--color-surface-container-lowest, transparent);
+  }
+  .rtps-tree .rtps-card:not([data-current]):hover,
+  .rtps-tree .rtps-projkids > .rtps-card:not([data-current]):hover {
+    background: var(--color-surface-container-low, var(--color-surface-container));
+  }
+  .rtps-tree .rtps-card[data-current],
+  .rtps-tree .rtps-projkids > .rtps-card[data-current] {
+    background: color-mix(in srgb, var(--color-text-primary, #fff) 2%, var(--color-surface-container-low, var(--color-surface-container)));
+  }
+  /* pills of a card that is not selected (nothing behind them to lift from): same
+     step-1 fill as in the selected card, so all cards read the same inside */
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock > .rtps-row[data-kind="pill"]:not(:hover) {
+    background: var(--color-surface-container);
+  }
+  /* deck chevrons: one rule for every card and every deck state: hover / focus only */
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"] > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"] > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="pill"] > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="chats"] > .rtps-chev,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="pill"] > .rtps-chev,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="chats"] > .rtps-chev {
+    opacity: 0;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-visible > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:focus-visible > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="pill"]:focus-within > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock > .rtps-row[data-kind="chats"]:focus-within > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="pill"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="chats"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="pill"]:hover > .rtps-chev,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock[data-open]:not([data-active]) > .rtps-row[data-kind="chats"]:hover > .rtps-chev {
+    opacity: 1;
+  }
+}
+
+/* "primary": a quiet tag, not a button. Right-aligned before the "+", the name
+   takes the room and truncates, no stroke, a 5% tonal fill that reads on all
+   three card steps, tertiary text, no hover and no cursor of its own. */
+html:root {
+  .rtps-tree .rtps-cardhead .rtps-label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .rtps-tree .rtps-cardhead .rtps-badge,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-cardhead .rtps-badge {
+    flex: none;
+    box-sizing: border-box;
+    height: 16px;
+    margin-left: auto;
+    padding: 1px 6px;
+    border: 0;
+    border-radius: var(--radius-sm, 4px);
+    background: color-mix(in srgb, var(--color-text-primary, #fff) 5%, transparent);
+    color: var(--color-text-tertiary);
+    font-size: var(--text-caption, 10px);
+    font-weight: var(--font-weight-medium, 500);
+    line-height: 14px;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: inherit;
+    opacity: 1;
+  }
+  .rtps-tree .rtps-cardhead .rtps-badge + .rtps-row-btn {
+    margin-left: 0;
+  }
+  .rtps-tree .rtps-cardhead .rtps-label ~ .rtps-badge ~ .rtps-row-btn {
+    margin-left: 0;
+  }
+}
+
+/* row hover inside the ACTIVE deck block: the block's own fill is the card
+   (#121212) + 3% of the text, ~#191919, which is exactly --color-surface-container,
+   so the step-1 hover vanished there. Inside that block hover goes one step up
+   (--color-surface-container-high) and the selected row one more (+6% of the
+   text on top of it). Everywhere else the step-1 hover is above its background. */
+html:root {
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) .rtps-row[data-kind="chat"]:hover,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) .rtps-row[data-kind="subchat"]:hover,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) .rtps-row[data-kind="panel"]:hover {
+    background: var(--color-surface-container-high);
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) .rtps-row[aria-selected="true"],
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]) .rtps-row[aria-selected="true"]:hover {
+    background: color-mix(in srgb, var(--color-text-primary, #fff) 6%, var(--color-surface-container-high));
+  }
+  /* rows of a dimmed deck come back to full strength under the pointer */
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-title,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-prov,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-time,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-status,
+  .rtps-tree .rtps-card .rtps-deckblock[data-open]:not([data-active]) .rtps-row:hover .rtps-provic {
+    opacity: 1;
+  }
+}
+
+/* the header of an EXPANDED deck is the top of its block: flush with the
+   block's edges (it cancels the block's 4px padding on top and sides), rounded
+   only on top (same radius as the block, which clips it), 4px taller by that
+   same padding; the next row takes the 4px back with its own margin, so the
+   content is centred in the 32px (no padding-top). Collapsed pills
+   keep their four corners. */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) {
+    overflow: clip;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock[data-open] > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-open] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock[data-open][data-active] > .rtps-row[data-kind="chats"],
+  .rtps-tree .rtps-card .rtps-deckblock[data-open][data-active] > .rtps-row[data-kind="chats"]:not(:hover),
+  .rtps-tree .rtps-card .rtps-deckblock[data-open] > .rtps-row[data-kind="chats"][aria-selected="true"] {
+    box-sizing: border-box;
+    width: calc(100% + 8px);
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    margin: -4px -4px 0;
+    padding: 0 14px;
+    border-radius: var(--radius-lg, 8px) var(--radius-lg, 8px) 0 0;
+  }
+  /* it starts 4px higher but is the same 32px: the next row gets the 4px back */
+  .rtps-tree .rtps-card .rtps-deckblock[data-open] > .rtps-row[data-kind="chats"] + .rtps-row {
+    margin-top: 8px;
+  }
+}
+/* session / pane rows never wrap: the label (title + suffix) is a flex strip that
+   clips itself, the suffix keeps its size, the time and icons never shrink */
+html:root {
+  .rtps-tree .rtps-card .rtps-row[data-kind="chat"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="subchat"],
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] {
+    white-space: nowrap;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+  }
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] .rtps-label {
+    display: flex;
+    align-items: center;
+    flex: 1 1 0;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] .rtps-label > :first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] .rtps-prov,
+  .rtps-tree .rtps-card .rtps-row[data-kind="panel"] .rtps-where {
+    flex: none;
+    white-space: nowrap;
+  }
+}
+
+/* no subtitle (branch == name): the kind icons live in the header, right
+   before the "primary" tag and the "+"; the first deck follows the header at 4px */
+html:root {
+  .rtps-tree .rtps-card-title > .rtps-cardhead-icons,
+  .rtps-tree .rtps-cardhead-icons {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 8px;
+    margin: 0;
+  }
+  .rtps-tree .rtps-cardhead-icons > *,
+  .rtps-tree .rtps-cardhead-icons .rtps-cardsub-ic {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  }
+  .rtps-tree .rtps-cardhead-icons .rtps-ic,
+  .rtps-tree .rtps-cardhead-icons svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+  }
+  .rtps-tree .rtps-cardhead-icons [data-type="canvas"],
+  .rtps-tree .rtps-cardhead-icons [data-type="canvas"] svg {
+    color: var(--color-lavender, var(--lavender-400, #a78bfa));
+  }
+  /* order inside .rtps-card-title: dot, name (flex 1), tag, icons, "+" */
+  .rtps-tree .rtps-card-title > .rtps-cardhead-icons + .rtps-row-btn {
+    margin-left: 0;
+  }
+  .rtps-tree .rtps-cardhead .rtps-label:has(~ .rtps-cardhead-icons) {
+    margin-right: 0;
+  }
+  .rtps-tree .rtps-card > .rtps-cardhead + .rtps-deckblock,
+  .rtps-tree .rtps-card > .rtps-cardhead + .rtps-deckblock:has(> .rtps-row[data-kind="pill"]),
+  .rtps-tree .rtps-card > .rtps-cardhead + .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) {
+    margin-top: 4px;
+  }
+}
+
+/* a tab hidden behind another tab of its pane (data-visible="false") is quieter:
+   secondary title, 0.6 on status / provider / type / time. Only in the active
+   deck of the selected card; inactive decks and unselected cards already dim
+   everything, so there the row looks like its neighbours. Hover restores it. */
+html:root {
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-title,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-label {
+    color: var(--color-text-secondary);
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-status,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-provic,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-ico,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-prov,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"] .rtps-time {
+    opacity: 0.6;
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-title,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-label {
+    color: var(--color-text-primary);
+  }
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-status,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-provic,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-ico,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-prov,
+  .rtps-tree .rtps-card[data-current] .rtps-deckblock[data-active] .rtps-row[data-visible="false"]:hover .rtps-time {
+    opacity: 1;
+  }
+}
+
+/* footer: the usage line (filled by usage-bar into the host) on one 44px row.
+   The content keeps the 16px gutter of the "Projects" header; the hairline on
+   top runs edge to edge across the panel (past the panel's own 6px side
+   padding). The host's children belong to usage-bar and are not styled here. */
+.rtps .rtps-foot {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+}
+.rtps .rtps-foot::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -6px;
+  right: -6px;
+  height: 1px;
+  background: var(--color-border-secondary);
+  pointer-events: none;
+}
+.rtps .rtps-foot [data-rtu-rings-host] {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 32px;
+}
+.rtps-foot .rtps-foot-row {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+.rtps-foot .rtps-foot-row > button[data-act="settings"] {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-icons-tertiary, var(--color-text-tertiary));
+  cursor: pointer;
+}
+.rtps-foot .rtps-foot-row > button[data-act="settings"]:hover {
+  background: var(--color-surface-container);
+  color: var(--color-text-primary);
+}
+.rtps-foot .rtps-foot-row > button[data-act="settings"] .rtps-ic {
+  width: 16px;
+  height: 16px;
+}
+.rtps-foot .rtps-foot-row > button[data-act="settings"]:focus-visible,
+.rtps-foot .rtps-foot-avatar:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: 1px;
+}
+.rtps-foot .rtps-foot-avatar {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent, var(--color-white, #fff));
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+  cursor: pointer;
+}
+.rtps-foot .rtps-foot-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* title-bar switch: project sidebar <-> native sidebar (exists in both states) */
+
+/* ============================================ tab drop -> new workspace
+   While a tab is dragged (pane-dock), every project "+" shows as a small accent
+   ring (the tree has data-tab-drag); the one under the pointer (data-drop="hot")
+   opens leftwards into a "New workspace" pill drawn like the dock's drop
+   previews: a 1px accent outline over a light accent tint, the app's type. The
+   pill is the button's ::before (no extra text in the row) and, once open, part
+   of the drop target. data-drop="busy": the dock is creating the worktree.
+   The worktree's own "+" (new deck) never changes. */
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"] {
+  position: relative;
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"] > .rtps-ic {
+  position: relative;
+  z-index: 1;
+}
+.rtps-tree[data-tab-drag] .rtps-project > .rtps-row-btn[data-row-act="newWorktree"],
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][data-drop] {
+  opacity: 1;
+}
+.rtps-tree[data-tab-drag] .rtps-project > .rtps-row-btn[data-row-act="newWorktree"]:not([data-drop]) {
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  color: var(--color-text-primary);
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"]::before {
+  content: "New workspace";
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 26px 0 10px;
+  border: 1px solid var(--color-accent);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-dim, var(--color-surface-container-lowest, Canvas)));
+  color: var(--color-text-primary, CanvasText);
+  font: 500 12px/16px var(--font-sans, system-ui, sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  /* closed: only the 22px circle under the "+" (clip-path also limits the hit area) */
+  clip-path: inset(0 0 0 calc(100% - 22px) round 9999px);
+  transition:
+    opacity 120ms ease-out,
+    clip-path 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][data-drop] {
+  z-index: 3;
+  background: transparent;
+  color: var(--color-accent);
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][data-drop]::before {
+  opacity: 1;
+  clip-path: inset(0 round 9999px);
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][data-drop="hot"]::before {
+  pointer-events: auto;
+}
+.rtps-tree .rtps-project > .rtps-row-btn[data-row-act="newWorktree"][data-drop="busy"]::before {
+  content: "Creating workspace…";
+  animation: rtps-drop-busy 900ms ease-in-out infinite alternate;
+}
+@keyframes rtps-drop-busy {
+  to {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+}
+
+/* The worktree the dock just created (rtps-card-enter, about 1.9 s): the JS opens
+   its slot (300 ms) while its content fades and slides down into it (600 ms); an
+   accent outline (border + soft halo) holds to 1.5 s, then fades into the card's
+   own look (the last keyframe is the card's normal style). rtps-card-ring: a card
+   that was already on screen gets the outline only. */
+.rtps-tree .rtps-card.rtps-card-enter {
+  transform-origin: 50% 0;
+  animation:
+    rtps-card-in 560ms cubic-bezier(0.16, 1, 0.3, 1) 40ms backwards,
+    rtps-card-ring 1800ms linear backwards;
+}
+.rtps-tree .rtps-card.rtps-card-ring {
+  animation: rtps-card-ring 1800ms linear backwards;
+}
+/* undone by the dock: the JS plays the exit (slot closing, fade, slide up), then
+   the card stays out until the store drops the worktree */
+.rtps-tree .rtps-card.rtps-card-gone {
+  display: none;
+}
+@keyframes rtps-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+@keyframes rtps-card-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rtps-card-ring {
+  0%,
+  83% {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
+    animation-timing-function: ease-out;
+  }
+}
+/* Reduced motion: a fade only (no slide; the JS skips the slot). !important: the
+   sidebar's reduced-motion rule turns every animation off with !important. */
+@media (prefers-reduced-motion: reduce) {
+  .rtps-tree .rtps-card.rtps-card-enter {
+    animation:
+      rtps-card-fade 400ms ease-out backwards,
+      rtps-card-ring 1800ms linear backwards !important;
+  }
+  .rtps-tree .rtps-card.rtps-card-ring {
+    animation: rtps-card-ring 1800ms linear backwards !important;
+  }
+}
+
+/* ============================================ deck rhythm + inactive tone
+   An open deck (header + rows) breathes more than folded ones: 12px above and
+   below it, 4px between two folded pills. Only margin-top on a block that has
+   a block before it, so two open decks in a row are 12px apart (never 24) and
+   the first / last block keep the card's own padding. The gap depends on the
+   open state only: hover, selection and activation move nothing. (Each
+   selector is one step stronger than the block rule it overrides.) */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock + .rtps-deckblock:has(> .rtps-row[data-kind="chats"]),
+  .rtps-tree .rtps-card .rtps-deckblock + .rtps-deckblock[data-active]:has(> .rtps-row[data-kind="chats"]),
+  .rtps-tree .rtps-card .rtps-deckblock + .rtps-deckblock[data-open]:not([data-active]):has(> .rtps-row[data-kind="chats"]),
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) + .rtps-deckblock,
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) + .rtps-deckblock[data-active],
+  .rtps-tree .rtps-card .rtps-deckblock:has(> .rtps-row[data-kind="chats"]) + .rtps-deckblock[data-open]:not([data-active]) {
+    margin-top: 12px;
+  }
+}
+/* Every deck that is not the active one reads the same open or folded: the
+   folded pill takes the open inactive deck's exact values (the number in
+   secondary at 0.6 on its label and 0.6 on itself; the state / provider / tab
+   groups at the rows' 0.5). Only the active deck is full; hovering a pill
+   brings it back, like a row of an open inactive deck. In a worktree that is
+   not the current one the block's own 0.55 is the only dimming (reset here as
+   for open decks), and the provider icon is desaturated once, not twice. */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-label,
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-deck-name {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-pillgroup {
+    opacity: 0.5;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"]:hover .rtps-label,
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"]:hover .rtps-deck-name {
+    color: var(--color-text-primary);
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"]:hover .rtps-pillgroup {
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-label,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-deck-name,
+  .rtps-tree .rtps-card:not([data-current]) .rtps-deckblock:not([data-active]) > .rtps-row[data-kind="pill"] .rtps-pillgroup {
+    opacity: 1;
+  }
+  .rtps-tree .rtps-card:not([data-current]) .rtps-pillgroup .rtps-provic .rtps-ic {
+    filter: none;
+  }
+}
+
+/* ============================================ a worktree with one deck
+   No deck header: the deck block holds the rows straight under the worktree
+   header, with no tonal box, padding or active marker (the rows keep their own
+   metrics). A second deck brings the headers back in the same block. */
+html:root {
+  .rtps-tree .rtps-card .rtps-deckblock[data-single],
+  .rtps-tree .rtps-card .rtps-deckblock[data-single][data-active],
+  .rtps-tree .rtps-card .rtps-deckblock[data-single][data-open]:not([data-active]) {
+    margin: 4px 0 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .rtps-tree .rtps-card .rtps-deckblock[data-single]::before {
+    content: none;
+  }
+}
+
+/* ============================================ worktree dot
+   Green for every worktree that is there (its checkout ready, primary or not),
+   green with a soft pulse while a session runs, gray only when it is not
+   available (not ready yet, failed or gone). "primary" is the chip's job.
+   (Under html:root like the dot's base rule, so it carries the weight.) */
+html:root {
+  .rtps-tree .rtps-cardhead .rtps-dot[data-state="ready"],
+  .rtps-tree .rtps-cardhead .rtps-dot[data-state="running"] {
+    background: var(--color-success);
+  }
+  .rtps-tree .rtps-cardhead .rtps-dot[data-state="running"] {
+    animation: rtps-dot-pulse 1600ms ease-in-out infinite;
+  }
+  .rtps-tree .rtps-cardhead .rtps-dot[data-state="unavailable"] {
+    background: var(--color-icons-tertiary, var(--color-text-tertiary));
+  }
+}
+@keyframes rtps-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 0%, transparent);
+  }
+}
+
+/* ============================================ context menus (tree)
+   The app's right-click menu (Base UI ContextMenu): surface-container, 1px
+   border-primary, 8px radius, 6px padding, at least 180px, the dropdown shadow;
+   items 32px (10 x 8 padding, 13/16, weight 500, 4px radius), hover
+   surface-container-high; separators 8px above / below, bleeding to the edges;
+   12px icons in the text color; destructive items in the app's critical red;
+   scale .95 -> 1 in 100 ms (none with reduced motion). Appended to <body>. */
+.rtps-ctx-menu {
+  --rtps-danger: var(--color-critical, var(--color-error));
+  position: fixed;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  min-width: 180px;
+  max-width: 320px;
+  max-height: calc(100vh - 16px); /* a long list (Move to deck ▸) scrolls; the focused item scrolls into view */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 6px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-container);
+  box-shadow: var(--shadow-dropdown, var(--elevation-dropdown));
+  color: var(--color-text-secondary);
+  font: 500 var(--text-body, 13px) / var(--leading-body, 16px) var(--font-sans, system-ui, sans-serif);
+  outline: none;
+  transform-origin: top left;
+  animation: rtps-ctx-in 100ms cubic-bezier(0, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+@keyframes rtps-ctx-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+.rtps-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+:root[data-theme="light"] .rtps-ctx-item {
+  color: var(--color-text-primary);
+}
+.rtps-ctx-item:hover,
+.rtps-ctx-item:focus,
+.rtps-ctx-item[aria-expanded="true"] {
+  background: var(--color-surface-container-high);
+  color: var(--color-text-primary);
+}
+.rtps-ctx-item[aria-disabled="true"],
+.rtps-ctx-item[aria-disabled="true"]:hover,
+.rtps-ctx-item[aria-disabled="true"]:focus {
+  background: transparent;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.rtps-ctx-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+.rtps-ctx-ic svg,
+.rtps-ctx-chev svg {
+  width: 12px;
+  height: 12px;
+}
+.rtps-ctx-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtps-ctx-kbd {
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  letter-spacing: 0.1em;
+}
+.rtps-ctx-chev {
+  display: grid;
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+}
+.rtps-ctx-sep {
+  height: 1px;
+  margin: 8px -6px;
+  background: var(--color-menu-divider, var(--color-border-primary));
+}
+.rtps-ctx-danger,
+.rtps-ctx-danger:hover,
+.rtps-ctx-danger:focus {
+  color: var(--rtps-danger);
+}
+/* confirmation, in place of the menu */
+.rtps-ctx-menu[data-confirm] {
+  padding: 10px;
+}
+.rtps-ctx-confirm-title {
+  color: var(--color-text-primary);
+  line-height: 18px;
+}
+.rtps-ctx-confirm-text {
+  margin-top: 2px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label, 11px);
+  font-weight: 400;
+  line-height: 16px;
+}
+.rtps-ctx-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 10px;
+}
+.rtps-ctx-confirm-actions button {
+  height: 26px;
+  padding: 0 10px;
+  border: 0.5px solid var(--color-border-primary);
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.rtps-ctx-confirm-actions button:hover {
+  background: var(--color-surface-container-high);
+}
+.rtps-ctx-confirm-actions .rtps-ctx-confirm-ok,
+.rtps-ctx-confirm-actions .rtps-ctx-confirm-ok:hover {
+  border-color: transparent;
+  background: var(--rtps-danger);
+  color: var(--color-text-on-critical, white);
+}
+.rtps-ctx-confirm-actions button:focus-visible {
+  outline: 1.5px solid var(--color-border-focus, var(--color-accent));
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtps-ctx-menu {
+    animation: none;
+  }
+}
+
+/* ============================================ shell grid + opaque panel
+   The shell animates its grid columns (the rail's 52 / 104px, bundle FOa: an
+   inline transition on grid-template-columns). With the mod on, the rail's
+   column changes at once, so the panel is never placed against a workspace
+   that is still sliding under it. The panel is opaque, in the shell's own
+   background, so nothing of the app ever shows through it. */
+html.rtps-on :has(> [data-testid="workspace-navbar"]) {
+  transition: none !important;
+}
+html.rtps-on .rtps {
+  background: var(--color-surface-dim);
+}
+
+/* a row on its way out (row motion): out of the flow, never hit */
+.rtps-tree .rtps-row[data-rtps-leaving] {
+  z-index: 0;
+  pointer-events: none;
+}

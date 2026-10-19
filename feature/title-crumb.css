@@ -1,0 +1,67 @@
+/*
+ * RE-TEMPO · title-crumb (user MOD layer)
+ * Breadcrumb in the header title (owner / project / branch). See title-crumb.js.
+ * Scoped to the rttc- prefix; colors come from the app's own text tokens, so
+ * light and dark themes follow the app.
+ */
+
+/* the native branch text stays in the DOM, hidden (JS also sets display:none) */
+[data-testid="app-header-branch-copy"] > [data-rttc-native] {
+  display: none !important;
+}
+
+.rttc-crumb {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.rttc-seg {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.rttc-owner,
+.rttc-project {
+  color: var(--color-text-secondary);
+}
+
+.rttc-branch {
+  color: var(--color-text-primary);
+}
+
+.rttc-sep {
+  flex: 0 0 auto;
+  margin: 0 2px;
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+}
+
+.rttc-project.rttc-link {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 120ms ease;
+}
+
+.rttc-project.rttc-link:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-text-tertiary);
+  text-underline-offset: 2px;
+}
+
+/* last resort when even the shortest segments do not fit: clip the branch */
+.rttc-crumb.rttc-squeeze .rttc-branch {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rttc-project.rttc-link {
+    transition: none;
+  }
+}

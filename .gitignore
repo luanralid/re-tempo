@@ -1,0 +1,14 @@
+# NEVER version the Tempo app or code extracted from it (third-party proprietary)
+*.app/
+RE-TEMPO/
+_backup/
+_data*/
+_home/
+extracted/
+app.asar*
+**/renderer/**/*.js
+**/*.cjsc
+node_modules/
+*.zip
+.DS_Store
+dist/

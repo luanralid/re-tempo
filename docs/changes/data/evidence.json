@@ -1,0 +1,1130 @@
+{
+ "note": "Index of evidence/ (not in this repo), written by build.mjs",
+ "mods": [
+  {
+   "mod": "agent-cursors",
+   "meta": {
+    "title": "Agent cursors on the canvas",
+    "summary": "Each agent working on a comment shows up on the canvas as a multiplayer-style cursor with a name tag and its own color. It stays near the comment and follows pan and zoom. When the screen changes, it glides to the changed element, outlines it and clicks. Waiting agents show a question mark; finished ones show a check and fade out.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:38:47.555Z",
+    "notCaptured": null,
+    "simulatedData": "Four comment tasks with no chat and no thread (one waiting for an answer, two working, one failed) written to the mod's local store; status changes come from a simulation layer over its API. The agent's edit was a CSS class change in DogHomeScreen.tsx inside the project clone, undone at the end."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the same canvas with only comment pins"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: three agent cursors with name tags and colors"
+    },
+    {
+     "file": "03-agent-edits-canvas.gif",
+     "caption": "Idle cursors, tag tooltip, the cursor gliding to the edited card and fading when done"
+    },
+    {
+     "file": "03-agent-edits-canvas.mp4",
+     "caption": "Idle cursors, tag tooltip, the cursor gliding to the edited card and fading when done"
+    },
+    {
+     "file": "04-after-edit.png",
+     "caption": "After the edit: the card is orange, the cursor is gone and the counter changed"
+    }
+   ]
+  },
+  {
+   "mod": "agent-follow",
+   "meta": {
+    "title": "Follow an agent, Figma style",
+    "summary": "Alt/Option-clicking a task bubble makes the canvas camera follow that agent: it zooms in, frames the screen being edited and keeps up with changes. A bar shows who is being followed with a Stop button. Alt/Option-clicking another bubble switches agents; Stop or Esc ends it.",
+    "shortcut": "Alt/Option-click a bubble · Esc or Stop to quit",
+    "capturedAt": "2026-10-18T21:38:47.555Z",
+    "notCaptured": null,
+    "simulatedData": "Four comment tasks with no chat and no thread (one waiting for an answer, two working, one failed) written to the mod's local store; status changes come from a simulation layer over its API. The screen change is the same edit in the project clone used for the cursors."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: canvas overview, no follow mode"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "Following an agent: the camera zooms into its screen and the Following Claude bar appears"
+    },
+    {
+     "file": "03-alt-click-follow.gif",
+     "caption": "Alt/Option-click a bubble; the camera flies to the agent and stays on it while the screen changes"
+    },
+    {
+     "file": "03-alt-click-follow.mp4",
+     "caption": "Alt/Option-click a bubble; the camera flies to the agent and stays on it while the screen changes"
+    },
+    {
+     "file": "04-switch-agent-and-stop.gif",
+     "caption": "Alt/Option-click another bubble to switch agents, then Stop"
+    },
+    {
+     "file": "04-switch-agent-and-stop.mp4",
+     "caption": "Alt/Option-click another bubble to switch agents, then Stop"
+    }
+   ]
+  },
+  {
+   "mod": "agent-runs-panel",
+   "meta": {
+    "title": "Agent Runs panel (⌘⇧A)",
+    "summary": "A floating panel sums up the agent runs of your account: total, active now, average duration, total cost and a bar per status. It only reads data from the logged-in session and changes nothing. Original Tempo has no such summary.",
+    "shortcut": "⌘⇧A (Esc closes)",
+    "capturedAt": "2026-10-18T21:27:54.084Z",
+    "notCaptured": null,
+    "simulatedData": "Only 04-preview-simulated.png: a synthetic summary (37 runs, 12 agents, $4.82) rendered by the mod's preview hook. 02 and the GIF show real account data."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: in original Tempo, ⌘⇧A opens nothing on the home screen"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the Agent Runs panel with the account's real numbers"
+    },
+    {
+     "file": "03-open-panel.gif",
+     "caption": "⌘⇧A opens the panel, Esc closes it, ⌘⇧A toggles it again"
+    },
+    {
+     "file": "03-open-panel.mp4",
+     "caption": "⌘⇧A opens the panel, Esc closes it, ⌘⇧A toggles it again"
+    },
+    {
+     "file": "04-preview-simulated.png",
+     "caption": "The same panel with more runs (simulated data from the mod's preview hook)"
+    }
+   ]
+  },
+  {
+   "mod": "app-map",
+   "meta": {
+    "title": "Live map of clickable elements",
+    "summary": "The app keeps a live index of everything that can be clicked, typed into, toggled or dragged, each with a stable readable name, its region and a risk level. Agents act by name instead of by pixels. A debug overlay shows the names on screen, and destructive actions need explicit confirmation.",
+    "shortcut": "window.__RE_TEMPO_APP_MAP__.debug(true)",
+    "capturedAt": "2026-10-18T21:38:47.556Z",
+    "notCaptured": null,
+    "simulatedData": "find() and act() called through the mod's local API with no real agent; the orange highlight and captions come from the capture kit."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the chat screen with no markings"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "Debug overlay: every element's name; green safe, yellow caution, red destructive"
+    },
+    {
+     "file": "03-debug-overlay.gif",
+     "caption": "Turning the debug overlay on and off"
+    },
+    {
+     "file": "03-debug-overlay.mp4",
+     "caption": "Turning the debug overlay on and off"
+    },
+    {
+     "file": "04-find-and-act.gif",
+     "caption": "find() by name, act() opens the canvas and returns, a destructive act() is refused"
+    },
+    {
+     "file": "04-find-and-act.mp4",
+     "caption": "find() by name, act() opens the canvas and returns, a destructive act() is refused"
+    },
+    {
+     "file": "05-find-result.png",
+     "caption": "find(\"untitled-4\") result highlighted: sidebar/treeitem/untitled-4, risk safe"
+    }
+   ]
+  },
+  {
+   "mod": "bg-tasks",
+   "meta": {
+    "title": "Background tasks inside the chat",
+    "summary": "Tasks the agent runs in the background show up as a block at the end of the chat, like a message. Each row shows the task type and live elapsed time; finished tasks get a final icon and duration, then fold into the header after 8 s. Original Tempo only shows a “N Tasks Running” pill in the composer.",
+    "shortcut": "Click the block header to show or hide finished tasks",
+    "capturedAt": "2026-10-18T21:36:17.089Z",
+    "notCaptured": null,
+    "simulatedData": "Three fictional tasks (Run the test suite, Review the component diff, Build for production) injected into the app's own background-task store in the renderer, then cleared."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the same 3 tasks only appear as “3 Tasks Running” in the composer (simulated data)"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: “3 background tasks running” block at the end of the chat (simulated data)"
+    },
+    {
+     "file": "03-tasks-run-and-finish.gif",
+     "caption": "Tasks start, run and finish, one fails (simulated data)"
+    },
+    {
+     "file": "03-tasks-run-and-finish.mp4",
+     "caption": "Tasks start, run and finish, one fails (simulated data)"
+    },
+    {
+     "file": "04-fold-and-expand.gif",
+     "caption": "Finished tasks fold into the header; a click shows them again (simulated data)"
+    },
+    {
+     "file": "04-fold-and-expand.mp4",
+     "caption": "Finished tasks fold into the header; a click shows them again (simulated data)"
+    },
+    {
+     "file": "05-one-failed.png",
+     "caption": "One task still running, one done and one failed (simulated data)"
+    },
+    {
+     "file": "06-all-finished.png",
+     "caption": "All finished, each with an icon and duration (simulated data)"
+    },
+    {
+     "file": "07-folded-summary.png",
+     "caption": "After 8 s: summary folded into the header (simulated data)"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-autosetup",
+   "meta": {
+    "title": "Automatic canvas setup",
+    "summary": "When the Design home shows the \"Set up canvases\" empty state, the mod presses the setup button by itself after about a second, once per workspace, and shows a toast that explains why a chat opened. By default it also presses Send in that new chat, which starts an agent run. On the \"This branch needs canvas setup\" variant it does nothing.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "This account has no project without canvases, so the \"Set up canvases\" variant (the only one where the mod acts) never shows. On a workspace without canvas setup, the variant was forced in the renderer (hasProjectCanvases=false in the props the mod reads), auto-send stayed off and the click on the app's button was intercepted: no chat opened and nothing was sent. The auto-send step was not captured, since it would start a real agent run."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the canvas setup empty state on the Design home"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod (simulated): the \"Setting up canvases automatically…\" toast"
+    },
+    {
+     "file": "03-auto-start-setup.gif",
+     "caption": "Opening Design: the mod presses setup by itself (simulated, no chat, no AI)"
+    },
+    {
+     "file": "03-auto-start-setup.mp4",
+     "caption": "Opening Design: the mod presses setup by itself (simulated, no chat, no AI) (MP4)"
+    },
+    {
+     "file": "04-real-variant-no-action.png",
+     "caption": "Mod on, real \"This branch needs canvas setup\" variant: no action, by design"
+    },
+    {
+     "file": "05-setup-toast.png",
+     "caption": "The mod's toast up close"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-browser",
+   "meta": {
+    "title": "Browser frame on the canvas",
+    "summary": "The canvas gets a Browser frame: a live web page with its own address bar, placed next to the storyboards. It pans and zooms with the canvas, moves by its title, resizes from its corners and is saved with the canvas. It shares the session of the app's Browser tab.",
+    "shortcut": "W (Browser tool)",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "The page is https://example.com. In the offscreen capture window the page content sometimes shows shifted inside a freshly drawn frame until it is resized."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the canvas has no browser frame"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: example.com loaded in a frame on the canvas"
+    },
+    {
+     "file": "03-draw-browser-frame.gif",
+     "caption": "Browser tool, draw a frame, type an address: the page loads live"
+    },
+    {
+     "file": "03-draw-browser-frame.mp4",
+     "caption": "Browser tool, draw a frame, type an address: the page loads live (MP4)"
+    },
+    {
+     "file": "04-move-resize-frame.gif",
+     "caption": "Move the frame by its title, resize it from a corner, zoom out"
+    },
+    {
+     "file": "04-move-resize-frame.mp4",
+     "caption": "Move the frame by its title, resize it from a corner, zoom out (MP4)"
+    },
+    {
+     "file": "05-toolbar-original.png",
+     "caption": "Original canvas toolbar, without the Browser tool"
+    },
+    {
+     "file": "06-toolbar-browser-tool.png",
+     "caption": "Canvas toolbar with the Browser tool (globe)"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-comment-agent",
+   "meta": {
+    "title": "Canvas comment becomes a Claude task",
+    "summary": "A comment you post on a canvas becomes a task for a Claude chat that runs in the background while you stay on the canvas. The mod tracks its status and captures the commented area before and after. When the run ends, it replies in the comment thread with a short summary and the images. Without the bubbles mod, tasks appear in a compact list over the sidebar.",
+    "shortcut": "Canvas comment tool",
+    "capturedAt": "2026-10-18T21:38:47.554Z",
+    "notCaptured": null,
+    "simulatedData": "Four comment tasks with no chat and no thread (one waiting for an answer, two working, one failed) written to the mod's local store; status changes come from a simulation layer over its API. The typed comment was cancelled, never sent, so no chat or thread reply was created."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the canvas with comment pins and nothing over the sidebar"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: a compact task list at the bottom left (author, request, time running)"
+    },
+    {
+     "file": "03-comment-to-task.gif",
+     "caption": "Comment on the canvas; the task joins the list"
+    },
+    {
+     "file": "03-comment-to-task.mp4",
+     "caption": "Comment on the canvas; the task joins the list"
+    },
+    {
+     "file": "04-task-list.png",
+     "caption": "Task list close-up: one waiting for an answer, two working"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-keys",
+   "meta": {
+    "title": "Single-key canvas shortcuts",
+    "summary": "The design canvas gets the Figma-style single keys the app was missing. C turns on the Comment tool and Shift+0 zooms to 100%. \"?\" opens a sheet with every canvas shortcut, built-in and new. Keys the app already owns are left alone.",
+    "shortcut": "? · C · Shift+0",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: pressing ? on the canvas does nothing"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: ? opens the Canvas shortcuts sheet"
+    },
+    {
+     "file": "03-single-key-shortcuts.gif",
+     "caption": "?, Esc, C (Comment tool) and Shift+0 (zoom to 100%)"
+    },
+    {
+     "file": "03-single-key-shortcuts.mp4",
+     "caption": "?, Esc, C (Comment tool) and Shift+0 (zoom to 100%) (MP4)"
+    },
+    {
+     "file": "04-shortcut-sheet.png",
+     "caption": "The shortcut sheet up close"
+    },
+    {
+     "file": "05-key-c-comment-tool.png",
+     "caption": "Key C: the Comment button turns on in the toolbar"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-paste",
+   "meta": {
+    "title": "Paste images at the pointer",
+    "summary": "Pasting an image on the canvas (⌘V) now puts its top-left corner exactly at the mouse pointer. In the original Tempo the image lands far away, to the right of every storyboard. The mod uses the same path as the canvas menu's Paste here; text, Tempo elements, Figma and links keep the normal paste.",
+    "shortcut": "⌘V",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "The image is a test PNG drawn in the page. The system clipboard was not used: navigator.clipboard.read was replaced in this page only and a synthetic paste event with a DataTransfer carried the same PNG. Pasted images were deleted from the test canvas afterwards."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the pointer was mid-canvas; the pasted image (highlighted) went to the far right"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: the image lands with its corner at the pointer"
+    },
+    {
+     "file": "03-paste-at-pointer.gif",
+     "caption": "With the mod: two pastes, each at the pointer"
+    },
+    {
+     "file": "03-paste-at-pointer.mp4",
+     "caption": "With the mod: two pastes, each at the pointer (MP4)"
+    },
+    {
+     "file": "04-original-paste-lands-far.gif",
+     "caption": "Original Tempo: ⌘V shows nothing near the pointer; the image appears far away"
+    },
+    {
+     "file": "04-original-paste-lands-far.mp4",
+     "caption": "Original Tempo: ⌘V shows nothing near the pointer; the image appears far away (MP4)"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-quick",
+   "meta": {
+    "title": "Quick canvas access",
+    "summary": "Opening a canvas no longer needs the Open modal. In the \"+\" menu, hovering \"Open ›\" lists the recent canvases and \"Search all…\". The canvas name pill at the top left is now a switcher that shows another canvas in the same tab. In the left rail, Design moves to second place and Ctrl+1…5 follow that order.",
+    "shortcut": "Hover \"+\" › Open ›",
+    "capturedAt": "2026-10-18T21:43:52.864Z",
+    "notCaptured": null,
+    "simulatedData": "Test canvases \"QA-changelog-screens\" and \"QA-changelog-images\" exist only in the cloned profile. The rail shot runs with the project-sidebar mod off, because it hides the rail. The original \"+\" menu opens with a right-click, since the new-page mod takes the plain click."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the \"+\" menu has Open, with no submenu"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: hovering Open › lists recent canvases and Search all…"
+    },
+    {
+     "file": "03-open-recent-submenu.gif",
+     "caption": "Opening a recent canvas straight from the Open › submenu"
+    },
+    {
+     "file": "03-open-recent-submenu.mp4",
+     "caption": "Opening a recent canvas straight from the Open › submenu (MP4)"
+    },
+    {
+     "file": "04-switch-canvas-pill.gif",
+     "caption": "Switching the canvas of this tab from the name pill"
+    },
+    {
+     "file": "04-switch-canvas-pill.mp4",
+     "caption": "Switching the canvas of this tab from the name pill (MP4)"
+    },
+    {
+     "file": "05-pill-switcher-menu.png",
+     "caption": "The canvas switcher opened from the name pill"
+    },
+    {
+     "file": "06-pill-original.png",
+     "caption": "Original Tempo: the pill shows only the canvas name"
+    },
+    {
+     "file": "07-rail-original-order.png",
+     "caption": "Original rail with Ctrl held: Chat 1, Docs 2, Design 3"
+    },
+    {
+     "file": "08-rail-design-second.png",
+     "caption": "With the mod, Ctrl held: Chat 1, Design 2, Docs 3"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-shader",
+   "meta": {
+    "title": "WebGL shader on the canvas",
+    "summary": "The canvas gets a Shader frame: an animated WebGL shader next to the storyboards, with a side panel for preset, speed, controls generated from the GLSL code, a live GLSL editor and PNG/WebM/embed export. A shader can also be an effect of a storyboard, over its content (Overlay, with a blend mode) or under it (Background).",
+    "shortcut": "Right-click \"+\" › Shader on Canvas",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "The native menu of the Preset field does not show in CDP captures: the pointer clicks the field and the value changes as a user pick would (change event)."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the \"+\" menu has no Shader on Canvas"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: an animated shader frame and its side panel"
+    },
+    {
+     "file": "03-add-shader-frame.gif",
+     "caption": "Add a shader from the \"+\" menu, pick a preset, drag a control, open the GLSL editor"
+    },
+    {
+     "file": "03-add-shader-frame.mp4",
+     "caption": "Add a shader from the \"+\" menu, pick a preset, drag a control, open the GLSL editor (MP4)"
+    },
+    {
+     "file": "04-shader-effect-on-storyboard.gif",
+     "caption": "A shader as a storyboard effect: Overlay, then Background"
+    },
+    {
+     "file": "04-shader-effect-on-storyboard.mp4",
+     "caption": "A shader as a storyboard effect: Overlay, then Background (MP4)"
+    },
+    {
+     "file": "05-glsl-editor.png",
+     "caption": "Live GLSL editor with the Compiled log"
+    },
+    {
+     "file": "06-presets.png",
+     "caption": "Six presets side by side"
+    },
+    {
+     "file": "07-storyboard-shader-effect.png",
+     "caption": "A storyboard with a shader effect and the effect panel"
+    },
+    {
+     "file": "08-panel-original-no-shader-effects.png",
+     "caption": "Original Tempo: the storyboard Design panel without shader effects"
+    }
+   ]
+  },
+  {
+   "mod": "canvas-snap",
+   "meta": {
+    "title": "Alt measurements between storyboards",
+    "summary": "With a storyboard selected, holding Alt/Option over another storyboard shows the exact distance between them, as thin red lines with red labels in canvas pixels. Over empty canvas it shows the distance to the nearest storyboard on each side. Everything disappears when Alt is released. Snapping itself stays the app's own.",
+    "shortcut": "Hold Alt/Option",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "The storyboard is selected with a drag selection: a plain click also selects its root element, and then the mod stays quiet on purpose (the app measures elements itself)."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: Alt held over another storyboard, no measurement"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: a red 465 px label between the two storyboards"
+    },
+    {
+     "file": "03-alt-measure.gif",
+     "caption": "Select a storyboard, hold Alt and hover: measurements appear and vanish on release"
+    },
+    {
+     "file": "03-alt-measure.mp4",
+     "caption": "Select a storyboard, hold Alt and hover: measurements appear and vanish on release (MP4)"
+    },
+    {
+     "file": "04-alt-hover-storyboard-below.png",
+     "caption": "Alt over the storyboard below: vertical gap and edge offsets"
+    },
+    {
+     "file": "05-alt-empty-canvas.png",
+     "caption": "Alt over empty canvas: distance to the nearest storyboard on each side"
+    }
+   ]
+  },
+  {
+   "mod": "comment-bubbles",
+   "meta": {
+    "title": "Task bubbles next to the canvas name",
+    "summary": "Comment tasks become bubbles, like presence avatars, in a segment attached to the canvas name pill, with an open/done counter. Ring and badge show the status: question, working, done or failed. Clicking a bubble opens a panel with the request, the agent's question with a reply field, the steps and before/after images. In the comment thread, the agent's reply is drawn as a Claude card (not shown here: no real threads were opened).",
+    "shortcut": "Click a bubble · Alt/Option-click to follow",
+    "capturedAt": "2026-10-18T21:38:47.555Z",
+    "notCaptured": null,
+    "simulatedData": "Four comment tasks with no chat and no thread (one waiting for an answer, two working, one failed) written to the mod's local store; status changes come from a simulation layer over its API. The after image in the panel comes from an edit made only in the project clone."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: only the canvas name pill"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: the pill gains a segment with the counter and task bubbles"
+    },
+    {
+     "file": "03-open-bubble-panel.gif",
+     "caption": "Bubble tooltip, panel with the agent's question, and a finished task with before/after"
+    },
+    {
+     "file": "03-open-bubble-panel.mp4",
+     "caption": "Bubble tooltip, panel with the agent's question, and a finished task with before/after"
+    },
+    {
+     "file": "04-task-finishes.gif",
+     "caption": "An agent finishes: its bubble gets a check and the counter updates"
+    },
+    {
+     "file": "04-task-finishes.mp4",
+     "caption": "An agent finishes: its bubble gets a check and the counter updates"
+    },
+    {
+     "file": "05-full-window.png",
+     "caption": "Full window with the bubble segment on the canvas"
+    },
+    {
+     "file": "06-panel-question.png",
+     "caption": "Panel of a task waiting for an answer: amber card with the question and the answer field"
+    },
+    {
+     "file": "07-panel-before-after.png",
+     "caption": "Panel of a finished task: Before (green card) and After (orange card)"
+    }
+   ]
+  },
+  {
+   "mod": "decision-model",
+   "meta": {
+    "title": "Decision model (TypeSafe Jev) in Settings",
+    "summary": "Settings gets a Decision model section, in the RE-TEMPO group, that connects TypeSafe AI's Jev model to canvas comment triage. For each new comment it suggests effort, whether to ask first and urgency, each with a confidence. Without an API key nothing is sent.",
+    "shortcut": "Settings (⌘,) › RE-TEMPO › Decision model",
+    "capturedAt": "2026-10-18T21:27:54.085Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: original Tempo Settings, no Decision model section"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: Settings › Decision model with connection fields and “Not configured”"
+    },
+    {
+     "file": "03-open-decision-model.gif",
+     "caption": "Open Decision model and scroll to automations, privacy and the log"
+    },
+    {
+     "file": "03-open-decision-model.mp4",
+     "caption": "Open Decision model and scroll to automations, privacy and the log"
+    },
+    {
+     "file": "04-empty-log.png",
+     "caption": "End of the section: automations, privacy notice and an empty decision log"
+    }
+   ]
+  },
+  {
+   "mod": "effort-levels",
+   "meta": {
+    "title": "“Extra High” effort for Opus 5",
+    "summary": "With Opus 5 (or Opus 5 1M), the composer's Effort menu gets an “Extra High” option that original Tempo hides for these models, although Claude Code accepts it. The choice is saved like the built-in options. The mod also drops the “ 1M” suffix from model names in the picker.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:33:57.082Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: Opus 5 in original Tempo, Effort menu without “Extra High”"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: Opus 5 with “Extra High” in the Effort menu, already picked"
+    },
+    {
+     "file": "03-pick-extra-high.gif",
+     "caption": "Switch to Opus 5, open Effort and pick “Extra High”"
+    },
+    {
+     "file": "03-pick-extra-high.mp4",
+     "caption": "Switch to Opus 5, open Effort and pick “Extra High”"
+    },
+    {
+     "file": "04-model-names-after.png",
+     "caption": "Model picker with the mod: names without “ 1M”"
+    },
+    {
+     "file": "05-model-names-before.png",
+     "caption": "Model picker in original Tempo: names with “ 1M”"
+    }
+   ]
+  },
+  {
+   "mod": "home-title",
+   "meta": {
+    "title": "New home title (“Let's do it”)",
+    "summary": "The big home title “Let's Cook.” now reads “Let's do it”. The mod only swaps the text on screen, without touching Tempo's code, and keeps it swapped when the screen re-renders. The empty new chat shows the same title.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:27:54.084Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: original Tempo home with the “Let's Cook.” title"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the same home with the “Let's do it” title"
+    },
+    {
+     "file": "03-open-empty-chat.gif",
+     "caption": "Home with the new title, then an empty chat with the same title"
+    },
+    {
+     "file": "03-open-empty-chat.mp4",
+     "caption": "Home with the new title, then an empty chat with the same title"
+    },
+    {
+     "file": "04-title-before.png",
+     "caption": "Close-up of the original title: “Let's Cook.”"
+    },
+    {
+     "file": "05-title-after.png",
+     "caption": "Close-up of the new title: “Let's do it”"
+    }
+   ]
+  },
+  {
+   "mod": "pane-dock",
+   "meta": {
+    "title": "Free-form panes in the center",
+    "summary": "The center of the app can now be split into as many panes as you want, like a code editor. Drag a tab to the edge of a pane to open a new pane beside or below it, or drop it on another pane's tab bar to move it. Dividers can be dragged, each pane has its own tab bar and +, and ⌘Z undoes layout changes.",
+    "shortcut": "Drag a tab to a pane edge; ⌘Z / ⌘⇧Z (undo / redo layout)",
+    "capturedAt": "2026-10-18T21:30:53.606Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the center shows one view at a time; chat, canvas and terminal are tabs (all mods except pane-dock, center only)."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: chat on the left, canvas and terminal stacked on the right, each pane with its own tab bar."
+    },
+    {
+     "file": "03-drag-tab-split.gif",
+     "caption": "Dragging the canvas tab to the right edge, the terminal to the bottom of that pane, then resizing with the divider."
+    },
+    {
+     "file": "03-drag-tab-split.mp4",
+     "caption": "Dragging the canvas tab to the right edge, the terminal to the bottom of that pane, then resizing with the divider."
+    },
+    {
+     "file": "04-undo-redo-layout.gif",
+     "caption": "⌘Z undoes the two splits one step at a time; ⌘⇧Z redoes them."
+    },
+    {
+     "file": "04-undo-redo-layout.mp4",
+     "caption": "⌘Z undoes the two splits one step at a time; ⌘⇧Z redoes them."
+    },
+    {
+     "file": "05-split-preview.png",
+     "caption": "While dragging, the target half of the pane is outlined before you drop (\"New split\")."
+    }
+   ]
+  },
+  {
+   "mod": "profile-page",
+   "meta": {
+    "title": "Profile page and the RE-TEMPO group in Settings",
+    "summary": "Settings gets a Profile page, the first item under Personal, with a read-only view of your work: level ring, counts, a 26-week activity map, work by type and milestones. There are no points, streaks or rankings; every number counts real work and only goes up. The mod also adds a “RE-TEMPO” group to Settings where other mods add their sections.",
+    "shortcut": "Settings (⌘,) › Personal › Profile",
+    "capturedAt": "2026-10-18T21:27:54.085Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: original Tempo Settings, no Profile and no RE-TEMPO group"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: Settings › Profile with level, counts and activity map"
+    },
+    {
+     "file": "03-open-profile.gif",
+     "caption": "Open Settings, see Profile and the RE-TEMPO group, scroll the profile"
+    },
+    {
+     "file": "03-open-profile.mp4",
+     "caption": "Open Settings, see Profile and the RE-TEMPO group, scroll the profile"
+    },
+    {
+     "file": "04-profile-bottom.png",
+     "caption": "Lower part of Profile: work by type, milestones and “Your month”"
+    }
+   ]
+  },
+  {
+   "mod": "project-sidebar",
+   "meta": {
+    "title": "One project-oriented sidebar",
+    "summary": "The left icon rail and the five separate sidebars (chat, docs, design, issues, agents) become a single sidebar organized by project. Each project lists its branches as cards, and each branch lists its chats and open tabs. Search, agent runs, add project and new worktree sit on top, and every click uses the app's own navigation.",
+    "shortcut": "⌘⇧E (switch sidebar mode), ⌘B (collapse)",
+    "capturedAt": "2026-10-18T21:36:14.716Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the original icon rail and Chats sidebar (Tempo with no mods)."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: one sidebar with projects, branch cards, chats and open tabs."
+    },
+    {
+     "file": "03-open-tab-switch-branch.gif",
+     "caption": "Clicking a tab row opens that tab, clicking a project collapses it, and clicking a branch switches workspace."
+    },
+    {
+     "file": "03-open-tab-switch-branch.mp4",
+     "caption": "Clicking a tab row opens that tab, clicking a project collapses it, and clicking a branch switches workspace."
+    },
+    {
+     "file": "04-search-filter.gif",
+     "caption": "Typing in the search box filters the tree; Esc clears it."
+    },
+    {
+     "file": "04-search-filter.mp4",
+     "caption": "Typing in the search box filters the tree; Esc clears it."
+    }
+   ]
+  },
+  {
+   "mod": "rail-menu",
+   "meta": {
+    "title": "Slimmer rail footer with a gear menu",
+    "summary": "The rail footer used to show bug report, help, settings and avatar buttons. Now it keeps only the gear and the avatar. Report a bug and Help moved into a menu that the gear opens, with the same shortcuts as before.",
+    "shortcut": "⌘, (Settings), ⌘⇧B (Report a bug), Shift-click the gear (Settings directly)",
+    "capturedAt": "2026-10-18T21:24:26.470Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the rail footer has bug report, help, settings and avatar buttons."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: only the gear and the avatar; the gear opens a menu with Settings, Help and Report a bug."
+    },
+    {
+     "file": "03-open-gear-menu.gif",
+     "caption": "The gear opens the menu; Help opens the original help submenu."
+    },
+    {
+     "file": "03-open-gear-menu.mp4",
+     "caption": "The gear opens the menu; Help opens the original help submenu."
+    },
+    {
+     "file": "04-title-bar-gear-menu.png",
+     "caption": "With the project sidebar on, the title bar gear opens the same menu."
+    }
+   ]
+  },
+  {
+   "mod": "sidebar-chats",
+   "meta": {
+    "title": "Every chat tab in the Chats sidebar",
+    "summary": "Chats opened from the + in the tab bar, in split view, in a window or pane, or in CLI mode used to show only in the tab bar. Now each one appears in the Chats sidebar, nested under the chat it came from. Rows show status, provider, a badge for where the chat lives (split, window, CLI) and the time.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:41:21.073Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the new chat is open in the tab bar but missing from the Chats sidebar."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the same chat nested under its parent chat, with workspace cards."
+    },
+    {
+     "file": "03-new-chat-nested.gif",
+     "caption": "A new chat opened from the + appears nested under its parent; the arrow folds and unfolds it."
+    },
+    {
+     "file": "03-new-chat-nested.mp4",
+     "caption": "A new chat opened from the + appears nested under its parent; the arrow folds and unfolds it."
+    },
+    {
+     "file": "04-move-to-pane-badge.gif",
+     "caption": "Moving the chat into a pane adds a \"window\" badge; clicking the row jumps to the chat."
+    },
+    {
+     "file": "04-move-to-pane-badge.mp4",
+     "caption": "Moving the chat into a pane adds a \"window\" badge; clicking the row jumps to the chat."
+    },
+    {
+     "file": "05-window-badge.png",
+     "caption": "Close-up: the nested draft chat with its \"window\" badge."
+    }
+   ]
+  },
+  {
+   "mod": "tab-close",
+   "meta": {
+    "title": "Close button on the main chat tab",
+    "summary": "In the center tab bar, the first tab (the main chat) was the only one without a close button. Now every tab has one. Closing the main chat only hides its tab: the conversation is not deleted or archived, it stays in the sidebar, and clicking it brings the tab back.",
+    "shortcut": "Click × or middle-click the tab",
+    "capturedAt": "2026-10-18T21:38:17.952Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the main chat tab has no close button (native Chats sidebar on both sides)."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the same tab with a close button."
+    },
+    {
+     "file": "03-close-primary-tab.gif",
+     "caption": "Closing the main chat tab hides it; clicking the chat in the sidebar brings it back."
+    },
+    {
+     "file": "03-close-primary-tab.mp4",
+     "caption": "Closing the main chat tab hides it; clicking the chat in the sidebar brings it back."
+    }
+   ]
+  },
+  {
+   "mod": "title-crumb",
+   "meta": {
+    "title": "Window title becomes owner / project / branch",
+    "summary": "The title in the middle of the top bar used to show only the branch name. Now it shows the full path: owner, project and branch. The owner comes from the git remote, or from the git user prefix of the branch when there is no remote. It updates when you switch workspace, and the branch icon, copy-on-click and +N counter stay as they were.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:37:36.361Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: the window title shows only the branch name, \"jdoe/mango\"."
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the title is a breadcrumb, \"jdoe / seed-tracker / mango\"."
+    },
+    {
+     "file": "03-crumb-follows-branch.gif",
+     "caption": "Switching between two branches of the butia project updates the breadcrumb (owner from the git remote)."
+    },
+    {
+     "file": "03-crumb-follows-branch.mp4",
+     "caption": "Switching between two branches of the butia project updates the breadcrumb (owner from the git remote)."
+    }
+   ]
+  },
+  {
+   "mod": "ui-beam",
+   "meta": {
+    "title": "Agent handoff beam",
+    "summary": "When an agent is about to use the interface, an animation shows it: a pulse at the source, a rounded beam with Claude's avatar traveling to the target, and a labeled frame on the target. It is only the animation; ui-drive performs the action.",
+    "shortcut": null,
+    "capturedAt": "2026-10-18T21:38:47.555Z",
+    "notCaptured": null,
+    "simulatedData": "Triggered through the mod's local play() API with no agent; the source is the message box of an empty chat."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: an empty chat, no agent indication"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: the beam leaves the chat box with Claude's avatar on its way to Settings"
+    },
+    {
+     "file": "03-beam-to-target.gif",
+     "caption": "Three handoffs: to Settings, to the canvas tab and to Files"
+    },
+    {
+     "file": "03-beam-to-target.mp4",
+     "caption": "Three handoffs: to Settings, to the canvas tab and to Files"
+    },
+    {
+     "file": "04-target-frame.png",
+     "caption": "Arrival: a frame labeled Opening Settings on the button"
+    }
+   ]
+  },
+  {
+   "mod": "ui-drive",
+   "meta": {
+    "title": "An agent drives the interface",
+    "summary": "An agent can operate Tempo for you: open Settings, switch sections, open a canvas, doc, issue or chat, point at an element and leave a short note. Commands come from @tempo-ui lines in chat replies, the tempo-ui CLI or the API. Every screen change shows a notice with Deny while the beam flies, then Undo and Always allow.",
+    "shortcut": "@tempo-ui <command> in a chat reply · tempo-ui CLI",
+    "capturedAt": "2026-10-18T21:38:47.556Z",
+    "notCaptured": null,
+    "simulatedData": "Commands sent through the mod's local run() API with no real agent and no chat; CLI reading pointed at an isolated file."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: the chat screen; nothing outside controls the UI"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "open settings in progress: beam to the Settings button and the Deny notice"
+    },
+    {
+     "file": "03-open-settings-undo.gif",
+     "caption": "open settings, then Undo goes back to the chat"
+    },
+    {
+     "file": "03-open-settings-undo.mp4",
+     "caption": "open settings, then Undo goes back to the chat"
+    },
+    {
+     "file": "04-highlight-and-note.gif",
+     "caption": "highlight points at the canvas tab; toast leaves a note"
+    },
+    {
+     "file": "04-highlight-and-note.mp4",
+     "caption": "highlight points at the canvas tab; toast leaves a note"
+    },
+    {
+     "file": "05-settings-opened-undo.png",
+     "caption": "Settings opened by the agent, with the Undo / Always allow notice"
+    }
+   ]
+  },
+  {
+   "mod": "usage-bar",
+   "meta": {
+    "title": "Plan usage in the sidebar footer",
+    "summary": "The sidebar footer shows how much of your plan is used, for Claude and Codex, with the time until each window resets. Hovering opens a Usage panel with every window as a bar. Numbers come from local files on the Mac and no credential is read. Without the RE-TEMPO sidebar, the same usage shows as two rings in the rail.",
+    "shortcut": "Hover the footer line (click to pin, Esc closes)",
+    "capturedAt": "2026-10-18T21:27:54.085Z",
+    "notCaptured": null,
+    "simulatedData": null
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: original Tempo footer with no usage information"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: the “Used” line in the footer with the Usage panel open"
+    },
+    {
+     "file": "03-open-usage-popover.gif",
+     "caption": "Hover opens the Usage panel, a click pins it, Esc closes it"
+    },
+    {
+     "file": "03-open-usage-popover.mp4",
+     "caption": "Hover opens the Usage panel, a click pins it, Esc closes it"
+    },
+    {
+     "file": "04-rail-rings-popover.gif",
+     "caption": "Without the RE-TEMPO sidebar: usage rings in the rail open the same panel"
+    },
+    {
+     "file": "04-rail-rings-popover.mp4",
+     "caption": "Without the RE-TEMPO sidebar: usage rings in the rail open the same panel"
+    },
+    {
+     "file": "05-footer-line.png",
+     "caption": "Compact usage line in the sidebar footer"
+    },
+    {
+     "file": "06-rail-rings.png",
+     "caption": "Two usage rings in the rail (time to reset in the center)"
+    }
+   ]
+  },
+  {
+   "mod": "voice-input",
+   "meta": {
+    "title": "Voice dictation in the composer",
+    "summary": "The chat composer gets a microphone button next to Send. Words appear in the field while you speak and the final text stays in the composer; nothing is sent. Recognition runs on the Mac (Apple Speech), with no cloud and no API key. Settings gets a Dictation section for engine, language and a mic test.",
+    "shortcut": "Click the mic (or tap Space in an empty composer); Option-click toggles PT/EN",
+    "capturedAt": "2026-10-18T21:27:54.085Z",
+    "notCaptured": null,
+    "simulatedData": "Dictation is replayed from synthetic partial results through the mod's replay hook (no microphone recording). Text: “I want an Export to CSV button at the top of the table.”"
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Before: original Tempo composer, no microphone"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "After: composer with the microphone button next to Send"
+    },
+    {
+     "file": "03-dictate-in-composer.gif",
+     "caption": "Live dictation filling the composer (simulated data: replayed partial results, no microphone)"
+    },
+    {
+     "file": "03-dictate-in-composer.mp4",
+     "caption": "Live dictation filling the composer (simulated data: replayed partial results, no microphone)"
+    },
+    {
+     "file": "04-open-dictation-settings.gif",
+     "caption": "Open Settings › Dictation: engine and language options"
+    },
+    {
+     "file": "04-open-dictation-settings.mp4",
+     "caption": "Open Settings › Dictation: engine and language options"
+    },
+    {
+     "file": "05-mic-tooltip.png",
+     "caption": "Mic tooltip: current language and engine"
+    },
+    {
+     "file": "06-live-dictation.png",
+     "caption": "Mid-dictation: live words over the field's placeholder (simulated data)"
+    },
+    {
+     "file": "07-settings-dictation.png",
+     "caption": "Settings › Dictation: engine, language and microphone test"
+    }
+   ]
+  },
+  {
+   "mod": "zoom",
+   "meta": {
+    "title": "Zoom level toast",
+    "summary": "When the app's native zoom changes (View › Zoom In, Zoom Out, Actual Size), a small toast in the bottom-right corner shows the new level, such as 110%, for about a second. The zoom itself is still the app's own.",
+    "shortcut": "⌘ = · ⌘ − · ⌘ 0",
+    "capturedAt": "2026-10-18T21:43:52.865Z",
+    "notCaptured": null,
+    "simulatedData": "Menu shortcuts do not reach the app over CDP, so the native zoom was changed from the test instance's main process (webContents.setZoomLevel ± 0.5, the same call as the View menu items). The toast reacts to the real zoom."
+   },
+   "list": [
+    {
+     "file": "01-before.png",
+     "caption": "Original Tempo: zoomed to 110% with no feedback"
+    },
+    {
+     "file": "02-after.png",
+     "caption": "With the mod: a 110% toast in the bottom-right corner"
+    },
+    {
+     "file": "03-zoom-in-out.gif",
+     "caption": "Zoom In, Zoom Out and Actual Size, with the toast showing each level"
+    },
+    {
+     "file": "03-zoom-in-out.mp4",
+     "caption": "Zoom In, Zoom Out and Actual Size, with the toast showing each level (MP4)"
+    },
+    {
+     "file": "04-zoom-toast.png",
+     "caption": "The zoom toast up close"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,289 @@
+/*
+ * RE-TEMPO · Agent Runs panel — own styles, scoped under [data-rar].
+ * The rar- prefix (re-tempo agent runs) is used everywhere so it never collides with Tempo's UI.
+ * Dark theme by default (the app default); respects Tempo's own [data-theme="light"].
+ */
+
+[data-rar-root] {
+  --rar-bg: #16131d;
+  --rar-surface: #1f1b29;
+  --rar-surface-2: #272233;
+  --rar-border: #332c44;
+  --rar-text: #ece9f3;
+  --rar-text-dim: #a59fb5;
+  --rar-accent: #8b5cf6;
+  --rar-accent-dim: #6d28d9;
+  --rar-ok: #34d399;
+  --rar-warn: #fbbf24;
+  --rar-err: #f87171;
+  --rar-run: #60a5fa;
+  --rar-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--rar-text);
+}
+
+/* Tempo light theme */
+html[data-theme="light"] [data-rar-root] {
+  --rar-bg: #ffffff;
+  --rar-surface: #ffffff;
+  --rar-surface-2: #f5f3fa;
+  --rar-border: #e6e1ef;
+  --rar-text: #1c1726;
+  --rar-text-dim: #6b6478;
+  --rar-shadow: 0 12px 40px rgba(60, 40, 110, 0.18);
+}
+
+/* clickable backdrop to close */
+[data-rar-root] .rar-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 6, 12, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* floating button (launcher) */
+[data-rar-launcher] {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2147482999;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  font: 600 12px/1 ui-sans-serif, system-ui, sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  border: none;
+  border-radius: 9px;
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.45);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+/* button hidden at the user's request; the panel stays on the ⌘⇧A shortcut */
+[data-rar-launcher] { display: none !important; }
+[data-rar-launcher]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(109, 40, 217, 0.6);
+}
+[data-rar-launcher] .rar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c4b5fd;
+  box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.25);
+}
+
+/* panel */
+[data-rar-root] .rar-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: var(--rar-surface);
+  border: 1px solid var(--rar-border);
+  border-radius: 14px;
+  box-shadow: var(--rar-shadow);
+  overflow: hidden;
+  animation: rar-in 0.16s ease;
+}
+@keyframes rar-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+[data-rar-root] .rar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rar-border);
+  background: var(--rar-surface-2);
+}
+[data-rar-root] .rar-title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+[data-rar-root] .rar-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.4px;
+}
+[data-rar-root] .rar-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--rar-text-dim);
+}
+[data-rar-root] .rar-x {
+  margin-left: 8px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid var(--rar-border);
+  background: transparent;
+  color: var(--rar-text-dim);
+  cursor: pointer;
+}
+[data-rar-root] .rar-x:hover { color: var(--rar-text); background: var(--rar-surface); }
+
+[data-rar-root] .rar-body {
+  padding: 16px;
+  overflow: auto;
+}
+
+/* metrics grid */
+[data-rar-root] .rar-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 440px) {
+  [data-rar-root] .rar-stats { grid-template-columns: repeat(4, 1fr); }
+}
+[data-rar-root] .rar-stat {
+  background: var(--rar-surface-2);
+  border: 1px solid var(--rar-border);
+  border-radius: 10px;
+  padding: 12px;
+}
+[data-rar-root] .rar-stat .rar-k {
+  font-size: 10.5px;
+  color: var(--rar-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+[data-rar-root] .rar-stat .rar-v {
+  margin-top: 5px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+[data-rar-root] .rar-stat .rar-v small { font-size: 12px; font-weight: 600; color: var(--rar-text-dim); }
+
+/* breakdown por status */
+[data-rar-root] .rar-section-title {
+  margin: 18px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rar-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+[data-rar-root] .rar-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+[data-rar-root] .rar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--rar-border);
+  background: var(--rar-surface-2);
+  text-transform: capitalize;
+}
+[data-rar-root] .rar-chip i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--rar-text-dim);
+}
+[data-rar-root] .rar-chip[data-s="done"] i,
+[data-rar-root] .rar-chip[data-s="completed"] i,
+[data-rar-root] .rar-chip[data-s="succeeded"] i { background: var(--rar-ok); }
+[data-rar-root] .rar-chip[data-s="running"] i,
+[data-rar-root] .rar-chip[data-s="starting"] i { background: var(--rar-run); }
+[data-rar-root] .rar-chip[data-s="queued"] i { background: var(--rar-warn); }
+[data-rar-root] .rar-chip[data-s="error"] i,
+[data-rar-root] .rar-chip[data-s="failed"] i,
+[data-rar-root] .rar-chip[data-s="cancelled"] i,
+[data-rar-root] .rar-chip[data-s="canceled"] i { background: var(--rar-err); }
+[data-rar-root] .rar-bar {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--rar-surface-2);
+  overflow: hidden;
+}
+[data-rar-root] .rar-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--rar-accent), var(--rar-accent-dim));
+}
+[data-rar-root] .rar-status-row .rar-n {
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* empty / error / loading states */
+[data-rar-root] .rar-note {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--rar-text-dim);
+}
+[data-rar-root] .rar-note .rar-emoji { font-size: 26px; display: block; margin-bottom: 8px; filter: grayscale(0.2); }
+[data-rar-root] .rar-note strong { color: var(--rar-text); display: block; margin-bottom: 4px; font-size: 14px; }
+[data-rar-root] .rar-err-box {
+  border: 1px solid var(--rar-err);
+  background: rgba(248, 113, 113, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  color: var(--rar-text);
+}
+[data-rar-root] .rar-retry {
+  margin-top: 10px;
+  padding: 6px 12px;
+  font: 600 12px ui-sans-serif, system-ui, sans-serif;
+  color: #fff;
+  background: var(--rar-accent-dim);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* skeleton loading */
+[data-rar-root] .rar-skel {
+  height: 68px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--rar-surface-2) 25%, var(--rar-surface) 37%, var(--rar-surface-2) 63%);
+  background-size: 400% 100%;
+  animation: rar-shimmer 1.3s ease infinite;
+}
+@keyframes rar-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+
+[data-rar-root] .rar-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--rar-border);
+  font-size: 10.5px;
+  color: var(--rar-text-dim);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+[data-rar-root] .rar-foot kbd {
+  font: 600 10px ui-monospace, monospace;
+  background: var(--rar-surface-2);
+  border: 1px solid var(--rar-border);
+  border-radius: 5px;
+  padding: 1px 5px;
+}

@@ -1,0 +1,162 @@
+{
+ "part": "a",
+ "images": [
+  {
+   "src": "media/real-a/project-sidebar--decks-chats.png",
+   "mod": "project-sidebar",
+   "feature": "Decks under branches",
+   "caption": "Project sidebar: a branch card with a numbered deck listing its chats, canvases, browser and terminal, plus an Archive hidden chats row.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/147.png"
+  },
+  {
+   "src": "media/real-a/project-sidebar--deck-summary.png",
+   "mod": "project-sidebar",
+   "feature": "Collapsed deck rows",
+   "caption": "Branch card with collapsed decks that summarize their contents with status, chat, canvas and terminal icons.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/139.png"
+  },
+  {
+   "src": "media/real-a/project-sidebar--deck-menu.png",
+   "mod": "project-sidebar",
+   "feature": "Deck menu",
+   "caption": "Deck row menu offering Rename and Remove deck.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/146.png"
+  },
+  {
+   "src": "media/real-a/project-sidebar--new-worktree.png",
+   "mod": "project-sidebar",
+   "feature": "New worktree picker",
+   "caption": "The plus button on a project opens a branch picker to create or switch to a worktree.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/67.png"
+  },
+  {
+   "src": "media/real-a/project-sidebar--full-window.png",
+   "mod": "project-sidebar",
+   "feature": "Whole window overview",
+   "caption": "Full RE-TEMPO window: project sidebar on the left with decks and branches, split panes and a canvas on the right.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/128.png"
+  },
+  {
+   "src": "media/real-a/project-sidebar--before-original.png",
+   "mod": "project-sidebar",
+   "feature": "Original rail and Chats sidebar",
+   "caption": "The original Tempo layout before the mod: icon rail on the left and a route-specific Chats sidebar.",
+   "kind": "before",
+   "source": "<claude-scratch>/<session>/images/79.png"
+  },
+  {
+   "src": "media/real-a/sidebar-chats--nested-tabs.png",
+   "mod": "sidebar-chats",
+   "feature": "Tabs nested under their chat",
+   "caption": "Each chat row in the sidebar has its canvas and terminal tabs nested underneath with connector lines.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/119.png"
+  },
+  {
+   "src": "media/real-a/usage-bar--popover-footer.png",
+   "mod": "usage-bar",
+   "feature": "Usage popover and footer line",
+   "caption": "Hovering the footer line opens the Usage popover with session, weekly and Codex windows.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/91.png"
+  },
+  {
+   "src": "media/real-a/usage-bar--footer-line.png",
+   "mod": "usage-bar",
+   "feature": "Footer usage line",
+   "caption": "Compact footer line showing used percentage and time to reset for Claude and Codex.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/130.png"
+  },
+  {
+   "src": "media/real-a/usage-bar--rings-popover.png",
+   "mod": "usage-bar",
+   "feature": "Usage rings",
+   "caption": "Two usage rings (4h and 7d) above the footer, with the Usage popover open.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/86.png"
+  },
+  {
+   "src": "media/real-a/pane-dock--panes.png",
+   "mod": "pane-dock",
+   "feature": "Free pane layout",
+   "caption": "One large pane on top and two panes below, each with its own tab bar.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/106.png"
+  },
+  {
+   "src": "media/real-a/tab-close--primary-chat.png",
+   "mod": "tab-close",
+   "feature": "Close button on the primary chat tab",
+   "caption": "The first chat tab now shows a close button, like every other tab.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/57.png"
+  },
+  {
+   "src": "media/real-a/canvas-quick--open-submenu-menu.png",
+   "mod": "canvas-quick",
+   "feature": "Plus menu with Open submenu",
+   "caption": "The plus menu has an Open entry with a chevron that leads to recent canvases.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/150.png"
+  },
+  {
+   "src": "media/real-a/canvas-quick--canvas-switcher.png",
+   "mod": "canvas-quick",
+   "feature": "Canvas switcher on the page pill",
+   "caption": "The canvas name pill opens a list of canvases open in tabs and recent ones, with Open at the bottom.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/107.png"
+  },
+  {
+   "src": "media/real-a/canvas-browser--plus-menu.png",
+   "mod": "canvas-browser",
+   "feature": "Browser on Canvas",
+   "caption": "The plus menu gains a Browser on Canvas item that places a browser frame on the canvas.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/143.png"
+  },
+  {
+   "src": "media/real-a/canvas-comment-agent--task-row.png",
+   "mod": "canvas-comment-agent",
+   "feature": "Canvas comment as a Claude task",
+   "caption": "A canvas comment appears as a Claude task row in a deck of the project sidebar.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/149.png"
+  },
+  {
+   "src": "media/real-a/canvas-comment-agent--agent-result.png",
+   "mod": "canvas-comment-agent",
+   "feature": "Agent answer to a canvas comment",
+   "caption": "The agent reports Done after acting on a comment left on the canvas.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/131.png"
+  },
+  {
+   "src": "media/real-a/title-crumb--breadcrumb.png",
+   "mod": "title-crumb",
+   "feature": "Header breadcrumb",
+   "caption": "Window header shows project / branch with the diff badge instead of the bare branch name.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/110.png"
+  },
+  {
+   "src": "media/real-a/rail-menu--before-original.png",
+   "mod": "rail-menu",
+   "feature": "Original rail footer",
+   "caption": "The original rail footer with separate Report a bug, Help and Settings buttons and the avatar.",
+   "kind": "before",
+   "source": "<claude-scratch>/<session>/images/60.png"
+  }
+ ],
+ "skipped": {
+  "reference_apps": 11,
+  "bugs_or_duplicates": 85,
+  "sensitive": 0
+ }
+}

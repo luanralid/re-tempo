@@ -1,0 +1,143 @@
+/*
+ * RE-TEMPO · canvas-autosetup — toast shown when the mod starts canvas setup.
+ * Mirrors the app's Sonner toasts (Toaster at bottom-right): 340 px card,
+ * surface-container-high, 0.5 px border-primary, popover shadow, 13/11 px
+ * title/description and a top-right close button.
+ */
+
+.rcas-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 8px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  border: 0.5px solid var(--color-border-primary, #3a3a3a);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-container-high, #232323);
+  box-shadow: var(--shadow-popover, 0 12px 32px rgba(0, 0, 0, 0.45));
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+}
+
+.rcas-toast[data-show] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.rcas-toast-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rcas-toast-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--color-text-primary, #ededed);
+}
+
+.rcas-toast-desc {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+  color: var(--color-text-secondary, #a1a1a1);
+  overflow-wrap: anywhere;
+}
+
+/* Sonner's action button: small, filled, under the text. */
+.rcas-toast-action {
+  align-self: flex-start;
+  margin-top: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-text-primary, #ededed);
+  color: var(--color-surface-container-high, #232323);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.rcas-toast-action:hover,
+.rcas-toast-action:focus-visible {
+  opacity: 0.9;
+}
+
+.rcas-toast-close {
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-tertiary, #7a7a7a);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.rcas-toast-close:hover,
+.rcas-toast-close:focus-visible {
+  color: var(--color-text-primary, #ededed);
+}
+
+.rcas-toast-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcas-toast {
+    transform: none;
+    transition: none;
+  }
+}
+
+/*
+ * "New canvas" while the workspace is not set up for canvases (readiness
+ * "missing"): the app's disabled variant (aria-disabled, cursor-not-allowed,
+ * text-tertiary, opacity-60, no hover) and pane-dock's (data-disabled:
+ * pointer-events none, opacity-50) read as an ordinary item, because picking
+ * it sets canvases up and then opens one. The app's own enabled item, once
+ * "present", has no data-rcas-setup and is untouched.
+ */
+[data-rcas-setup] {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] [data-rcas-setup] {
+  color: var(--color-text-primary) !important;
+}
+
+[data-rcas-setup][data-highlighted],
+[data-rcas-setup]:hover {
+  background-color: var(--color-surface-menu-hover) !important;
+}
+
+/* The app's "Set up canvases from the Design tab." tooltip on that item. */
+[data-rcas-hide] {
+  display: none !important;
+}

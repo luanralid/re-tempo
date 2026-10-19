@@ -1,0 +1,281 @@
+/*
+ * RE-TEMPO · sidebar-chats (user mod layer)
+ * Extra chat rows in the left "Chats" sidebar, nested under their parent chat
+ * in Orca's style. The rows reuse the app's own tree item classes (see
+ * sidebar-chats.js); this file adds the child row layout (status, provider,
+ * title, badge, time), the parent's round fold button and the [hidden] state,
+ * with Tempo tokens only. Everything is scoped to the mod's own nodes
+ * ([data-rsc-root]); the app rows are only reached through :has() on the
+ * mod's fold button node, to make room for it.
+ */
+
+[data-rsc-root] {
+  /* Children start under the parent's label (icon slot + gap), minus a
+     little so the bullet lines up with the label's first letter. */
+  --rsc-indent: calc(var(--tree-icon-size, 16px) + var(--tree-item-gap, 8px) - 6px);
+}
+
+[data-rsc-root][hidden],
+[data-rsc-root] [hidden] {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------ child row */
+[data-rsc-root] .rsc-row {
+  gap: 6px;
+}
+
+[data-rsc-root] .rsc-status {
+  color: var(--info);
+}
+
+[data-rsc-root] .rsc-hollow {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--color-text-tertiary);
+}
+
+[data-rsc-root] .rsc-provider {
+  display: flex;
+  flex: none;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+[data-rsc-root] .rsc-provider svg {
+  display: block;
+}
+
+[data-rsc-root] .rsc-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+[data-rsc-root] .rsc-badges {
+  display: flex;
+  flex: none;
+  gap: 3px;
+  align-items: center;
+}
+
+[data-rsc-root] .rsc-badge {
+  padding: 1px 4px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 0.5px var(--color-border-secondary);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-micro, 9px);
+  line-height: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------- parent fold button */
+/* Zero-height node right after the parent row; the button overlays the
+   right end of that row, where its time label was. */
+[data-rsc-handle] {
+  position: relative;
+  height: 0;
+  margin: 0;
+}
+
+[data-rsc-handle] .rsc-toggle {
+  position: absolute;
+  right: var(--tree-item-px, 8px);
+  bottom: calc((var(--tree-item-height, 28px) - 18px) / 2);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font: inherit;
+  font-size: var(--text-micro, 9px);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+[data-rsc-handle] .rsc-toggle:hover,
+[data-rsc-handle] .rsc-toggle:focus-visible {
+  background: var(--tree-item-hover-bg, var(--color-surface-container));
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+[data-rsc-handle] .rsc-chev {
+  display: flex;
+  transition: transform 150ms ease;
+}
+
+[data-rsc-handle][data-folded] .rsc-chev {
+  transform: rotate(180deg);
+}
+
+/* Room for the fold button at the right end of the parent row: the app's
+   padding and hover actions both read --tree-item-pr. The parent's time
+   label gives way to the button (Orca: the fold button replaces the time). */
+div[role="none"]:has(+ [data-rsc-handle]:not([hidden])) > [role="treeitem"],
+[role="treeitem"]:has(+ [data-rsc-handle]:not([hidden])) {
+  --tree-item-pr: calc(var(--tree-item-px, 8px) + 22px);
+}
+
+div[role="none"]:has(+ [data-rsc-handle]:not([hidden])) > [role="treeitem"][data-thread-workspace-id] > span.ml-auto > span.min-w-0 > span[title] {
+  display: none;
+}
+
+/* --------------------------------------------------- workspace card */
+/* Orca's worktree card: the workspace node (its row, its chats and the
+   mod's rows) gets a rounded border, keyed on the mod's own header so it
+   goes away with the mod. The app's nodes are not moved. */
+div[role="none"]:has(> [data-rsc-card-head]:not([hidden])) {
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 10px;
+  padding: 2px 3px 5px;
+}
+
+[data-rsc-card-head] {
+  padding-top: 6px;
+  padding-right: var(--tree-item-px, 8px);
+  padding-bottom: 3px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+[data-rsc-card-head]:hover {
+  background: var(--tree-item-hover-bg, var(--color-surface-container));
+}
+
+[data-rsc-card-head] .rsc-card-l1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+[data-rsc-card-head] .rsc-card-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-text-tertiary);
+}
+
+[data-rsc-card-head][data-live] .rsc-card-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 22%, transparent);
+}
+
+[data-rsc-card-head] .rsc-card-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: var(--tree-label-size, 13px);
+  font-weight: 600;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-rsc-card-head] .rsc-card-l2 {
+  overflow: hidden;
+  padding-left: 14px; /* under the title, past the dot */
+  color: var(--color-text-tertiary);
+  font-size: var(--text-caption, 11px);
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The native workspace row only repeats the card title (worktree with no
+   chat): the header takes its place (click and right-click are forwarded to
+   it, so selection and the app's menu still work). */
+div[role="none"]:has(> [data-rsc-card-head][data-rsc-dup]) > [role="treeitem"] {
+  display: none;
+}
+
+/* ------------------------------------------------------ group card */
+/* A parent chat and its child rows are siblings in the app's tree, so the
+   group is one card made of its members: the parent's wrapper (the app's
+   node, reached with :has on the mod's handle) and the mod's own child rows
+   each draw their slice of one border and background; the first slice has
+   the top corners, the last ([data-rsc-last]) the bottom ones. Folded: the
+   parent wrapper is the whole card. Selected ([data-rsc-gsel], parent or any
+   child active) and hover ([data-rsc-ghover]) apply to every slice. A parent
+   without children has no handle, so it stays a plain row. */
+:root,
+[data-rsc-root] {
+  --rsc-g-border: color-mix(in srgb, var(--color-border-secondary) 55%, transparent);
+  --rsc-g-bg: color-mix(in srgb, var(--color-surface-container) 40%, transparent);
+  --rsc-g-sel-border: color-mix(in srgb, var(--color-text-tertiary) 55%, var(--color-border-secondary));
+  --rsc-g-sel-bg: color-mix(in srgb, var(--color-surface-container) 85%, transparent);
+  --rsc-g-hover-bg: color-mix(in srgb, var(--color-surface-container) 65%, transparent);
+}
+
+div[role="none"]:has(+ [data-rsc-handle]:not([hidden])),
+[data-rsc-child] {
+  border: 0 solid var(--rsc-g-border);
+  border-width: 0 1px;
+  background: var(--rsc-g-bg);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+div[role="none"]:has(+ [data-rsc-handle]:not([hidden])) {
+  margin-top: 3px;
+  border-width: 1px 1px 0;
+  border-radius: 8px 8px 0 0;
+  padding-top: 1px;
+}
+
+/* Folded, or no visible child: the parent wrapper closes the card. */
+div[role="none"]:has(+ [data-rsc-handle][data-folded]) {
+  border-width: 1px;
+  border-radius: 8px;
+  padding-bottom: 1px;
+}
+
+/* The gap above a child row is padding here, so the card has no seams. */
+[data-rsc-child] {
+  margin-top: 0 !important;
+  padding-top: var(--tree-item-gap-y, 2px);
+}
+
+[data-rsc-child][data-rsc-last] {
+  border-bottom-width: 1px;
+  border-radius: 0 0 8px 8px;
+  padding-bottom: 1px;
+  margin-bottom: 3px;
+}
+
+div[role="none"]:has(+ [data-rsc-handle][data-folded]) {
+  margin-bottom: 3px;
+}
+
+/* Hover: the whole group. */
+div[role="none"]:has(+ [data-rsc-handle][data-rsc-ghover]),
+[data-rsc-child][data-rsc-ghover] {
+  background: var(--rsc-g-hover-bg);
+}
+
+/* Selected: the whole card; the active row keeps the app's own (stronger)
+   row highlight inside it. */
+div[role="none"]:has(+ [data-rsc-handle][data-rsc-gsel]),
+[data-rsc-child][data-rsc-gsel] {
+  border-color: var(--rsc-g-sel-border);
+  background: var(--rsc-g-sel-bg);
+}
+
+/* Inside a card the rows' own hover would double up with the card's. */
+div[role="none"]:has(+ [data-rsc-handle]:not([hidden])) > [role="treeitem"]:not([class~="bg-[var(--tree-item-hover-bg)]"]):hover,
+[data-rsc-child] > [role="treeitem"]:not([aria-current]):hover {
+  background: transparent;
+}

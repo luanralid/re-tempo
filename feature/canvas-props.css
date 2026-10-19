@@ -1,0 +1,575 @@
+/*
+ * RE-TEMPO · canvas-props (user MOD layer): pen.dev's properties sections for
+ * the mods' canvas nodes (browser frame, shader frame, note) in the canvas's
+ * right panel. Scoped under rtcp- classes, the app's tokens (--color-*,
+ * --font-sans), so light and dark follow the app. Section metrics repeat the
+ * app's (A$): 40 px header, 12 px / 510 title, 28 px rows, 16 px left inset.
+ */
+
+/* Before the app's own sections (the design tab body is a flex column; this
+   node is prepended and never moved once inside it). */
+.rtcp-wrap {
+  order: -1;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+.rtcp-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rtcp-section[hidden] {
+  display: none;
+}
+.rtcp-head {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 8px 8px 8px 16px;
+}
+.rtcp-title {
+  overflow: hidden;
+  color: var(--color-text-primary, #f5f5f5);
+  font-size: 12px;
+  font-weight: 510;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtcp-body {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 12px 16px;
+  border-bottom: var(--border-width-thin, 0.5px) solid var(--color-border-secondary, #232323);
+}
+.rtcp-section[data-rtcp-section="node"] > .rtcp-body {
+  padding-bottom: 0;
+}
+
+/* canvas-chrome's own section shell: the node header has no title row */
+.rtcp-chrome-section[data-rtcp-part="node"] > .rcc-section-head {
+  display: none;
+}
+.rtcp-chrome-section[data-rtcp-part="node"] > .rcc-section-body {
+  padding-bottom: 0;
+}
+/* in canvas-chrome's card the selection pill already is the title row (its
+   icon and name): the node row is the rename field, filled like every other
+   field, beside its kind chip, not a second title */
+.rtcp-chrome-section[data-rtcp-part="node"] .rtcp-node-icon {
+  display: none;
+}
+.rtcp-chrome-section[data-rtcp-part="node"] .rtcp-node-name {
+  padding: 0 8px;
+  background: var(--color-surface-container-high, #232323);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.rtcp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+}
+.rtcp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.rtcp-grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.rtcp-grid2l {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px;
+}
+.rtcp-ic {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* node header: type icon, editable name, type label */
+.rtcp-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  min-width: 0;
+}
+.rtcp-node-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtcp-node-name {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 510;
+  text-overflow: ellipsis;
+}
+.rtcp-node-name::placeholder {
+  color: var(--color-text-primary, #f5f5f5);
+  opacity: 1;
+}
+.rtcp-node-name:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcp-node-name:focus {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+  background: var(--color-surface-container-high, #232323);
+}
+.rtcp-node-name:focus::placeholder {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtcp-node-kind {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-tertiary, #787878);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcp-error {
+  margin: -4px 0 8px;
+  color: var(--color-text-danger, #ff8a80);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcp-error[hidden] {
+  display: none;
+}
+
+/* numeric fields: label = scrub handle */
+.rtcp-num {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 28px;
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container-high, #232323);
+  cursor: text;
+}
+.rtcp-num:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcp-num:focus-within {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcp-num-label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 26px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 11px;
+  cursor: ew-resize;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.rtcp-num-label .rtcp-ic {
+  width: 14px;
+  height: 14px;
+}
+.rtcp-num:hover .rtcp-num-label {
+  color: var(--color-text-secondary, #bababa);
+}
+.rtcp-num-input {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 8px 0 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.rtcp-num-unit {
+  flex: none;
+  padding-right: 8px;
+  color: var(--color-text-tertiary, #787878);
+}
+.rtcp-num-wide .rtcp-num-label {
+  display: none;
+}
+.rtcp-num-wide .rtcp-num-input {
+  padding-left: 8px;
+}
+.rtcp-num-wide {
+  cursor: ew-resize;
+}
+html[data-rtcp-scrubbing],
+html[data-rtcp-scrubbing] * {
+  cursor: ew-resize !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* buttons */
+.rtcp-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-icons-secondary, #bababa);
+  cursor: pointer;
+}
+.rtcp-icon-btn:hover {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtcp-icon-btn[aria-pressed="true"] {
+  background: var(--color-accent-subtle, #2b2b2b);
+  color: var(--color-accent, #e0e0e0);
+}
+.rtcp-icon-btn:focus-visible,
+.rtcp-btn:focus-visible,
+.rtcp-seg:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcp-btn {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rtcp-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtcp-btn .rtcp-ic {
+  width: 14px;
+  height: 14px;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtcp-btn:hover {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+
+/* text fields */
+.rtcp-text,
+.rtcp-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+}
+.rtcp-text {
+  height: 28px;
+  padding: 0 8px;
+  text-overflow: ellipsis;
+}
+.rtcp-textarea {
+  display: block;
+  min-height: 96px;
+  padding: 6px 8px;
+  line-height: 18px;
+  resize: vertical;
+}
+.rtcp-text::placeholder,
+.rtcp-textarea::placeholder {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtcp-text:hover,
+.rtcp-textarea:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcp-text:focus,
+.rtcp-textarea:focus {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcp-field-wrap {
+  position: relative;
+  min-width: 0;
+}
+.rtcp-field-ic {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-tertiary, #787878);
+  pointer-events: none;
+}
+.rtcp-field-wrap .rtcp-text {
+  padding-left: 28px;
+}
+
+/* checkbox */
+.rtcp-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 24px;
+  color: var(--color-text-secondary, #bababa);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.rtcp-check-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.rtcp-check-box {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border-primary, #3a3a3a);
+  border-radius: 4px;
+  color: transparent;
+}
+.rtcp-ic-check {
+  width: 10px;
+  height: 10px;
+  stroke-width: 3;
+}
+.rtcp-check-input:checked + .rtcp-check-box {
+  border-color: var(--color-accent, #e0e0e0);
+  background: var(--color-accent, #e0e0e0);
+  color: var(--color-surface-container-lowest, #080808);
+}
+.rtcp-check-input:focus-visible + .rtcp-check-box {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 1px;
+}
+.rtcp-check:hover .rtcp-check-box {
+  border-color: var(--color-text-tertiary, #787878);
+}
+.rtcp-check-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* select */
+.rtcp-select {
+  position: relative;
+  min-width: 0;
+}
+.rtcp-select-el {
+  box-sizing: border-box;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  padding: 0 28px 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rtcp-select-el:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcp-select-el:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcp-select-el option {
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtcp-select-ic {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  color: var(--color-icons-secondary, #bababa);
+  pointer-events: none;
+}
+
+/* segmented (note type) */
+.rtcp-segs {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  min-width: 0;
+  height: 28px;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--color-surface-container-high, #232323);
+}
+.rtcp-seg {
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rtcp-seg:hover {
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtcp-seg[aria-checked="true"] {
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+}
+
+/* label + control rows (shader, note) */
+.rtcp-lrow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.rtcp-lrow[hidden],
+.rtcp-hint[hidden] {
+  display: none;
+}
+.rtcp-lrow-label {
+  overflow: hidden;
+  color: var(--color-text-secondary, #bababa);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtcp-lrow-ctl {
+  min-width: 0;
+}
+.rtcp-pick {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.rtcp-pick:hover {
+  outline-color: var(--color-border-primary, #3a3a3a);
+}
+.rtcp-pick:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtcp-pick:disabled {
+  cursor: default;
+  outline-color: transparent;
+}
+.rtcp-pick:disabled .rtcp-pick-ic {
+  display: none;
+}
+.rtcp-pick-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtcp-pick-ic {
+  width: 14px;
+  height: 14px;
+  color: var(--color-icons-secondary, #bababa);
+}
+.rtcp-hint {
+  margin-top: -6px;
+  padding-left: 64px;
+  color: var(--color-text-tertiary, #787878);
+  font-size: 11px;
+  line-height: 14px;
+}

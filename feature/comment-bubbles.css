@@ -1,0 +1,3871 @@
+/*
+ * RE-TEMPO · comment-bubbles — the designer's comment requests as bubbles on
+ * the left edge of the content area (.rtcb-*). comment-bubbles.js positions
+ * the column ([data-rtcb-root], fixed, or static inside [data-rtcb-host]) and
+ * the panel next to it. Only the app's tokens (fallbacks = its dark theme),
+ * so light/dark come for free; Claude's orange is the brand colour.
+ * Every status has a shape as well as a colour (ring style + corner badge).
+ */
+
+[data-rtcb-root],
+.rtcb-panel,
+.rtcb-pop,
+.rtcb-tip,
+.rtcb-lb,
+.rtcb-ag,
+.rtcb-burst,
+.rtcb-ghost,
+[data-rtcb-search-host] {
+  --rtcb-claude: #d97757;
+  --rtcb-amber: color-mix(in oklab, var(--color-warning, #f9d338) 60%, #f97316);
+  --rtcb-green: var(--color-success, #78e33d);
+  --rtcb-red: var(--color-critical, #f46363);
+  --rtcb-surface: var(--color-surface-container, #191919);
+  --rtcb-surface-hi: var(--color-surface-container-high, #232323);
+  --rtcb-surface-lo: var(--color-surface-container-low, #0e0e0e);
+  --rtcb-border: var(--color-border-primary, #3a3a3a);
+  --rtcb-border-2: var(--color-border-secondary, #232323);
+  --rtcb-text: var(--color-text-primary, #f5f5f5);
+  --rtcb-text-2: var(--color-text-secondary, #bababa);
+  --rtcb-text-3: var(--color-text-tertiary, #787878);
+  --rtcb-focus: var(--color-border-focus, #8a63ff);
+  --rtcb-hair: var(--border-width, 0.5px);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* No rule on html.rtcc-capturing: the pipeline masks this UI out of its
+   screenshots, so nothing here ever hides while an agent works. */
+/* Stacking in the canvas view: the panel, the manager (4200), the enlarged
+   view (4250) and the tooltip (4300) sit over the canvas's own tool bar
+   (the app's design tools wrapper is z-index 4160 in the same view). */
+
+/* ------------------------------------------------------------ segment */
+/* Part of the canvas chrome: the pill's next sibling in its row, with the
+   pill's own classes (height, surface, border, radius come from them); here
+   only what makes it continue the pill: in the row's flow against it
+   (margin-right: auto in a justify-between row), square left corners, no
+   left border, a thin divider. Doubled attribute: wins over the app's
+   single utility classes. */
+[data-rtcb-root][data-rtcb-root] {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0 auto 0 0;
+  padding-left: 12px;
+  padding-right: 8px;
+  overflow: hidden;
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  pointer-events: auto;
+}
+[data-rtcb-root][data-rtcb-root][hidden] {
+  display: none;
+}
+[data-rtcb-root][data-rtcb-root]::before {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: 0;
+  width: var(--rtcb-hair);
+  background: var(--rtcb-border);
+}
+/* Compact, inside another mod's slot ([data-rtcb-host]: canvas-chrome's
+   agents pill): its items' height, its natural width, no surface or margin of its own;
+   only its buttons act (avatars, "+N", "Manage agents"). Nothing clipped:
+   the mod fits the avatars to the slot's width, so the overshoot of a new
+   avatar and the focus rings stay whole. */
+[data-rtcb-root][data-rtcb-root].rtcb--hosted {
+  flex: none;
+  align-self: center;
+  gap: 6px;
+  height: auto;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+}
+/* after a name in the same pill: the divider, the pill's own padding after */
+[data-rtcb-root][data-rtcb-root].rtcb--hosted[data-lead="true"] {
+  margin-right: 0;
+  padding-right: 0;
+}
+[data-rtcb-root][data-rtcb-root].rtcb--hosted[data-lead="false"]::before {
+  display: none;
+}
+.rtcb--hosted .rtcb-count {
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+  cursor: pointer;
+}
+.rtcb--hosted .rtcb-count:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.rtcb-count[data-attn="true"] .rtcb-n-short::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--rtcb-amber);
+  vertical-align: 1px;
+}
+.rtcb--hosted .rtcb-rail {
+  padding: 2px 0;
+  overflow: visible;
+}
+/* no avatar yet: the segment's gap after "Manage agents" goes too (a pill
+   with the button alone stays concentric with it); the rail keeps its box */
+.rtcb--hosted .rtcb-rail[data-empty="true"] {
+  margin-left: -6px;
+}
+.rtcb--hosted .rtcb-rail > .rtcb-bubble {
+  width: 24px;
+  height: 24px;
+}
+.rtcb--hosted .rtcb-rail > .rtcb-bubble,
+.rtcb--hosted .rtcb-rail > .rtcb-more {
+  box-shadow: 0 0 0 1.5px var(--rtcb-seg-bg, var(--rtcb-surface));
+}
+.rtcb--hosted .rtcb-bubble:hover {
+  transform: none;
+}
+.rtcb--hosted .rtcb-bubble .rtcb-av {
+  inset: 2.5px;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+/* the status only in the ring (1.5 px), no corner badge */
+.rtcb--hosted .rtcb-badge {
+  display: none !important;
+}
+.rtcb--hosted [data-status="queued"] > .rtcb-ring {
+  border-width: 1.5px;
+}
+/* working: the arc spins in the agent's own colour (its avatar's, its cursor's) */
+.rtcb--hosted [data-status="running"] > .rtcb-ring,
+.rtcb-hub-av[data-status="running"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rtcb-agent, var(--rtcb-claude)) 24%, transparent);
+}
+.rtcb--hosted [data-status="running"] > .rtcb-ring::before,
+.rtcb-hub-av[data-status="running"] > .rtcb-ring::before {
+  background: conic-gradient(from 0turn, transparent 0turn, color-mix(in srgb, var(--rtcb-agent, var(--rtcb-claude)) 10%, transparent) 0.05turn, var(--rtcb-agent, var(--rtcb-claude)) 0.36turn, transparent 0.37turn);
+}
+.rtcb--hosted .rtcb-ring::before,
+.rtcb-hub-av .rtcb-ring::before {
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+}
+.rtcb--hosted [data-status="needs-input"] > .rtcb-ring,
+.rtcb-hub-av[data-status="needs-input"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 1.5px var(--rtcb-amber);
+}
+.rtcb--hosted [data-status="needs-input"] > .rtcb-ring::after,
+.rtcb-hub-av[data-status="needs-input"] > .rtcb-ring::after {
+  box-shadow: 0 0 0 1.5px var(--rtcb-amber);
+}
+.rtcb--hosted [data-status="done"] > .rtcb-ring,
+.rtcb-hub-av[data-status="done"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 1.5px var(--rtcb-green);
+}
+.rtcb--hosted [data-status="failed"] > .rtcb-ring,
+.rtcb-hub-av[data-status="failed"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 1.5px var(--rtcb-red);
+}
+.rtcb-hub-av[data-status="queued"] > .rtcb-ring {
+  border-width: 1.5px;
+}
+/* "+N": a 24 px disc at the end of the stack (up to "+99"), under the last
+   avatar like the others; its count centred in the part that shows */
+.rtcb--hosted .rtcb-rail > .rtcb-more {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  letter-spacing: -0.03em;
+}
+.rtcb--hosted .rtcb-rail > .rtcb-bubble + .rtcb-more {
+  padding-left: 6px;
+}
+.rtcb--hosted .rtcb-rail > .rtcb-more[data-len="3"] {
+  font-size: 8.5px;
+  letter-spacing: -0.05em;
+}
+/* in the stack, a number sits in the part of its disc that shows (the
+   previous avatar covers its left 6 px) */
+[data-rtcb-root].rtcb--hosted:not([data-spread="true"]) .rtcb-rail > .rtcb-bubble + .rtcb-bubble .rtcb-av {
+  box-sizing: border-box;
+  padding-left: 5px;
+}
+[data-rtcb-root].rtcb--hosted:not([data-spread="true"]) .rtcb-rail > .rtcb-bubble + .rtcb-bubble .rtcb-av[data-len="3"] {
+  padding-left: 3px;
+}
+.rtcb--hosted .rtcb-more:hover,
+.rtcb--hosted .rtcb-more[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--rtcb-text) 14%, var(--rtcb-surface-hi));
+}
+
+/* "Manage agents": the agents grid, the same icon as the slot's empty
+   state ("⊞ 0"), 22 px in a slot, 24 px on the pill */
+.rtcb-manage {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.rtcb-manage svg {
+  display: block;
+}
+/* in a slot it comes first; in a pill of its own, concentric with it (the
+   mod sets --rtcb-mg, its size, and --rtcb-mg-r, its radius) */
+.rtcb--hosted > .rtcb-manage {
+  width: var(--rtcb-mg, 22px);
+  height: var(--rtcb-mg, 22px);
+  border-radius: var(--rtcb-mg-r, 6px);
+  background: color-mix(in srgb, var(--rtcb-text) 7%, transparent);
+  color: var(--rtcb-text-2);
+}
+.rtcb--hosted > .rtcb-manage svg {
+  width: clamp(14px, calc(var(--rtcb-mg, 22px) * 0.47), 16px);
+  height: clamp(14px, calc(var(--rtcb-mg, 22px) * 0.47), 16px);
+}
+.rtcb--hosted > .rtcb-manage:hover,
+.rtcb--hosted > .rtcb-manage[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--rtcb-text) 12%, transparent);
+  color: var(--rtcb-text);
+}
+.rtcb-manage:hover,
+.rtcb-manage[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--rtcb-text) 9%, transparent);
+  color: var(--rtcb-text);
+}
+.rtcb-manage:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+
+/* a new agent that landed past "+N" keeps a ring in its colour while it
+   is held in view (one that enters keeps its place in the stack) */
+.rtcb-rail > .rtcb-bubble.rtcb--spot {
+  z-index: 31 !important;
+  box-shadow:
+    0 0 0 1.5px var(--rtcb-seg-bg, var(--rtcb-surface)),
+    0 0 0 3px color-mix(in srgb, var(--rtcb-agent, var(--rtcb-claude)) 85%, transparent),
+    0 0 10px 2px color-mix(in srgb, var(--rtcb-agent, var(--rtcb-claude)) 35%, transparent);
+}
+
+/* The entry's halo and ring (overlays in the canvas view, over the
+   composer, centred on the avatar by the mod; --d = the avatar's size) and
+   the disc that tucks into "+N". Only transform / opacity animate. */
+.rtcb-burst {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.rtcb-burst-halo,
+.rtcb-burst-ring {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.rtcb-burst-halo {
+  top: calc(var(--d, 20px) * -2);
+  left: calc(var(--d, 20px) * -2);
+  width: calc(var(--d, 20px) * 4);
+  height: calc(var(--d, 20px) * 4);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, color-mix(in oklab, var(--rtcb-agent) 75%, #fff) 66%, transparent) 0 22%,
+    color-mix(in srgb, var(--rtcb-agent) 38%, transparent) 42%,
+    color-mix(in srgb, var(--rtcb-agent) 12%, transparent) 70%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  mix-blend-mode: screen;
+}
+.rtcb-burst-ring {
+  top: calc(var(--d, 20px) * -0.5);
+  left: calc(var(--d, 20px) * -0.5);
+  width: var(--d, 20px);
+  height: var(--d, 20px);
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in oklab, var(--rtcb-agent) 65%, #fff);
+}
+.rtcb-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4210;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--rtcb-agent);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+.rtcb--hosted .rtcb-rail > .rtcb-bubble + .rtcb-bubble,
+.rtcb--hosted .rtcb-rail > .rtcb-bubble + .rtcb-more {
+  margin-left: -6px;
+}
+/* an agent's avatar: its colour, white figures (as its cursor's tag) */
+.rtcb-bubble .rtcb-av,
+.rtcb-hub-av > .rtcb-av,
+.rtcb-ghost {
+  color: #fff;
+  text-shadow: 0 0 1px rgb(0 0 0 / 0.25);
+}
+/* the pill the segment continues: square right corners, no seam */
+[data-rtcb-joined] {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right-color: transparent !important;
+}
+
+.rtcb-count {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--rtcb-text-3);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+.rtcb-count[hidden],
+[data-rtcb-root][data-compact="true"] .rtcb-count {
+  display: none;
+}
+.rtcb-n-open {
+  color: var(--rtcb-text-2);
+}
+.rtcb-count[data-attn="true"] .rtcb-n-open::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--rtcb-amber);
+  vertical-align: 1px;
+}
+.rtcb-n-done {
+  color: color-mix(in oklab, var(--rtcb-green) 70%, var(--rtcb-text-2));
+}
+.rtcb-sep {
+  opacity: 0.6;
+}
+
+/* Bubbles in a row, overlapping by 6 px like presence avatars; the first
+   (needs-input first) on top; a cut-out ring in the segment's colour. */
+.rtcb-rail {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+  padding: 4px 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.rtcb-rail::-webkit-scrollbar {
+  display: none;
+}
+.rtcb-rail > .rtcb-bubble + .rtcb-bubble,
+.rtcb-rail > .rtcb-bubble + .rtcb-more {
+  margin-left: -6px;
+}
+.rtcb-rail > .rtcb-bubble,
+.rtcb-rail > .rtcb-more {
+  box-shadow: 0 0 0 2px var(--rtcb-seg-bg, var(--rtcb-surface));
+}
+.rtcb-rail > .rtcb-bubble:hover,
+.rtcb-rail > .rtcb-bubble:focus-visible,
+.rtcb-rail > .rtcb-bubble[aria-expanded="true"] {
+  z-index: 30 !important;
+}
+.rtcb-more {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.rtcb-more[hidden] {
+  display: none;
+}
+.rtcb-more:hover {
+  color: var(--rtcb-text);
+}
+.rtcb-more:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+/* the followed agent */
+.rtcb-bubble[data-follow="true"] {
+  outline: 1.5px solid var(--rtcb-claude);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- bubble */
+.rtcb-bubble {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    opacity 600ms ease,
+    transform 140ms ease;
+}
+.rtcb-bubble:hover {
+  transform: scale(1.06);
+}
+.rtcb-bubble:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+.rtcb-bubble[aria-expanded="true"] {
+  outline: 1.5px solid var(--rtcb-text-3);
+  outline-offset: 2px;
+}
+.rtcb-bubble.rtcb--faded {
+  opacity: 0.6;
+}
+.rtcb-bubble.rtcb--faded:hover,
+.rtcb-bubble.rtcb--faded:focus-visible,
+.rtcb-bubble.rtcb--faded[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.rtcb-av {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rtcb-av, #8b5cf6);
+  color: color-mix(in oklab, var(--rtcb-av, #8b5cf6) 28%, #000);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+.rtcb-bubble .rtcb-av {
+  position: absolute;
+  inset: 3.5px;
+  font-size: 8.5px;
+}
+.rtcb-bubble[data-status="queued"] .rtcb-av {
+  filter: saturate(0.5);
+  opacity: 0.8;
+}
+
+/* Status ring: 2px, drawn outside the avatar. */
+.rtcb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.rtcb-ring::before,
+.rtcb-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+}
+.rtcb-ring::before {
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+}
+
+/* queued: hollow dashed ring */
+[data-status="queued"] > .rtcb-ring {
+  border: 1.5px dashed color-mix(in srgb, var(--rtcb-text-3) 90%, transparent);
+}
+
+/* running: a Claude-coloured arc spinning over a faint track */
+[data-status="running"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rtcb-claude) 24%, transparent);
+}
+[data-status="running"] > .rtcb-ring::before {
+  opacity: 1;
+  background: conic-gradient(from 0turn, transparent 0turn, color-mix(in srgb, var(--rtcb-claude) 10%, transparent) 0.05turn, var(--rtcb-claude) 0.36turn, transparent 0.37turn);
+  animation: rtcb-spin 1.1s linear infinite;
+}
+
+/* needs-input: amber ring with a soft pulse */
+[data-status="needs-input"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 2px var(--rtcb-amber);
+}
+[data-status="needs-input"] > .rtcb-ring::after {
+  opacity: 0.6;
+  box-shadow: 0 0 0 2px var(--rtcb-amber);
+  animation: rtcb-pulse 1.8s ease-out infinite;
+}
+
+[data-status="done"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 2px var(--rtcb-green);
+}
+[data-status="failed"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 2px var(--rtcb-red);
+}
+
+/* Corner badge: Claude logo (running), "?" (needs-input), check (done),
+   "!" (failed). Queued has none: its dashed ring is the signal. */
+.rtcb-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: none;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--rtcb-surface);
+  box-shadow: 0 0 0 1.5px var(--rtcb-surface);
+  pointer-events: none;
+}
+.rtcb-badge svg {
+  display: block;
+}
+[data-status="running"] > .rtcb-badge,
+[data-status="needs-input"] > .rtcb-badge,
+[data-status="done"] > .rtcb-badge,
+[data-status="failed"] > .rtcb-badge {
+  display: grid;
+}
+[data-status="needs-input"] > .rtcb-badge {
+  background: var(--rtcb-amber);
+  color: color-mix(in oklab, var(--rtcb-amber) 22%, #000);
+}
+/* done: muted check (surface + green); filled while fresh (first 8 s) */
+[data-status="done"] > .rtcb-badge {
+  color: var(--rtcb-green);
+}
+[data-status="done"].rtcb--fresh > .rtcb-badge {
+  background: var(--rtcb-green);
+  color: color-mix(in oklab, var(--rtcb-green) 22%, #000);
+}
+[data-status="failed"] > .rtcb-badge {
+  background: var(--rtcb-red);
+  color: #fff;
+}
+
+/* The only celebration: the check pops in and draws itself, once. */
+.rtcb--celebrate > .rtcb-badge {
+  animation: rtcb-check-pop 520ms cubic-bezier(0.3, 1.4, 0.5, 1) 1 both;
+}
+.rtcb--celebrate > .rtcb-badge .rtcb-check-path {
+  stroke-dasharray: 11;
+  stroke-dashoffset: 11;
+  animation: rtcb-draw 320ms ease-out 140ms 1 forwards;
+}
+
+.rtcb-foot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  cursor: pointer;
+}
+.rtcb-rail[data-empty="false"] > .rtcb-foot {
+  margin-left: 6px;
+}
+.rtcb-foot:hover,
+.rtcb-foot[data-on="true"] {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+}
+.rtcb-foot:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------ tooltip */
+.rtcb-tip {
+  position: absolute;
+  z-index: 4300;
+  box-sizing: border-box;
+  max-width: 260px;
+  padding: 6px 8px;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 6px;
+  background: var(--color-surface-menu, var(--rtcb-surface-hi));
+  box-shadow: var(--shadow-dropdown, 0 2px 6px rgb(0 0 0 / 0.12));
+  color: var(--rtcb-text);
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-3px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+.rtcb-tip[data-show] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+/* rich: the running agent's last frame (or the after) on top */
+.rtcb-tip[data-rich="true"] {
+  width: 244px;
+  padding: 6px;
+}
+.rtcb-tip-img {
+  display: block;
+  width: 100%;
+  max-height: 160px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background: var(--rtcb-surface-lo);
+  object-fit: contain;
+}
+.rtcb-tip-k {
+  margin-top: 4px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+}
+.rtcb-tip-h {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+.rtcb-tip-h b {
+  color: var(--rtcb-text);
+  font-weight: 500;
+}
+.rtcb-tip-t {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--rtcb-text-2);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.rtcb-num {
+  color: var(--rtcb-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.rtcb-tip-st {
+  color: var(--rtcb-text-3);
+}
+.rtcb-st--running {
+  color: var(--rtcb-claude);
+}
+.rtcb-st--needs-input {
+  color: var(--rtcb-amber);
+}
+.rtcb-st--done {
+  color: var(--rtcb-green);
+}
+.rtcb-st--failed {
+  color: var(--rtcb-red);
+}
+.rtcb-st--stopped {
+  color: var(--rtcb-text-2);
+}
+
+/* -------------------------------------------------------------- panel */
+.rtcb-panel {
+  position: absolute;
+  z-index: 4200;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 360px;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 12px;
+  background: var(--rtcb-surface);
+  box-shadow: var(--shadow-dialog, 0 4px 14px rgb(0 0 0 / 0.15), 0 10px 28px rgb(0 0 0 / 0.11));
+  color: var(--rtcb-text);
+  font-size: 13px;
+  line-height: 18px;
+  outline: none;
+}
+.rtcb-panel.rtcb--in {
+  animation: rtcb-panel-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rtcb-panel *,
+.rtcb-panel *::before,
+.rtcb-panel *::after {
+  box-sizing: border-box;
+}
+.rtcb-grow {
+  flex: 1 1 auto;
+}
+
+.rtcb-ph {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  border-bottom: var(--rtcb-hair) solid var(--rtcb-border);
+}
+.rtcb-num--head {
+  font-size: 12px;
+  font-weight: 500;
+}
+.rtcb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px 0 6px;
+  border-radius: 999px;
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.rtcb-chip-ico {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+}
+.rtcb-panel[data-status="queued"] .rtcb-chip-ico::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1.5px dashed currentColor;
+  border-radius: 50%;
+}
+.rtcb-panel[data-status="running"] .rtcb-chip {
+  background: color-mix(in srgb, var(--rtcb-claude) 14%, transparent);
+  color: color-mix(in oklab, var(--rtcb-claude) 75%, var(--rtcb-text));
+}
+.rtcb-panel[data-status="needs-input"] .rtcb-chip {
+  background: color-mix(in srgb, var(--rtcb-amber) 16%, transparent);
+  color: var(--rtcb-amber);
+}
+.rtcb-panel[data-status="done"] .rtcb-chip {
+  background: color-mix(in srgb, var(--rtcb-green) 14%, transparent);
+  color: var(--rtcb-green);
+}
+.rtcb-panel[data-status="failed"] .rtcb-chip {
+  background: color-mix(in srgb, var(--rtcb-red) 14%, transparent);
+  color: var(--rtcb-red);
+}
+/* The chat's model and effort, right of the time: the time gives way first
+   (full text in its tooltip); the chip only shrinks in a very narrow panel. */
+.rtcb-model {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 58%;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 22px;
+  padding: 0 8px 0 6px;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 999px;
+  color: var(--rtcb-text-2);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.rtcb-model[hidden] {
+  display: none;
+}
+.rtcb-model .rtcb-claude {
+  flex: none;
+}
+/* a label, not a status: the mark stays still even while the run goes on */
+.rtcb-panel .rtcb-model .rtcb-claude,
+.rtcb-panel .rtcb-model .rtcb-claude path {
+  animation: none !important;
+}
+.rtcb-model-t {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtcb-ptime {
+  flex: 0 4 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rtcb-text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rtcb-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  cursor: pointer;
+}
+.rtcb-x:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-x:focus-visible,
+.rtcb-btn:focus-visible,
+.rtcb-send:focus-visible,
+.rtcb-seg-b:focus-visible,
+.rtcb-thumb:focus-visible,
+.rtcb-steps-b:focus-visible,
+.rtcb-link:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+
+.rtcb-pb {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.rtcb-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+}
+.rtcb-sec + .rtcb-sec {
+  border-top: var(--rtcb-hair) solid var(--rtcb-border-2);
+}
+.rtcb-sec-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rtcb-text-3);
+  font-size: var(--text-label, 11px);
+  font-weight: 500;
+  line-height: 14px;
+}
+.rtcb-sec-h svg {
+  flex: none;
+}
+
+/* needs-input card: on top, the answer field inside */
+.rtcb-ask {
+  margin: 12px 12px 0;
+  padding: 10px 12px 12px;
+  border: var(--rtcb-hair) solid color-mix(in srgb, var(--rtcb-amber) 55%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rtcb-amber) 10%, transparent);
+}
+.rtcb-ask-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rtcb-amber);
+  font-size: 12px;
+  font-weight: 500;
+}
+.rtcb-ask-h svg {
+  flex: none;
+  padding: 1.5px;
+  border-radius: 50%;
+  background: var(--rtcb-amber);
+  color: color-mix(in oklab, var(--rtcb-amber) 22%, #000);
+  box-sizing: content-box;
+}
+.rtcb-ask-q {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rtcb-ask .rtcb-reply {
+  margin-top: 10px;
+  background: var(--rtcb-surface);
+  border-color: color-mix(in srgb, var(--rtcb-amber) 45%, transparent);
+}
+
+/* You asked */
+.rtcb-msg {
+  display: flex;
+  gap: 10px;
+}
+.rtcb-av--sm {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  font-size: 9px;
+}
+.rtcb-msg-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rtcb-who {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 22px;
+}
+.rtcb-who b {
+  font-weight: 500;
+}
+.rtcb-ago {
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rtcb-text {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rtcb-where {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-top: 6px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-where svg {
+  flex: none;
+}
+.rtcb-where span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Screenshots */
+.rtcb-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 8px;
+  background: var(--rtcb-surface-lo);
+  cursor: zoom-in;
+  aspect-ratio: var(--rtcb-ar, 16 / 10);
+  max-height: 220px;
+}
+.rtcb-thumb[hidden] {
+  display: none;
+}
+.rtcb-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+.rtcb-thumb:hover {
+  border-color: var(--rtcb-text-3);
+}
+.rtcb-thumb-tag {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 17px;
+  pointer-events: none;
+}
+.rtcb-thumb--att {
+  width: 112px;
+  margin-top: 8px;
+  aspect-ratio: 16 / 10;
+}
+
+/* Agent timeline */
+.rtcb-tl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rtcb-steps-b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  margin: 0;
+  padding: 0 6px 0 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.rtcb-steps-b:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+}
+.rtcb-chev {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 12px;
+  transition: transform 140ms ease;
+}
+.rtcb-steps[data-open="true"] .rtcb-chev {
+  transform: rotate(90deg);
+}
+.rtcb-steps-n {
+  flex: none;
+  color: var(--rtcb-text-2);
+  font-weight: 500;
+}
+.rtcb-steps-last {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-steps-last::before {
+  content: "· ";
+}
+.rtcb-steps .rtcb-feed {
+  margin: 6px 0 2px 8px;
+  padding-left: 10px;
+  border-left: var(--rtcb-hair) solid var(--rtcb-border);
+}
+
+.rtcb-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rtcb-u {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.rtcb-u > p {
+  margin: 0;
+  color: var(--rtcb-text-2);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* a step: one line, the whole text on click */
+.rtcb-u--text {
+  cursor: pointer;
+  border-radius: 4px;
+}
+.rtcb-u--text:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+.rtcb-u--text > .rtcb-u-t {
+  min-width: 0;
+}
+.rtcb-u--text[data-open="false"] > .rtcb-u-t {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-u--text:hover > .rtcb-u-t {
+  color: var(--rtcb-text);
+}
+.rtcb-u--shot {
+  align-items: end;
+}
+.rtcb-thumb--feed {
+  max-width: 200px;
+  max-height: 125px;
+}
+
+/* Question / answer bubbles stay visible */
+.rtcb-msgb {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rtcb-msgb > p {
+  margin: 0;
+  padding: 7px 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rtcb-msgb--q {
+  align-items: flex-start;
+  padding-right: 32px;
+}
+.rtcb-msgb--q > p {
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 10px 10px 10px 3px;
+}
+.rtcb-msgb--you {
+  align-items: flex-end;
+  padding-left: 32px;
+}
+.rtcb-msgb--you > p {
+  border-radius: 10px 10px 3px 10px;
+  background: var(--rtcb-surface-hi);
+}
+.rtcb-u-meta {
+  display: flex;
+  gap: 6px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-u-err {
+  color: var(--rtcb-red);
+}
+.rtcb-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rtcb-text-2);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rtcb-idle {
+  margin: 0;
+  color: var(--rtcb-text-3);
+}
+.rtcb-idle--live {
+  background: linear-gradient(90deg, var(--rtcb-text-3) 0%, var(--rtcb-text) 50%, var(--rtcb-text-3) 100%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rtcb-shimmer 2s linear infinite;
+}
+
+/* Result */
+.rtcb-fail,
+.rtcb-sum {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.rtcb-fail {
+  border: var(--rtcb-hair) solid color-mix(in srgb, var(--rtcb-red) 50%, transparent);
+  background: color-mix(in srgb, var(--rtcb-red) 9%, transparent);
+}
+.rtcb-sum {
+  border: var(--rtcb-hair) solid color-mix(in srgb, var(--rtcb-green) 40%, transparent);
+  background: color-mix(in srgb, var(--rtcb-green) 7%, transparent);
+}
+.rtcb-fail-h,
+.rtcb-sum-h {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.rtcb-fail-h {
+  color: var(--rtcb-red);
+}
+.rtcb-sum-h {
+  color: var(--rtcb-green);
+}
+.rtcb-fail p,
+.rtcb-sum p {
+  margin: 4px 0 0;
+  color: var(--rtcb-text-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rtcb-seg {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--rtcb-surface-lo);
+}
+.rtcb-seg-b {
+  height: 22px;
+  margin: 0;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.rtcb-seg-b:hover {
+  color: var(--rtcb-text-2);
+}
+.rtcb-seg-b[aria-checked="true"] {
+  background: var(--rtcb-surface-hi);
+  box-shadow: 0 0 0 var(--rtcb-hair) var(--rtcb-border);
+  color: var(--rtcb-text);
+}
+
+/* GIF of the run (or its 3 key frames): the player, then GIF / Copy.
+   Play/pause is JS (a paused GIF shows a still); nothing here animates. */
+.rtcb-gif-view {
+  max-height: 240px;
+}
+.rtcb-gif-view img {
+  object-fit: contain;
+  object-position: center;
+}
+.rtcb-gif-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  min-width: 0;
+}
+.rtcb-gif-bar .rtcb-seg {
+  margin: 0;
+}
+.rtcb-gif-play {
+  padding-left: 6px;
+}
+.rtcb-gif-play[aria-pressed="true"] {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-gif-meta {
+  overflow: hidden;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-gif-msg {
+  display: block;
+  margin-top: 4px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+}
+.rtcb-gif-msg:empty {
+  display: none;
+}
+/* The result's media: one carousel (a 200 px stage, images contained). */
+.rtcb-car {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.rtcb-car-stage {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 200px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 8px;
+  background: var(--rtcb-surface-lo);
+  cursor: zoom-in;
+}
+.rtcb-car-stage:hover {
+  border-color: var(--rtcb-text-3);
+}
+.rtcb-car-stage:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+.rtcb-car-fig {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+.rtcb-car-fig + .rtcb-car-fig {
+  border-left: var(--rtcb-hair) solid var(--rtcb-border);
+}
+.rtcb-car-fig img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.rtcb-car-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.rtcb-car-arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  cursor: pointer;
+}
+.rtcb-car-arrow:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-car-arrow[hidden],
+.rtcb-car-dots[hidden],
+.rtcb-car-nav[hidden],
+.rtcb-car-name[hidden],
+.rtcb-car-gif[hidden] {
+  display: none;
+}
+.rtcb-car-dots {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rtcb-car-dot {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.rtcb-car-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rtcb-border);
+}
+.rtcb-car-dot[aria-selected="true"]::before {
+  background: var(--rtcb-text-2);
+}
+.rtcb-car-dot:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  border-radius: 4px;
+}
+.rtcb-car-name {
+  margin-left: 4px;
+  overflow: hidden;
+  color: var(--rtcb-text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-car-gif {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+/* the summary: 3 lines, the rest on "Show more" */
+.rtcb-sum[data-open="false"] .rtcb-sum-t {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.rtcb-sum-more {
+  margin-top: 4px;
+}
+.rtcb-sum-more[hidden] {
+  display: none;
+}
+
+/* Why a capture is missing (the pipeline's notes). */
+.rtcb-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--rtcb-text-3);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+.rtcb-note svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ------------------------------------------- the agent's reply in a thread
+   A [data-testid="comment-message"] whose text ends with the pipeline's
+   marker: its native avatar, name and text hide; its "…" menu stays top
+   right; the card (.rtcb-ag, appended by JS) comes first. */
+[data-rtcb-agent] {
+  position: relative;
+}
+[data-rtcb-agent] > .rtcb-ag {
+  order: -1;
+}
+[data-rtcb-agent] > :first-child:not(.rtcb-ag) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+}
+[data-rtcb-agent] > :first-child:not(.rtcb-ag) > :first-child {
+  display: none;
+}
+[data-rtcb-agent] > :nth-child(2) > :has(> .whitespace-pre-wrap):not(:has(textarea)) {
+  display: none;
+}
+[data-rtcb-agent][data-rtcb-media="own"] > :nth-child(2) > :is([data-testid^="comment-message-image"], :has([data-testid^="comment-message-image"])) {
+  display: none;
+}
+.rtcb-ag {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--rtcb-text);
+}
+.rtcb-ag-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 24px;
+  padding-right: 28px; /* the native "…" menu */
+}
+.rtcb-ag-av {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  box-shadow: inset 0 0 0 var(--rtcb-hair) var(--rtcb-border);
+}
+.rtcb-ag-av .rtcb-claude {
+  animation: none !important;
+}
+.rtcb-ag-name {
+  flex: none;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.rtcb-ag .rtcb-ag-chip {
+  height: 20px;
+  padding: 0 7px;
+  font-size: 11px;
+}
+.rtcb-ag-time {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-ag-b {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 32px;
+}
+.rtcb-ag-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rtcb-ag-cmp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.rtcb-ag .rtcb-thumb {
+  max-height: 140px;
+}
+.rtcb-ag .rtcb-gif-view {
+  max-height: 200px;
+}
+.rtcb-ag-open {
+  align-self: flex-start;
+}
+
+/* Footer: reply + actions */
+.rtcb-pf {
+  flex: none;
+  padding: 10px 12px;
+  border-top: var(--rtcb-hair) solid var(--rtcb-border);
+}
+.rtcb-panel[data-reply-in="card"] .rtcb-pf {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.rtcb-reply {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 6px 6px 12px;
+  border: var(--rtcb-hair) solid transparent;
+  border-radius: 16px;
+  background: var(--rtcb-surface-hi);
+}
+.rtcb-reply:focus-within {
+  border-color: var(--rtcb-border);
+}
+.rtcb-ta {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  max-height: 112px;
+  margin: 0;
+  padding: 3px 32px 3px 0; /* room for voice-input's mic (inside-end) */
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--rtcb-text);
+  font: inherit;
+  line-height: 18px;
+  resize: none;
+}
+.rtcb-ta::placeholder {
+  color: var(--rtcb-text-3);
+}
+.rtcb-ta:disabled {
+  cursor: not-allowed;
+}
+.rtcb-send {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rtcb-text);
+  color: var(--rtcb-surface);
+  cursor: pointer;
+}
+.rtcb-send:disabled {
+  background: var(--rtcb-border);
+  color: var(--rtcb-text-3);
+  cursor: default;
+}
+.rtcb-pf-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rtcb-panel[data-reply-in="card"] .rtcb-pf-row {
+  margin-top: 0;
+}
+.rtcb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  margin: 0;
+  padding: 0 8px;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rtcb-open {
+  padding-left: 6px;
+}
+.rtcb-btn[hidden] {
+  display: none;
+}
+.rtcb-btn:hover:not(:disabled) {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rtcb-dismiss {
+  border-color: transparent;
+  color: var(--rtcb-text-3);
+}
+.rtcb-hint {
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+}
+
+/* ----------------------------------------------------------- lightbox */
+.rtcb-lb {
+  position: absolute;
+  inset: 0;
+  z-index: 4250;
+  container-type: size; /* the enlarged view fits the canvas view, not the window */
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.72);
+  outline: none;
+  animation: rtcb-fade 140ms ease-out;
+}
+.rtcb-lb-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 92cqw;
+  margin: 0;
+}
+.rtcb-lb-fig img {
+  display: block;
+  max-width: 92cqw;
+  max-height: calc(90cqh - 44px);
+  border-radius: 8px;
+  background: var(--rtcb-surface-lo);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
+  object-fit: contain;
+}
+.rtcb-lb-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rtcb-lb .rtcb-seg {
+  margin: 0;
+  background: rgb(0 0 0 / 0.5);
+}
+.rtcb-lb-label {
+  color: #fff;
+  font-size: 12px;
+}
+.rtcb-lb-x {
+  color: #ddd;
+}
+
+/* --------------------------------------------------------- animations */
+/* Claude mark while running: it never rotates. It "breathes" (scale 1 > 1.08 > 1,
+   opacity .7 > 1 > .7, 1.6 s ease-in-out) and the rays contract/expand a touch
+   out of phase (1.2 s). Reference: Claude Code's spinner cycles asterisk glyphs
+   in place with a shimmer, never turning the mark; claude.ai pulses the mark.
+   Sources (third-party, Anthropic publishes no spec): medium.com/@kyletmartinez
+   "Reverse Engineering Claude's ASCII Spinner Animation"; anthropics/claude-code
+   issues #6038 (thinking shimmer) and #76424 (glyph cycle). */
+[data-status="running"] .rtcb-claude,
+.rtcb-panel[data-status="running"] .rtcb-claude {
+  animation: rtcb-breathe 1.6s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+[data-status="running"] .rtcb-claude path,
+.rtcb-panel[data-status="running"] .rtcb-claude path {
+  animation: rtcb-rays 1.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+@keyframes rtcb-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes rtcb-rays {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.94);
+  }
+}
+@keyframes rtcb-breathe-soft {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rtcb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rtcb-pulse {
+  0% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+@keyframes rtcb-check-pop {
+  0% {
+    transform: scale(0.3);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes rtcb-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes rtcb-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes rtcb-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+@keyframes rtcb-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-rtcb-root] *,
+  [data-rtcb-root] *::before,
+  [data-rtcb-root] *::after,
+  .rtcb-panel,
+  .rtcb-panel *,
+  .rtcb-panel *::before,
+  .rtcb-panel *::after,
+  .rtcb-lb,
+  .rtcb-tip {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* Reduced motion keeps only a slow opacity pulse on the Claude mark. */
+  [data-status="running"] .rtcb-claude,
+  .rtcb-panel[data-status="running"] .rtcb-claude {
+    animation: rtcb-breathe-soft 3.2s ease-in-out infinite !important;
+  }
+  [data-status="running"] .rtcb-claude path,
+  .rtcb-panel[data-status="running"] .rtcb-claude path {
+    animation: none !important;
+  }
+  /* Static stand-ins for the motion: a full Claude ring, a solid amber halo,
+     the check drawn at once. */
+  [data-status="running"] > .rtcb-ring::before {
+    background: var(--rtcb-claude);
+  }
+  [data-status="needs-input"] > .rtcb-ring::after {
+    opacity: 0.35;
+    transform: scale(1.18);
+  }
+  .rtcb--celebrate > .rtcb-badge .rtcb-check-path {
+    stroke-dashoffset: 0;
+  }
+  .rtcb-bubble:hover {
+    transform: none;
+  }
+  .rtcb-idle--live {
+    background: none;
+    color: var(--rtcb-text-3);
+  }
+}
+
+/* ------------------------------------------------------------ refinement
+   The panel and the tooltip: radius 8 on items, 16 on the panel, hairlines,
+   one soft shadow, 12 px paddings, 13 / 12 px text, 8 px gaps. Chips and
+   round buttons keep their shape. */
+.rtcb-panel {
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.rtcb-ph {
+  gap: 8px;
+  padding: 0 12px;
+}
+.rtcb-sec {
+  gap: 8px;
+  padding: 12px;
+}
+.rtcb-ask {
+  padding: 12px;
+  border-radius: 8px;
+}
+.rtcb-fail,
+.rtcb-sum {
+  padding: 12px;
+}
+.rtcb-pf {
+  padding: 12px;
+}
+.rtcb-panel[data-reply-in="card"] .rtcb-pf {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.rtcb-msg,
+.rtcb-reply,
+.rtcb-pf-row,
+.rtcb-car,
+.rtcb-car-nav,
+.rtcb-where,
+.rtcb-fail-h,
+.rtcb-sum-h,
+.rtcb-steps-b {
+  gap: 8px;
+}
+.rtcb-x,
+.rtcb-btn,
+.rtcb-reply,
+.rtcb-steps-b,
+.rtcb-car-arrow,
+.rtcb-u--text,
+.rtcb-tip {
+  border-radius: 8px;
+}
+.rtcb-msgb > p {
+  padding: 8px 12px;
+}
+.rtcb-msgb--q > p {
+  border-radius: 8px 8px 8px 3px;
+}
+.rtcb-msgb--you > p {
+  border-radius: 8px 8px 3px 8px;
+}
+.rtcb-u > p {
+  font-size: 13px;
+}
+.rtcb-model,
+.rtcb-sec-h,
+.rtcb-ago,
+.rtcb-where,
+.rtcb-thumb-tag,
+.rtcb-u-meta,
+.rtcb-seg-b,
+.rtcb-gif-meta,
+.rtcb-gif-msg,
+.rtcb-car-name,
+.rtcb-note,
+.rtcb-hint,
+.rtcb-tip-h,
+.rtcb-tip-k {
+  font-size: 12px;
+}
+.rtcb-tip {
+  padding: 8px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.rtcb-tip[data-rich="true"] {
+  padding: 8px;
+}
+
+/* --------------------------------------------------------------- manager
+   "Agents": a panel of the canvas view over the composer (opening upwards
+   from its left edge) or under the segment. 360 px, radius 14, one shadow;
+   header (title, counts, batch actions), filters + search, the rows (only
+   they scroll), the keys. 13 / 12 / 11 px text, tokens only. The mod sets
+   its box, transform-origin (the button that opened it) and the motion. */
+.rtcb-pop.rtcb-hub {
+  position: absolute;
+  z-index: 4200;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 360px;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 14px;
+  background: var(--rtcb-surface);
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.18);
+  color: var(--rtcb-text);
+  font-size: 12px;
+  line-height: 16px;
+  outline: none;
+}
+.rtcb-hub *,
+.rtcb-hub *::before,
+.rtcb-hub *::after {
+  box-sizing: border-box;
+}
+.rtcb-hub button {
+  font: inherit;
+}
+/* "Agents" and the actions on one line, the counts under them */
+.rtcb-hub-h {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "title stop clear"
+    "counts counts counts";
+  align-items: center;
+  column-gap: 2px;
+  min-width: 0;
+  padding: 10px 10px 9px 14px;
+}
+.rtcb-hub-h > [data-act="stop-all"] {
+  grid-area: stop;
+}
+.rtcb-hub-h > [data-act="clear"] {
+  grid-area: clear;
+}
+.rtcb-hub-title {
+  grid-area: title;
+  margin: 0;
+  color: var(--rtcb-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: -0.005em;
+}
+.rtcb-hub-counts {
+  grid-area: counts;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: -2px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+.rtcb-hub-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.rtcb-hub-c::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin-right: 1px;
+  border-radius: 50%;
+  background: var(--rtcb-text-3);
+}
+.rtcb-hub-c--running::before {
+  background: var(--rtcb-claude);
+}
+.rtcb-hub-c--waiting::before {
+  background: var(--rtcb-amber);
+}
+.rtcb-hub-c--done::before {
+  background: var(--rtcb-green);
+}
+.rtcb-hub-c--failed::before {
+  background: var(--rtcb-red);
+}
+.rtcb-hub-c--stopped::before {
+  background: var(--rtcb-text-3);
+}
+.rtcb-hub-c b {
+  color: var(--rtcb-text-2);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.rtcb-hub-c[data-zero="true"] {
+  opacity: 0.6;
+}
+.rtcb-hub-c[data-zero="true"]::before {
+  background: var(--rtcb-text-3);
+}
+.rtcb-hub-act {
+  flex: none;
+  height: 26px;
+  margin: 0;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.rtcb-hub-act:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-hub-act[data-act="stop-all"]:hover:not([aria-disabled="true"]) {
+  color: var(--rtcb-red);
+}
+/* armed: a second click stops every working agent */
+.rtcb-hub-act[data-act="stop-all"][data-armed="true"] {
+  background: color-mix(in srgb, var(--rtcb-red) 16%, transparent);
+  color: var(--rtcb-red);
+}
+.rtcb-hub-act:disabled,
+.rtcb-hub-act[aria-disabled="true"] {
+  color: var(--rtcb-text-3);
+  opacity: 0.65;
+  cursor: default;
+}
+.rtcb-hub-act:focus-visible,
+.rtcb-hub-tab:focus-visible,
+.rtcb-hub-link:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+
+/* filters (a segmented control, the thumb slides) and the search field */
+.rtcb-hub-tools {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 8px;
+  border-bottom: var(--rtcb-hair) solid var(--rtcb-border-2);
+}
+.rtcb-hub-seg {
+  --i: 0;
+  position: relative;
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, 1fr);
+  width: 186px;
+  height: 28px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--rtcb-surface-lo);
+  box-shadow: inset 0 0 0 var(--rtcb-hair) var(--rtcb-border-2);
+}
+.rtcb-hub-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 3);
+  border-radius: 6px;
+  background: var(--rtcb-surface-hi);
+  box-shadow:
+    0 0 0 var(--rtcb-hair) var(--rtcb-border),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(calc(var(--i) * 100%));
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rtcb-hub-tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+.rtcb-hub-tab:hover,
+.rtcb-hub-tab[aria-selected="true"] {
+  color: var(--rtcb-text);
+}
+.rtcb-hub-tab-n {
+  color: var(--rtcb-text-3);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.rtcb-hub-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 120px;
+  align-items: center;
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px 0 26px;
+  border-radius: 8px;
+  background: var(--rtcb-surface-lo);
+  box-shadow: inset 0 0 0 var(--rtcb-hair) var(--rtcb-border-2);
+  cursor: text;
+  transition: box-shadow 140ms ease;
+}
+.rtcb-hub-search:focus-within {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rtcb-focus) 70%, transparent);
+}
+.rtcb-hub-search-ico {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  display: grid;
+  color: var(--rtcb-text-3);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.rtcb-hub-q {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--rtcb-text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.rtcb-hub-q::placeholder {
+  color: var(--rtcb-text-3);
+}
+.rtcb-hub-qx {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--rtcb-text-3);
+  cursor: pointer;
+}
+.rtcb-hub-qx[hidden] {
+  display: none;
+}
+.rtcb-hub-qx:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+
+/* the rows */
+.rtcb-hub-list {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scrollbar-width: thin;
+}
+.rtcb-hub-list[hidden] {
+  display: none;
+}
+.rtcb-hub-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 8px 0 9px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.rtcb-hub-row[aria-selected="true"] {
+  background: var(--rtcb-surface-hi);
+}
+.rtcb-hub-av {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.rtcb-hub-av > .rtcb-av {
+  position: absolute;
+  inset: 3.5px;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+/* three-figure request numbers still fit their disc */
+.rtcb--hosted .rtcb-bubble .rtcb-av[data-len="3"] {
+  font-size: 7.5px;
+  letter-spacing: -0.03em;
+}
+.rtcb-hub-av > .rtcb-av[data-len="3"] {
+  font-size: 7.5px;
+  letter-spacing: -0.03em;
+}
+.rtcb-hub-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rtcb-hub-l1,
+.rtcb-hub-l2 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.rtcb-hub-t {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rtcb-text);
+  font-size: 12.5px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-hub-time {
+  flex: none;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.rtcb-hub-l2 {
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-hub-st {
+  flex: none;
+  color: var(--rtcb-hub-st, var(--rtcb-text-3));
+  font-weight: 500;
+}
+.rtcb-hub-row[data-status="running"] {
+  --rtcb-hub-st: var(--rtcb-text-2);
+}
+.rtcb-hub-row[data-status="needs-input"] {
+  --rtcb-hub-st: var(--rtcb-amber);
+}
+.rtcb-hub-row[data-status="done"] {
+  --rtcb-hub-st: color-mix(in oklab, var(--rtcb-green) 80%, var(--rtcb-text-2));
+}
+.rtcb-hub-row[data-status="failed"] {
+  --rtcb-hub-st: var(--rtcb-red);
+}
+/* stopped by the designer: not a failure, a neutral ring and label */
+.rtcb-hub-row[data-stopped="true"] {
+  --rtcb-hub-st: var(--rtcb-text-2);
+}
+.rtcb-hub-av[data-stopped="true"] > .rtcb-ring,
+.rtcb--hosted [data-stopped="true"] > .rtcb-ring {
+  box-shadow: inset 0 0 0 1.5px var(--rtcb-text-3);
+}
+.rtcb-hub-av[data-stopped="true"] > .rtcb-av,
+.rtcb--hosted [data-stopped="true"] > .rtcb-av {
+  filter: saturate(0.6);
+}
+.rtcb-hub-where {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-hub-mark {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--rtcb-focus) 32%, transparent);
+  color: var(--rtcb-text);
+}
+/* the row's actions: over its right end on hover / the active row; the
+   time steps aside */
+.rtcb-hub-acts {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding-left: 18px;
+  background: linear-gradient(to right, transparent, var(--rtcb-surface-hi) 16px);
+  opacity: 0;
+  transform: translateY(-50%) translateX(4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rtcb-hub-row:hover .rtcb-hub-acts,
+.rtcb-hub-row[aria-selected="true"] .rtcb-hub-acts {
+  opacity: 1;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+.rtcb-hub-row:hover .rtcb-hub-time,
+.rtcb-hub-row[aria-selected="true"] .rtcb-hub-time {
+  opacity: 0;
+}
+.rtcb-hub-ib {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.rtcb-hub-ib[hidden] {
+  display: none;
+}
+.rtcb-hub-ib svg {
+  display: block;
+}
+.rtcb-hub-ib:hover:not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--rtcb-text) 10%, transparent);
+  color: var(--rtcb-text);
+}
+.rtcb-hub-ib[data-act="stop"]:hover:not([aria-disabled="true"]) {
+  color: var(--rtcb-red);
+}
+.rtcb-hub-ib[data-on="true"] {
+  color: var(--rtcb-claude);
+}
+.rtcb-hub-ib[aria-disabled="true"] {
+  color: var(--rtcb-text-3);
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* empty states */
+.rtcb-hub-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 150px;
+  padding: 24px 20px 26px;
+  text-align: center;
+}
+.rtcb-hub-empty[hidden] {
+  display: none;
+}
+.rtcb-hub-empty-ico {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--rtcb-surface-hi);
+  box-shadow: inset 0 0 0 var(--rtcb-hair) var(--rtcb-border);
+  color: var(--rtcb-text-3);
+}
+.rtcb-hub-empty-ico svg {
+  width: 16px;
+  height: 16px;
+}
+.rtcb-hub-empty-t {
+  color: var(--rtcb-text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.rtcb-hub-empty-d {
+  max-width: 240px;
+  color: var(--rtcb-text-3);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+.rtcb-hub-link {
+  height: 24px;
+  margin-top: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.rtcb-hub-link:hover {
+  color: var(--rtcb-text);
+}
+
+/* the keys */
+.rtcb-hub-foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 14px;
+  border-top: var(--rtcb-hair) solid var(--rtcb-border-2);
+  overflow: hidden;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+.rtcb-hub-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rtcb-hub-key kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--rtcb-surface-hi);
+  box-shadow: inset 0 0 0 var(--rtcb-hair) var(--rtcb-border);
+  color: var(--rtcb-text-2);
+  font: inherit;
+  font-size: 10px;
+}
+.rtcb-hub[data-narrow="true"] .rtcb-hub-foot {
+  display: none;
+}
+.rtcb-hub[data-narrow="true"] .rtcb-hub-seg {
+  flex: 1 1 100%;
+  width: auto;
+}
+
+/* its tooltip (for the row buttons and the disabled actions) */
+.rtcb-hub-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  max-width: 240px;
+  padding: 5px 8px;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 7px;
+  background: var(--color-surface-menu, var(--rtcb-surface-hi));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: var(--rtcb-text);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: pre;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 120ms ease,
+    visibility 0s linear 120ms;
+  pointer-events: none;
+}
+.rtcb-hub-tip[data-show] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 120ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcb-hub-thumb,
+  .rtcb-hub-acts,
+  .rtcb-hub-tip,
+  .rtcb-manage {
+    transition: none;
+  }
+}
+/* the hosted segment never animates its own background */
+@media (prefers-reduced-motion: reduce) {
+  [data-rtcb-root][data-rtcb-root].rtcb--hosted {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------- compact cluster, spread
+   Hover / focus: 24 px avatars, 6 px apart, each a button (150 ms). */
+.rtcb--hosted .rtcb-rail > .rtcb-bubble {
+  transition:
+    width 150ms ease,
+    height 150ms ease,
+    margin-left 150ms ease,
+    opacity 600ms ease,
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* a slot with its own width: no spread; the avatar under the pointer
+   comes forward and lifts a little */
+[data-rtcb-root].rtcb--hosted[data-fit="slot"] .rtcb-rail > .rtcb-bubble:hover,
+[data-rtcb-root].rtcb--hosted[data-fit="slot"] .rtcb-rail > .rtcb-bubble:focus-visible {
+  transform: translateY(-1.5px);
+}
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-rail > .rtcb-bubble {
+  width: 24px;
+  height: 24px;
+}
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-rail > .rtcb-bubble + .rtcb-bubble,
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-rail > .rtcb-bubble + .rtcb-more {
+  margin-left: 6px;
+}
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-bubble .rtcb-av {
+  inset: 3px;
+  font-size: 8px;
+}
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-rail > .rtcb-more {
+  width: auto;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+[data-rtcb-root].rtcb--hosted[data-spread="true"] .rtcb-bubble:hover .rtcb-av {
+  filter: brightness(1.12);
+}
+.rtcb--hosted .rtcb-rail > .rtcb-bubble.rtcb--enter {
+  animation: rtcb-fade 150ms ease-out;
+}
+/* the compact tooltip: one 11 px line */
+.rtcb-tip.rtcb-tip--mini {
+  max-width: 280px;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-tip-mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.rtcb-tip-mini-t {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rtcb-text);
+  text-overflow: ellipsis;
+}
+.rtcb-tip-mini .rtcb-tip-st {
+  flex: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcb--hosted .rtcb-rail > .rtcb-bubble {
+    transition: none;
+  }
+  .rtcb--hosted .rtcb-rail > .rtcb-bubble.rtcb--enter {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------ popover over a bubble
+   A bubble in another mod's slot (canvas-chrome's composer at the bottom):
+   the panel is a small popover centred over that bubble, its bottom 14 px
+   over the slot's surface, with a caret pointing at the bubble
+   (--rtcb-caret-x, set by the mod). Same content, tighter. */
+.rtcb-panel[data-anchor="bubble"] {
+  overflow: visible;
+}
+.rtcb-panel[data-anchor="bubble"] > .rtcb-pb {
+  overscroll-behavior: contain;
+}
+.rtcb-panel[data-anchor="bubble"] > :first-child {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+.rtcb-panel[data-anchor="bubble"] > :last-child {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+.rtcb-panel[data-anchor="bubble"]::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: calc(var(--rtcb-caret-x, 50%) - 6px);
+  width: 12px;
+  height: 12px;
+  border-right: var(--rtcb-hair) solid var(--rtcb-border);
+  border-bottom: var(--rtcb-hair) solid var(--rtcb-border);
+  background: var(--rtcb-surface);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.rtcb-panel[data-anchor="bubble"] .rtcb-ph {
+  height: 40px;
+}
+.rtcb-panel[data-anchor="bubble"] .rtcb-car-stage:not([data-sv="true"]) {
+  height: 160px;
+}
+.rtcb-panel[data-anchor="bubble"] .rtcb-sv {
+  --rtcb-sv-mh: 180px;
+}
+
+/* ------------------------------------------------- the card's agents list
+   The manager inline in canvas-chrome's left card ([data-rtcb-hub-host],
+   its Agent tab, ~275 px): no box of its own, "Agents · N", the batch
+   actions, the filters and the search stacked, the rows, no key hints; as
+   tall as the host allows (the mod sets max-height from the host's), only
+   the rows scroll. A row opens that agent's thread in their place,
+   "‹ Agents" back; its body scrolls. */
+.rtcb-pop.rtcb-hub.rtcb-hub--inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: auto;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.rtcb-hub-n {
+  display: none;
+  color: var(--rtcb-text-3);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.rtcb-hub--inline .rtcb-hub-n {
+  display: inline;
+}
+.rtcb-hub--inline .rtcb-hub-counts,
+.rtcb-hub--inline .rtcb-hub-foot {
+  display: none;
+}
+.rtcb-hub--inline .rtcb-hub-h {
+  grid-template-areas: "title stop clear";
+  padding: 4px 4px 6px 10px;
+}
+/* over a chat with messages: "‹" first, folding the list into its line */
+.rtcb-hub-collapse {
+  display: none;
+}
+.rtcb-hub--inline[data-collapsible="true"] .rtcb-hub-h {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "back title stop clear";
+  padding-left: 4px;
+}
+.rtcb-hub--inline[data-collapsible="true"] .rtcb-hub-collapse {
+  grid-area: back;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.rtcb-hub-collapse:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-hub-collapse:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+.rtcb-hub-collapse svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* the three views. List and thread take the whole tab (canvas-chrome gives
+   the host the tab's box); the line ("row") is the box's only part. */
+.rtcb-pop.rtcb-hub.rtcb-hub--inline:not([data-view="row"]) {
+  height: 100%;
+}
+.rtcb-hub-bar {
+  display: none;
+}
+.rtcb-hub--inline[data-view="row"] > :not(.rtcb-hub-bar):not(.rtcb-hub-tip) {
+  display: none;
+}
+/* "Agents · N   ◉◉◉◉ +3  ›": one 36 px line at the card's inset (4 px),
+   the session row's button height and radius, transparent until hovered */
+.rtcb-hub--inline[data-view="row"] > .rtcb-hub-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 8px);
+  height: 36px;
+  margin: 4px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rtcb-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.rtcb-hub-bar:hover {
+  background: var(--rtcb-surface-hi);
+}
+.rtcb-hub-bar:active {
+  background: var(--color-accent-subtle, var(--rtcb-surface-hi));
+}
+.rtcb-hub-bar:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: -1.5px;
+}
+.rtcb-hub-bar-t {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-hub-bar-t > .rtcb-hub-n {
+  display: inline;
+}
+/* the mini avatars: 18 px discs overlapping 4 px, cut out of the card */
+.rtcb-hub-bar-avs {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+.rtcb-hub-mini {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--rtcb-av, #8b5cf6);
+  box-shadow: 0 0 0 1.5px var(--rtcb-surface);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 1px rgb(0 0 0 / 0.25);
+}
+.rtcb-hub-mini[data-len="3"] {
+  font-size: 6.5px;
+}
+.rtcb-hub-mini + .rtcb-hub-mini {
+  margin-left: -4px;
+}
+.rtcb-hub-mini[data-status="needs-input"] {
+  box-shadow:
+    0 0 0 1.5px var(--rtcb-amber),
+    0 0 0 3px var(--rtcb-surface);
+}
+.rtcb-hub-mini[data-status="queued"] {
+  filter: saturate(0.5);
+  opacity: 0.8;
+}
+.rtcb-hub-mini--more {
+  width: auto;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+  text-shadow: none;
+}
+.rtcb-hub-bar-chev {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 12px;
+  color: var(--rtcb-text-3);
+}
+.rtcb-hub-bar-chev svg {
+  width: 12px;
+  height: 12px;
+}
+.rtcb-hub-bar:hover .rtcb-hub-bar-chev {
+  color: var(--rtcb-text-2);
+}
+/* a view as it leaves (comment-bubbles.js ghostOf): a still copy over the
+   card, on the card's surface, dissolving */
+/* the card's one search, in its head row ([data-rtcb-search-host],
+   canvas-chrome): the list's own field, as tall and filled as the head
+   row's buttons (36px, radius 8, the hairline), over the agents and the chat */
+[data-rtcb-search-host] > .rtcb-hub-search {
+  flex: 1 1 auto;
+  height: 36px;
+  padding: 0 6px 0 32px;
+  border-radius: 8px;
+  background: var(--color-surface-container-high, var(--rtcb-surface-hi));
+  box-shadow: inset 0 0 0 1px var(--color-border-secondary, var(--rtcb-border-2));
+  color: var(--rtcb-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 16px;
+}
+[data-rtcb-search-host] > .rtcb-hub-search:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-border-primary, var(--rtcb-border));
+}
+[data-rtcb-search-host] > .rtcb-hub-search .rtcb-hub-search-ico {
+  left: 11px;
+}
+[data-rtcb-search-host] > .rtcb-hub-search .rtcb-hub-search-ico svg {
+  width: 14px;
+  height: 14px;
+}
+[data-rtcb-search-host] > .rtcb-hub-search .rtcb-hub-q {
+  font-size: 13px;
+}
+[data-rtcb-search-host] > .rtcb-hub-search .rtcb-hub-q::placeholder {
+  color: var(--rtcb-text-3);
+}
+/* the chat matching the search, first in the results */
+.rtcb-hub-chathit-ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text-2);
+}
+.rtcb-hub-chathit-ico svg {
+  width: 13px;
+  height: 13px;
+}
+.rtcb-pop.rtcb-hub.rtcb-hub-ghost {
+  position: fixed;
+  z-index: 46;
+  margin: 0;
+  background: var(--rtcb-surface);
+  pointer-events: none;
+}
+/* rows and a thread's body scroll under faded edges (16 px where there is
+   more), so a row at an edge is never just cut; the rows snap to the top */
+.rtcb-hub--inline .rtcb-hub-list,
+.rtcb-panel[data-inline="true"] .rtcb-pb {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--rtcb-ft, 0px), #000 calc(100% - var(--rtcb-fb, 0px)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--rtcb-ft, 0px), #000 calc(100% - var(--rtcb-fb, 0px)), transparent 100%);
+}
+.rtcb-hub--inline .rtcb-hub-list {
+  overflow-x: hidden; /* a row sliding in never brings a horizontal scrollbar */
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 4px;
+}
+.rtcb-hub--inline .rtcb-hub-row {
+  scroll-snap-align: start;
+}
+.rtcb-panel[data-inline="true"].rtcb--in {
+  animation: none;
+}
+/* a thread in the card has no reply field of its own (the composer under
+   the card answers it, canvas-chrome.js) and no footer line: its actions
+   (Follow, Stop, Dismiss) sit at the right of "‹ Agents", on that line */
+.rtcb-panel[data-inline="true"] {
+  overflow: visible;
+}
+.rtcb-panel[data-inline="true"] .rtcb-reply,
+.rtcb-panel[data-inline="true"] .rtcb-hint {
+  display: none !important;
+}
+.rtcb-panel[data-inline="true"] .rtcb-pf {
+  position: absolute;
+  top: -29px;
+  right: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.rtcb-panel[data-inline="true"] .rtcb-pf-row {
+  gap: 2px;
+  margin: 0;
+}
+.rtcb-panel[data-inline="true"] .rtcb-pf-row > .rtcb-grow {
+  display: none;
+}
+/* the thread's status reads as a status (its icon and word in its colour),
+   not as a button to press */
+.rtcb-panel[data-inline="true"] .rtcb-chip {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+  user-select: none;
+}
+.rtcb-panel[data-inline="true"] .rtcb-btn {
+  height: 24px;
+  padding: 0 7px;
+  border-color: transparent;
+  border-radius: 7px;
+  font-size: 11.5px;
+}
+.rtcb-hub--inline .rtcb-hub-title {
+  font-size: 12px;
+  line-height: 16px;
+}
+.rtcb-hub--inline .rtcb-hub-act {
+  height: 24px;
+  padding: 0 7px;
+  font-size: 11.5px;
+}
+.rtcb-hub--inline .rtcb-hub-tools {
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+.rtcb-hub--inline .rtcb-hub-seg {
+  width: auto;
+  height: 26px;
+}
+/* one row: the filters, then a short search field */
+.rtcb-hub--inline .rtcb-hub-tools {
+  flex-wrap: nowrap;
+}
+.rtcb-hub.rtcb-hub--inline .rtcb-hub-seg {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rtcb-hub--inline .rtcb-hub-tab {
+  gap: 3px;
+  padding: 0 2px;
+  font-size: 11.5px;
+}
+.rtcb-hub--inline .rtcb-hub-search {
+  flex: 0 0 84px;
+  height: 26px;
+  padding-left: 22px;
+}
+.rtcb-hub--inline .rtcb-hub-search-ico {
+  left: 6px;
+}
+.rtcb-hub--inline .rtcb-hub-q {
+  font-size: 11.5px;
+}
+.rtcb-hub--inline:focus-visible {
+  outline: none;
+}
+.rtcb-hub--inline .rtcb-hub-list {
+  padding: 4px 4px 6px;
+}
+.rtcb-hub--inline .rtcb-hub-row {
+  gap: 8px;
+  height: 44px;
+  padding: 0 6px 0 7px;
+}
+.rtcb-hub--inline .rtcb-hub-av {
+  width: 24px;
+  height: 24px;
+}
+.rtcb-hub--inline .rtcb-hub-av > .rtcb-av {
+  inset: 3px;
+  font-size: 8.5px;
+}
+.rtcb-hub--inline .rtcb-hub-t {
+  font-size: 12px;
+}
+.rtcb-hub--inline .rtcb-hub-ib {
+  width: 24px;
+  height: 24px;
+}
+.rtcb-hub--inline .rtcb-hub-empty {
+  min-height: 112px;
+  padding: 16px 14px 18px;
+}
+.rtcb-hub--inline .rtcb-hub-empty-ico {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+}
+/* list / thread */
+.rtcb-hub-thread {
+  display: none;
+}
+.rtcb-hub--inline[data-view="thread"] > :not(.rtcb-hub-thread):not(.rtcb-hub-tip) {
+  display: none;
+}
+.rtcb-hub--inline[data-view="thread"] > .rtcb-hub-thread {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.rtcb-hub-back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  margin: 2px 6px 4px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rtcb-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.rtcb-hub-back:hover {
+  background: var(--rtcb-surface-hi);
+  color: var(--rtcb-text);
+}
+.rtcb-hub-back:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 1px;
+}
+.rtcb-hub-back svg {
+  width: 12px;
+  height: 12px;
+}
+.rtcb-hub-thread-slot {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+/* the agent's panel inline: its content, not its box */
+.rtcb-panel[data-inline="true"] {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: auto;
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-top: var(--rtcb-hair) solid var(--rtcb-border-2);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.rtcb-panel[data-inline="true"]::after {
+  display: none;
+}
+.rtcb-panel[data-inline="true"] .rtcb-x,
+.rtcb-panel[data-inline="true"] .rtcb-model {
+  display: none !important;
+}
+.rtcb-panel[data-inline="true"] .rtcb-ph {
+  height: 36px;
+  padding: 0 10px;
+}
+.rtcb-panel[data-inline="true"] .rtcb-sec,
+.rtcb-panel[data-inline="true"] .rtcb-pf {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.rtcb-panel[data-inline="true"] .rtcb-car-stage:not([data-sv="true"]) {
+  height: 150px;
+}
+.rtcb-panel[data-inline="true"] .rtcb-sv {
+  --rtcb-sv-mh: 180px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcb-hub-back {
+    transition: none;
+  }
+}
+.rtcb-panel .rtcb-stop:hover:not(:disabled) {
+  color: var(--rtcb-red);
+}
+
+/* ------------------------------------------------- an agent's tooltip
+   An avatar in a slot (canvas-chrome's agents pill): what the agent
+   changed (its after, Before | After, or its live frame) in boxes of the
+   pictures' own ratio, then "#n · status · time" and the request. A
+   picture fades in once decoded; its box holds the place meanwhile, so the
+   tooltip never grows or moves. Opening the popover from it: the tooltip
+   steps under the panel for its fade (no blink). */
+.rtcb-tip.rtcb-tip--agent {
+  width: 252px;
+  padding: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  transition:
+    opacity 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 140ms;
+}
+.rtcb-tip.rtcb-tip--agent[data-show] {
+  transition:
+    opacity 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtcb-tip[data-dir="up"]:not([data-show]) {
+  transform: translateY(3px);
+}
+.rtcb-tip[data-leaving="under"] {
+  z-index: 4190;
+}
+.rtcb-tip-media {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.rtcb-tip-media[data-n="2"] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.rtcb-tip-fig {
+  position: relative;
+  max-height: 156px;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: var(--rtcb-ar, 16 / 10);
+  border-radius: 6px;
+  background: var(--rtcb-surface-lo);
+}
+.rtcb-tip-fig > .rtcb-tip-img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtcb-tip-fig[data-loaded="true"] > .rtcb-tip-img {
+  opacity: 1;
+}
+.rtcb-tip-fig > .rtcb-tip-tag {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.56);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+}
+.rtcb-tip--agent .rtcb-tip-h {
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-tip--agent .rtcb-tip-t {
+  padding: 0 4px 2px;
+  color: var(--rtcb-text);
+}
+.rtcb-tip--agent .rtcb-sep,
+.rtcb-tip-when {
+  color: var(--rtcb-text-3);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcb-tip-fig > .rtcb-tip-img {
+    transition: opacity 120ms linear;
+  }
+}
+
+/* -------------------------------------------- one text box: the composer
+   A popover over canvas-chrome's composer ([data-reply="composer"]) has no
+   reply field of its own: the composer under it reads "Reply to #N…" /
+   "Answer #N…". Its actions (Follow, Stop, Dismiss) sit in its header,
+   left of ×, compact (as on the card's "‹ Agents" line); the model moves
+   to the "Agent" line. */
+.rtcb-panel[data-reply="composer"] .rtcb-reply,
+.rtcb-panel[data-reply="composer"] .rtcb-hint {
+  display: none !important;
+}
+.rtcb-panel[data-reply="composer"]:not([data-inline="true"]) > .rtcb-pf {
+  display: none;
+}
+.rtcb-panel[data-reply="composer"]:not([data-inline="true"]) > .rtcb-pb {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+.rtcb-panel[data-reply="composer"] .rtcb-ph .rtcb-model {
+  display: none !important;
+}
+.rtcb-ph > .rtcb-pf-row {
+  flex: none;
+  gap: 2px;
+  margin: 0;
+}
+.rtcb-ph > .rtcb-pf-row > .rtcb-grow {
+  display: none;
+}
+.rtcb-ph > .rtcb-pf-row .rtcb-btn {
+  height: 24px;
+  padding: 0 7px;
+  border-color: transparent;
+  border-radius: 7px;
+  font-size: 11.5px;
+}
+.rtcb-sec-model {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 400;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtcb-sec-model::before {
+  content: "· ";
+}
+.rtcb-panel:not([data-reply="composer"]) .rtcb-sec-model {
+  display: none;
+}
+/* the popover's copy, fading where it was while the card takes the thread */
+.rtcb-panel.rtcb-hub-ghost {
+  position: fixed;
+  z-index: 4200;
+  bottom: auto;
+  margin: 0;
+  animation: none;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------- readable answers
+   The agent's words in Markdown (comment-bubbles.js md): its last message
+   whole (6 lines, then "Show more" in place), the steps whole once open,
+   the question, the failure and the summary. Text is selectable; a click
+   never draws a focus ring (only the keyboard's :focus-visible does). */
+.rtcb-md {
+  min-width: 0;
+  color: var(--rtcb-text);
+  font-size: 13px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+  cursor: text;
+  user-select: text;
+}
+.rtcb-md > p {
+  margin: 0;
+}
+.rtcb-md > * + * {
+  margin-top: 6px;
+}
+.rtcb-md-h {
+  font-weight: 600;
+}
+.rtcb-md strong {
+  color: var(--rtcb-text);
+  font-weight: 600;
+}
+.rtcb-md-list {
+  margin: 0;
+  padding-left: 18px;
+}
+.rtcb-md-list > li + li {
+  margin-top: 2px;
+}
+.rtcb-md-list > li::marker {
+  color: var(--rtcb-text-3);
+}
+.rtcb-md-code {
+  padding: 0 4px;
+  border: var(--rtcb-hair) solid var(--rtcb-border-2);
+  border-radius: 4px;
+  background: var(--rtcb-surface-hi);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+.rtcb-md-pre {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: var(--rtcb-surface-lo);
+  font: 11.5px/16px var(--font-mono, ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace);
+  white-space: pre;
+  scrollbar-width: thin;
+}
+.rtcb-say {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rtcb-say-t[data-clamp="true"] {
+  max-height: calc(6 * 19px);
+  overflow: hidden;
+}
+.rtcb-say-t[data-cut="true"] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 19px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 19px), transparent);
+}
+.rtcb-say-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 14px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-say-more {
+  color: var(--rtcb-text-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+.rtcb-say-more:hover {
+  color: var(--rtcb-text);
+}
+.rtcb-say-more[hidden] {
+  display: none;
+}
+/* the steps, open: each one whole, quieter than the answer */
+.rtcb-u--step > .rtcb-u-t {
+  color: var(--rtcb-text-2);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.rtcb-msgb--q > .rtcb-md {
+  padding: 8px 12px;
+  border: var(--rtcb-hair) solid var(--rtcb-border);
+  border-radius: 8px 8px 8px 3px;
+}
+.rtcb-ask-q.rtcb-md {
+  white-space: normal;
+}
+.rtcb-fail > .rtcb-md,
+.rtcb-sum > .rtcb-md {
+  margin-top: 4px;
+  color: var(--rtcb-text-2);
+}
+.rtcb-sum[data-open="false"] .rtcb-sum-t {
+  display: block;
+  max-height: calc(6 * 19px);
+  -webkit-line-clamp: none;
+}
+.rtcb-panel:focus,
+.rtcb-panel :focus:not(:focus-visible) {
+  outline: none;
+}
+/* the popover grows out of its avatar (its caret), over the tooltip */
+.rtcb-panel[data-anchor="bubble"].rtcb--in {
+  transform-origin: var(--rtcb-caret-x, 50%) 100%;
+  animation: rtcb-bpop-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes rtcb-bpop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+}
+/* the app's reset drops list markers: the agent's lists keep theirs */
+ul.rtcb-md-list {
+  list-style: disc;
+}
+ol.rtcb-md-list {
+  list-style: decimal;
+}
+
+/* the agent's card, last messages: who said it, two lines each */
+.rtcb-tip-msgs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 4px 2px;
+  padding-top: 8px;
+  border-top: var(--rtcb-hair) solid var(--rtcb-border-2);
+}
+.rtcb-tip-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+}
+.rtcb-tip-mt {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--rtcb-text-2);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+/* beside the agents list (a row's hover): it takes the pointer, so it can
+   be reached and read */
+.rtcb-tip.rtcb-tip--side[data-show] {
+  pointer-events: auto;
+}
+.rtcb-tip[data-dir="side"]:not([data-show]) {
+  transform: translateX(-3px);
+}
+
+/* ------------------------------------------------- the result picture
+   shotView (.rtcb-sv): the after as the hero, in a frame of its own ratio
+   (--rtcb-sv-ar, a number), as wide as its place, at most --rtcb-sv-mh
+   tall. Over it: the replay's frames (.rtcb-sv-rp, only while it plays),
+   the before (clipped left of the divider at --rtcb-sv-x while comparing),
+   the changed areas (.rtcb-sv-box: a hairline in the agent's colour and a
+   soft glow, animated in and out by the mod), the agent's cursor and its
+   chip, a progress hairline, the tags. Only opacity / transform / clip-path
+   change: nothing here lays out again while it plays. */
+.rtcb-sv {
+  --rtcb-sv-mh: 220px;
+  --rtcb-sv-x: 100%;
+  --rtcb-sv-c: var(--rtcb-claude);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.rtcb-sv-frame {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, calc(var(--rtcb-sv-mh) * var(--rtcb-sv-ar, 1.6)));
+  margin: 0 auto;
+  overflow: hidden;
+  aspect-ratio: var(--rtcb-sv-ar, 1.6);
+  border-radius: 6px;
+  background: var(--rtcb-surface-lo);
+  box-shadow: inset 0 0 0 var(--rtcb-hair) color-mix(in oklab, var(--rtcb-text) 10%, transparent);
+  cursor: zoom-in;
+  container-type: inline-size; /* the cursor's chip measures its room in cqw */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rtcb-sv-frame:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+.rtcb-sv[data-cmp] .rtcb-sv-frame {
+  cursor: ew-resize;
+}
+.rtcb-sv-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.rtcb-sv-rp {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rtcb-sv[data-state="play"] .rtcb-sv-rp {
+  opacity: 1;
+  transition-duration: 120ms;
+}
+/* the before: left of the divider (all of it at --rtcb-sv-x: 100%) */
+.rtcb-sv-before {
+  opacity: 0;
+  clip-path: inset(0 calc(100% - var(--rtcb-sv-x)) 0 0);
+  transition: opacity 120ms ease;
+}
+.rtcb-sv[data-cmp] .rtcb-sv-before {
+  opacity: 1;
+}
+.rtcb-sv[data-cmp="before"] .rtcb-sv-before {
+  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtcb-sv-div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--rtcb-sv-x);
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.35), 0 0 8px rgb(0 0 0 / 0.35);
+  opacity: 0;
+  pointer-events: none;
+}
+.rtcb-sv[data-cmp="split"] .rtcb-sv-div {
+  opacity: 1;
+}
+.rtcb-sv-side {
+  position: absolute;
+  top: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.rtcb-sv-side--b {
+  left: 6px;
+}
+.rtcb-sv-side--a {
+  right: 6px;
+}
+.rtcb-sv[data-cmp="split"] .rtcb-sv-side,
+.rtcb-sv[data-cmp="before"] .rtcb-sv-side--b {
+  opacity: 1;
+}
+/* the changed areas: thin, soft, and only for a moment */
+.rtcb-sv-boxes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rtcb-sv-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in oklab, var(--rtcb-sv-c) 85%, #fff);
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--rtcb-sv-c) 22%, transparent),
+    0 0 14px color-mix(in oklab, var(--rtcb-sv-c) 45%, transparent);
+  opacity: 0;
+}
+.rtcb-sv[data-still="true"] .rtcb-sv-box {
+  opacity: 0.55;
+}
+.rtcb-sv[data-cmp] .rtcb-sv-boxes,
+.rtcb-sv[data-cmp] .rtcb-sv-cur {
+  visibility: hidden;
+}
+/* the agent's cursor: a layer the frame's size, moved by translate(%) */
+.rtcb-sv-cur {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.rtcb-sv-cur-in {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  color: var(--rtcb-sv-c);
+  opacity: 0;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+}
+.rtcb-sv-arrow {
+  display: block;
+}
+.rtcb-sv-chip {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--rtcb-sv-c);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  max-width: max(28px, calc((1 - var(--rtcb-sv-cfx, 0)) * 100cqw - 16px));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+}
+/* the pass's progress: a hairline at the bottom */
+.rtcb-sv-prog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: color-mix(in oklab, var(--rtcb-sv-c) 80%, #fff);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.rtcb-sv[data-state="play"] .rtcb-sv-prog {
+  opacity: 1;
+}
+.rtcb-sv-tag,
+.rtcb-sv-new,
+.rtcb-sv-hint {
+  position: absolute;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.56);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.rtcb-sv-tag {
+  left: 6px;
+  bottom: 6px;
+}
+.rtcb-sv-tag-r,
+.rtcb-sv[data-state="play"] .rtcb-sv-tag-a {
+  display: none;
+}
+.rtcb-sv[data-state="play"] .rtcb-sv-tag-r {
+  display: inline;
+}
+.rtcb-sv[data-state="play"] .rtcb-sv-tag--still,
+.rtcb-sv[data-cmp] .rtcb-sv-tag,
+.rtcb-sv[data-cmp] .rtcb-sv-hint,
+.rtcb-sv[data-cmp] .rtcb-sv-new {
+  opacity: 0;
+}
+/* an empty place: no before, a quiet "New" */
+.rtcb-sv-new {
+  top: 6px;
+  left: 6px;
+  background: color-mix(in oklab, var(--rtcb-green) 22%, rgb(0 0 0 / 0.6));
+  color: color-mix(in oklab, var(--rtcb-green) 55%, #fff);
+}
+.rtcb-sv-hint {
+  right: 6px;
+  bottom: 6px;
+  opacity: 0;
+}
+.rtcb-sv-frame:hover .rtcb-sv-hint {
+  opacity: 1;
+}
+.rtcb-sv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--rtcb-text-3);
+  font-size: 11px;
+  line-height: 14px;
+}
+.rtcb-sv-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* in the agent's card (tooltip): wider, the picture on top, as wide as the
+   card; it takes the pointer (compare, a click enlarges) */
+.rtcb-tip.rtcb-tip--hero {
+  width: 312px;
+}
+.rtcb-tip.rtcb-tip--hero[data-show] {
+  pointer-events: auto;
+}
+.rtcb-tip--hero > .rtcb-sv {
+  margin-bottom: 8px;
+}
+/* the panel's carousel: the stage takes the picture's height */
+.rtcb-car-stage[data-sv="true"] {
+  height: auto;
+  padding: 6px;
+  cursor: default;
+}
+.rtcb-car-stage[data-sv="true"]:hover {
+  border-color: var(--rtcb-border);
+}
+.rtcb-car-stage[role="button"]:focus-visible {
+  outline: 1.5px solid var(--rtcb-focus);
+  outline-offset: 2px;
+}
+.rtcb-car-stage .rtcb-sv {
+  --rtcb-sv-mh: 220px;
+  width: 100%;
+}
+/* the thread's Claude card */
+.rtcb-ag .rtcb-sv {
+  --rtcb-sv-mh: 220px;
+}
+/* enlarged: as big as the view allows (and ~1.25x the capture at most) */
+.rtcb-lb .rtcb-sv {
+  --rtcb-sv-mh: calc(90cqh - 48px);
+  width: min(92cqw, calc((90cqh - 48px) * var(--rtcb-sv-ar, 1.6)), var(--rtcb-sv-nw, 100vw));
+}
+.rtcb-lb .rtcb-sv-frame {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
+  cursor: ew-resize;
+}
+.rtcb-lb .rtcb-sv-chip {
+  font-size: 12px;
+  line-height: 16px;
+  padding: 2px 8px;
+}
+.rtcb-lb .rtcb-sv-note {
+  color: #bbb;
+}
+.rtcb-lb-fig img[hidden],
+.rtcb-lb-replay[hidden],
+.rtcb-lb-hint[hidden] {
+  display: none;
+}
+.rtcb-lb-replay {
+  color: #eee;
+}
+.rtcb-lb-hint {
+  color: #aaa;
+  font-size: 11px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtcb-sv-rp,
+  .rtcb-sv-before,
+  .rtcb-sv-side,
+  .rtcb-sv-tag,
+  .rtcb-sv-hint {
+    transition: none;
+  }
+}
+/* the divider's grip */
+.rtcb-sv-div::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 22px;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+  transform: translate(-50%, -50%);
+}
+/* left of the cursor: its right edge just left of the arrow's tip */
+.rtcb-sv-chip--l {
+  left: auto;
+  right: calc(100% + 2px);
+  max-width: max(28px, calc(var(--rtcb-sv-cfx, 1) * 100cqw - 8px));
+}
+.rtcb-sv-chip--u {
+  top: auto;
+  bottom: 6px;
+}
+/* the comparator's pictures fill their frame exactly, everywhere (the
+   enlarged view's own "img" rule must not size them: boxes and the cursor
+   are fractions of the frame) */
+.rtcb-sv-frame > .rtcb-sv-img,
+.rtcb-sv-frame > .rtcb-sv-rp > .rtcb-sv-img,
+.rtcb-lb-fig .rtcb-sv-frame img.rtcb-sv-img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  object-fit: fill;
+}
+/* an older task's before may have another ratio: kept whole, not stretched */
+.rtcb-sv-frame > .rtcb-sv-img.rtcb-sv-before {
+  object-fit: contain;
+}

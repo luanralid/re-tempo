@@ -1,0 +1,90 @@
+{
+ "part": "b",
+ "images": [
+  {
+   "src": "media/real-b/comment-bubbles--bubbles-next-to-pill.png",
+   "mod": "comment-bubbles",
+   "feature": "Bubbles next to the page pill",
+   "caption": "Agent bubbles sit right next to the canvas name pill, with a \"done today\" count, a red badge for tasks that need attention and a check for finished ones.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/65.png"
+  },
+  {
+   "src": "media/real-b/comment-bubbles--done-count.png",
+   "mod": "comment-bubbles",
+   "feature": "Done-today counter",
+   "caption": "The pill segment counts finished comment tasks (\"3 done today\") and shows one bubble per task.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/81.png"
+  },
+  {
+   "src": "media/real-b/comment-bubbles--task-card.png",
+   "mod": "comment-bubbles",
+   "feature": "Task card",
+   "caption": "Clicking a bubble opens a card with the original request, the agent result, a reply box and an Open chat button.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/72.png"
+  },
+  {
+   "src": "media/real-b/agent-follow--follow-button.png",
+   "mod": "agent-follow",
+   "feature": "Follow button",
+   "caption": "While an agent works on a comment, the task card offers Follow next to Open chat so the canvas view tracks the agent.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/89.png"
+  },
+  {
+   "src": "media/real-b/home-title--heading.png",
+   "mod": "home-title",
+   "feature": "Logged-out home heading",
+   "caption": "The home heading reads \"Let's do it\" instead of the original \"Let's Cook.\".",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/93.png"
+  },
+  {
+   "src": "media/real-b/canvas-autosetup--setup-state.png",
+   "mod": "canvas-autosetup",
+   "feature": "Set up canvases state",
+   "caption": "The Design home empty state (\"Set up canvases\") that the mod presses automatically once per workspace.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/21.png"
+  },
+  {
+   "src": "media/real-b/bg-tasks--task-list.png",
+   "mod": "bg-tasks",
+   "feature": "Background tasks list",
+   "caption": "Background tasks are listed in the conversation with a type chip (agent, bash) and a live timer, above the composer's \"4 Tasks Running\" pill.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/22.png"
+  },
+  {
+   "src": "media/real-b/bg-tasks--running-task.png",
+   "mod": "bg-tasks",
+   "feature": "Running task block",
+   "caption": "A single running task shown in the transcript with a spinner, label, type chip and elapsed time.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/7.png"
+  },
+  {
+   "src": "media/real-b/voice-input--dictation.png",
+   "mod": "voice-input",
+   "feature": "Dictation in the composer",
+   "caption": "The mic button next to send records speech, and the words appear in the composer while you speak.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/11.png"
+  },
+  {
+   "src": "media/real-b/effort-levels--composer-selector.png",
+   "mod": "effort-levels",
+   "feature": "Model and effort selector",
+   "caption": "The composer shows the model as \"Opus 5.5\" (no \" 1M\" suffix) next to the effort selector.",
+   "kind": "after",
+   "source": "<claude-scratch>/<session>/images/2.png"
+  }
+ ],
+ "skipped": {
+  "reference_apps": 9,
+  "bugs_or_duplicates": 107,
+  "sensitive": 1
+ }
+}

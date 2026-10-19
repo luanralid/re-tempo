@@ -1,0 +1,274 @@
+{
+ "area": "ui-agents",
+ "items": [
+  {
+   "id": "ui-drive",
+   "title": "UI drive (agent controls the app)",
+   "group": "agents",
+   "files": [
+    "feature/ui-drive.js",
+    "feature/ui-drive.css"
+   ],
+   "summary": "An agent can now open Settings, switch sections, open a canvas, doc, issue or chat, open a web page, point at a control or show a note, all on your screen. Every screen change shows a Deny button first and an Undo button after.",
+   "features": [
+    {
+     "name": "Open something, with Deny and Undo",
+     "what": "Before: an agent could only reply in text, it could not move you around the app. Now: when the agent writes a command line (for example `@tempo-ui open settings`) or runs the CLI, the app opens Settings by itself. A small toast shows Deny while it moves, then Undo to go back.",
+     "how": "Nothing to do. Click Deny to stop it, Undo to go back, or Always allow to stop seeing the toast.",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-drive--open-settings-undo.mp4",
+       "type": "video",
+       "caption": "Agent writes a command, Settings opens, the toast offers Undo (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--open-settings-undo.gif",
+       "type": "gif",
+       "caption": "Same clip as a GIF (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--pending-deny.png",
+       "type": "image",
+       "caption": "Toast with a Deny button while the command runs (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--done-undo.png",
+       "type": "image",
+       "caption": "After it ran: Undo and Always allow (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "done"
+    },
+    {
+     "name": "Deny a command",
+     "what": "Before: no way to stop an agent. Now: pressing Deny while the beam flies cancels the move and nothing changes on screen.",
+     "how": "Click Deny in the toast.",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-drive--deny.mp4",
+       "type": "video",
+       "caption": "Agent asks to go to the canvas, user clicks Deny, the app stays where it was (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--deny.gif",
+       "type": "gif",
+       "caption": "Same clip as a GIF (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--denied.png",
+       "type": "image",
+       "caption": "The toast after Deny (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "done"
+    },
+    {
+     "name": "Point at a control and show a note",
+     "what": "Before: an agent could only describe a button in words. Now: it can scroll to a control and highlight it, or show a short note toast.",
+     "how": "Automatic, from the agent (focus and toast commands).",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-drive--focus-note.mp4",
+       "type": "video",
+       "caption": "Agent highlights a card, then shows a note toast (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--focus-note.gif",
+       "type": "gif",
+       "caption": "Same clip as a GIF (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--focus-highlight.png",
+       "type": "image",
+       "caption": "Highlighted target (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--note-toast.png",
+       "type": "image",
+       "caption": "Note toast (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "done"
+    },
+    {
+     "name": "Safety rules",
+     "what": "Before: not applicable. Now: only a fixed list of commands runs. Code (eval), bad links (javascript:, file:) and unknown actions are refused with a short toast. Risky actions, like deleting, run only after you click Allow, and are never always-allowed.",
+     "how": "Click Allow in the toast for a risky action. Otherwise it expires after 10 seconds.",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-drive--refused.png",
+       "type": "image",
+       "caption": "Refused commands (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-drive--destructive-ask.png",
+       "type": "image",
+       "caption": "A destructive action asks for an explicit Allow (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "n/a: covered by the stills, the clips above show the same toast"
+    }
+   ]
+  },
+  {
+   "id": "ui-beam",
+   "title": "UI beam (agent handoff animation)",
+   "group": "agents",
+   "files": [
+    "feature/ui-beam.js",
+    "feature/ui-beam.css"
+   ],
+   "summary": "When an agent uses the UI, you now see it: a pulse on the message, a beam with the Claude avatar flying to the control, then a frame around the target.",
+   "features": [
+    {
+     "name": "Message to target flight",
+     "what": "Before: things just changed on screen with no clue why. Now: a pulse starts at the agent message, a rounded beam with the Claude avatar flies to the target (about 1 second), and a frame fades in around it.",
+     "how": "Automatic when ui-drive runs a command.",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-beam--beam-flight.mp4",
+       "type": "video",
+       "caption": "Beam flying from a chat message to a button (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-beam--beam-flight.gif",
+       "type": "gif",
+       "caption": "Same clip as a GIF (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-beam--flight-start.png",
+       "type": "image",
+       "caption": "Start: pulse on the message (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-beam--flight-mid.png",
+       "type": "image",
+       "caption": "Mid flight: beam and avatar (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "done"
+    },
+    {
+     "name": "Target frame and reduced motion",
+     "what": "Before: not applicable. Now: the target keeps a soft rounded frame for about 1.5 seconds. With reduced motion on, there is no travel, only a short pulse and the frame. It can be turned off in localStorage (rtd.uiBeam = off).",
+     "how": "Automatic.",
+     "media": [
+      {
+       "src": "media/ui-agents/ui-beam--target-frame.png",
+       "type": "image",
+       "caption": "Frame around the target (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/ui-beam--reduced-motion.png",
+       "type": "image",
+       "caption": "Reduced motion: pulse and frame only (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "n/a: the flight clip above already shows the frame"
+    }
+   ]
+  },
+  {
+   "id": "app-map",
+   "title": "App map (named controls for agents)",
+   "group": "agents",
+   "files": [
+    "feature/app-map.js",
+    "feature/app-map.css"
+   ],
+   "summary": "A live list of every button, field and toggle on screen, each with a stable readable name, plus the app's actions. Agents can find and use a control by name instead of guessing pixels.",
+   "features": [
+    {
+     "name": "Stable names and debug overlay",
+     "what": "Before: an agent saw only pixels. Now: every clickable or typeable control gets a name such as `rail/button/settings` and a risk color (green safe, orange caution, red destructive). A debug overlay draws all names on screen.",
+     "how": "For developers: run `__RE_TEMPO_APP_MAP__.debug(true)` in the console.",
+     "media": [
+      {
+       "src": "media/ui-agents/app-map--debug-overlay.mp4",
+       "type": "video",
+       "caption": "Overlay turned on, then a search, then a click by name (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/app-map--debug-overlay.gif",
+       "type": "gif",
+       "caption": "Same clip as a GIF (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/app-map--debug-overlay.png",
+       "type": "image",
+       "caption": "Every control labeled with its id and colored by risk (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "done"
+    },
+    {
+     "name": "Find and click by name",
+     "what": "Before: not possible. Now: an agent can ask for `split right` and get the matching controls, then click, type, toggle, select or drag them by id. Destructive controls are refused unless confirmed.",
+     "how": "Agent commands such as `tempo-ui ui.find split right` and `tempo-ui ui.click <id>`.",
+     "media": [
+      {
+       "src": "media/ui-agents/app-map--find.png",
+       "type": "image",
+       "caption": "Search result for 'split right' with risk labels (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "n/a: shown in the overlay clip above"
+    }
+   ]
+  },
+  {
+   "id": "tempo-ui",
+   "title": "tempo-ui command line",
+   "group": "agents",
+   "files": [
+    "feature/bin/tempo-ui"
+   ],
+   "summary": "A small command an agent runs in the terminal to drive the open Tempo window (open settings, open a canvas, take a screenshot...). The window answers and the result prints back.",
+   "features": [
+    {
+     "name": "Help and agent instructions",
+     "what": "Before: Tempo's agent had no way to touch the app UI. Now: it runs `tempo-ui open settings` and the window does it with the beam and Deny/Undo. `tempo-ui --instructions` prints a text to paste into CLAUDE.md or AGENTS.md so any agent knows the commands.",
+     "how": "In a terminal: `tempo-ui --help` and `tempo-ui --instructions`.",
+     "media": [
+      {
+       "src": "media/ui-agents/tempo-ui--help.png",
+       "type": "image",
+       "caption": "Output of tempo-ui --help (fixture)",
+       "origin": "fixture"
+      },
+      {
+       "src": "media/ui-agents/tempo-ui--instructions.png",
+       "type": "image",
+       "caption": "Output of tempo-ui --instructions (fixture)",
+       "origin": "fixture"
+      }
+     ],
+     "video": "n/a: plain text output, the command channel is shown in the ui-drive clips"
+    }
+   ]
+  }
+ ]
+}

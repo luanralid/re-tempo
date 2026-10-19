@@ -1,0 +1,195 @@
+/*
+ * RE-TEMPO · canvas-comment-agent — the mini list of Claude chats working on
+ * canvas comments (.rcca-*). Fixed over the left sidebar, just above its
+ * footer (canvas-comment-agent.js positions it), or static inside a
+ * [data-rtcc-host]. Only the app's tokens, so dark/light come for free.
+ * Row: Claude logo (breathing in place while the chat runs, never rotating) · "Author · comment"
+ * (truncated) · elapsed time. 12px text.
+ */
+
+[data-rcca-root] {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-sizing: border-box;
+  padding: 3px;
+  border: var(--border-width, 0.5px) solid var(--color-border-primary);
+  border-radius: 8px;
+  background: var(--color-surface-container);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  animation: rcca-in 160ms ease-out;
+}
+[data-rcca-root].rcca--hosted {
+  position: static;
+  width: auto;
+  box-shadow: none;
+}
+
+.rcca-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rcca-item:not(:disabled):hover {
+  background: var(--color-surface-container-high);
+}
+.rcca-item:focus-visible {
+  outline: 1px solid var(--color-border-focus);
+  outline-offset: -1px;
+}
+.rcca-item:disabled {
+  cursor: default;
+}
+
+/* The logo never shrinks or truncates; only the text does. */
+.rcca-ico {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+.rcca-ico svg {
+  display: block;
+  flex: none;
+}
+/* Claude mark: no rotation. Breathes (scale 1 > 1.08 > 1, opacity .7 > 1 > .7,
+   1.6 s ease-in-out) with the rays contracting slightly out of phase (1.2 s).
+   Reference: Claude Code's spinner cycles asterisk glyphs in place with a
+   shimmer; claude.ai pulses the mark. Sources (third-party, no official spec):
+   medium.com/@kyletmartinez "Reverse Engineering Claude's ASCII Spinner
+   Animation"; anthropics/claude-code issues #6038, #76424. */
+.rcca-spin {
+  animation: rcca-breathe 1.6s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+.rcca-spin path {
+  animation: rcca-rays 1.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.rcca-check {
+  color: var(--success, #3fb950);
+}
+.rcca-warn {
+  color: var(--color-text-error, #e5534b);
+}
+.rcca-item[data-state="awaiting"] .rcca-ico::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--warning, #d29922);
+  box-shadow: 0 0 0 1.5px var(--color-surface-container);
+}
+
+.rcca-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rcca-author {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+.rcca-sep,
+.rcca-body {
+  color: var(--color-text-secondary);
+}
+.rcca-time {
+  flex: none;
+  min-width: 3ch;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rcca-item[data-state="done"] .rcca-body,
+.rcca-item[data-state="failed"] .rcca-body {
+  color: var(--color-text-tertiary);
+}
+
+@keyframes rcca-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes rcca-rays {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.94);
+  }
+}
+@keyframes rcca-breathe-soft {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rcca-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-rcca-root] {
+    animation: none;
+  }
+  .rcca-spin {
+    animation: rcca-breathe-soft 3.2s ease-in-out infinite;
+  }
+  .rcca-spin path {
+    animation: none;
+  }
+}
+
+/* The bubbles mod (comment-bubbles) is the main UI: this list is only its fallback. */
+html.rtcb-on [data-rcca-root] {
+  display: none !important;
+}
+
+/* While "before" / "after" are taken (~0.1 s each), the app's comment
+   popover and pins stay out of the image (nothing under a pin is lost).
+   The mods' UI (this list, the bubbles) never hides: the pipeline masks it
+   out of the image instead. */
+html.rtcc-capturing [data-testid="canvas-comment-popover"],
+html.rtcc-capturing [data-testid="canvas-comment-mention-popover"],
+html.rtcc-capturing [data-testid^="canvas-comment-pin"]:not([data-testid="canvas-comment-pin-layer"]),
+html.rtcc-capturing .rtcn-note {
+  visibility: hidden !important;
+}

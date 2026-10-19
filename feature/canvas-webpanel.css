@@ -1,0 +1,1335 @@
+/*
+ * RE-TEMPO · canvas-webpanel — pen.dev's browser card, floating inside the
+ * canvas view (see canvas-webpanel.js). Prefix: rtwp-. App tokens only, with
+ * the dark theme values as fallbacks (light/dark free).
+ *
+ * Scale (8px grid): radii 16 (the card), 12 (address field, Import, page
+ * box, mode tiles on hover, Recent rows, menus, toasts), 8 (icon buttons,
+ * small tiles, menu items, tooltips); 48px bar, 32px controls, 16px icons
+ * at stroke 1.5; one hairline (border-secondary); one shadow. Hover =
+ * surface-container-high, pressed = accent-subtle + accent, focus = focus
+ * ring. An armed import mode is accent too: its radio (dot + tinted
+ * tile), the bar's pick / camera / Import (as pressed), the pill's action
+ * (accent fill) and switch (accent thumb), the address field's icon.
+ * Motion: out cubic-bezier(0.22, 1, 0.36, 1), 140 ms micro / 220 ms small;
+ * transform and opacity only; reduced motion: opacity only, 120 ms at most.
+ *
+ * Geometry: the card is absolute in the canvas viewport area, 12px off its
+ * top, right and bottom (--rtwp-w / --rtwp-h on the card, set by the mod);
+ * nothing paints outside it, the canvas shows around it. While it is open
+ * canvas-chrome moves its right-anchored chrome itself (data-rcw-open +
+ * --rcw-width on .rtwp-anchor, every frame of a drag); without it the app's
+ * top layer gets an additive margin-right of --rtwp-inset.
+ */
+
+/* ------------------------------------------------------ mount + push */
+[data-rtwp-pos] {
+  position: relative;
+}
+/* canvas-chrome's container for the push (data-rcw-open + --rcw-width): no
+   size, in the view's top right corner (its right edge is the view's); a
+   drag rewrites it every frame and restyles nothing else */
+.rtwp-anchor {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+/* without canvas-chrome: the app's top layer (Share, "Canvas controls")
+   moves left of the card (--rtwp-inset, set on that layer). canvas-chrome
+   views move themselves (they read data-rcw-open + --rcw-width on
+   .rtwp-anchor). */
+[data-canvas-shell]:not([data-rcc-shell])[data-rtwp-open]:not([data-rtwp-full]) [data-rtwp-layer] {
+  margin-right: var(--rtwp-inset, 0px) !important;
+}
+/* the card over the whole view (expanded, or a view too narrow to share):
+   on a canvas-chrome view it starts under the chrome's top row (FULL_TOP),
+   so the file pill and the top pill (the globe, Share) stay in sight and
+   clickable over it. What the chrome floats under that row would cover the
+   card (its tool rail at z-index 4160, its composer at 31, the properties'
+   wrapper at 40) or sit hidden behind it: it all hides while the card is
+   full */
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-rcc-railwrap],
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] .rcc-composer-wrap,
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] .rcc-agents-pill,
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] .rcc-sel,
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] .rcc-zoom,
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-testid="rcq-left-toggle"],
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-testid="canvas-design-sidebar"],
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-testid="canvas-design-sidebar"] *,
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-rcc-rwrap],
+/* the properties' parts set their own visibility; the app's Share (fixed
+   over the top pill) lives in there and stays */
+[data-canvas-shell][data-rcc-shell][data-rtwp-open][data-rtwp-full] [data-rcc-rwrap] *:not([data-rcc-share], [data-rcc-share] *) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+[data-canvas-shell][data-rcc-shell] .rtwp-dock[data-full] {
+  top: 60px;
+  height: calc(100% - 72px);
+}
+html.rtwp-resizing-x,
+html.rtwp-resizing-x * {
+  cursor: col-resize !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html.rtwp-resizing-y,
+html.rtwp-resizing-y * {
+  cursor: row-resize !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html.rtwp-resizing-xy,
+html.rtwp-resizing-xy * {
+  cursor: nesw-resize !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* --------------------------------------------------------- toggle button */
+/* the app's top bar button (vHi): 28px, radius 8, tertiary text */
+.rtwp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-tertiary, #787878);
+  cursor: pointer;
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out;
+}
+.rtwp-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-btn:hover {
+  color: var(--color-text-primary, #f5f5f5);
+  background: var(--color-surface-container-high, #232323);
+}
+.rtwp-btn[aria-pressed="true"] {
+  color: var(--color-accent, #c9a2ff);
+  background: var(--color-accent-subtle, rgba(155, 59, 246, 0.18));
+}
+.rtwp-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus, var(--color-focus, #67cffd));
+  outline-offset: 1px;
+}
+
+/* -------------------------------------------------------------- the card */
+.rtwp-dock {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: var(--rtwp-w, 480px);
+  height: var(--rtwp-h, calc(100% - 24px));
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 16px;
+  background: var(--color-surface-container, #191919);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary, #f5f5f5);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  container-type: inline-size;
+  container-name: rtwp;
+  pointer-events: auto;
+  /* canvas-chrome slides its right-anchored chrome over the same 220ms on
+     the same curve (its slideOn): opening, card and chrome stay 12px apart
+     in every frame; closing, the chrome takes the room back once the card
+     is gone */
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-dock[hidden] {
+  display: none !important;
+}
+.rtwp-dock[data-state="closed"] {
+  transform: translateX(calc(100% + 12px));
+  opacity: 0;
+  pointer-events: none;
+}
+.rtwp-dock[data-instant],
+.rtwp-dock[data-dragging] {
+  transition: none !important;
+}
+/* Expand, or a view too narrow to share: the whole view */
+.rtwp-dock[data-full] {
+  left: 12px;
+  width: auto;
+  height: calc(100% - 24px);
+}
+.rtwp-dock[data-full] .rtwp-handle {
+  display: none;
+}
+
+/* resize handles: the left edge and the bottom (pen's grip) */
+.rtwp-handle {
+  position: absolute;
+  z-index: 3;
+  outline: none;
+  touch-action: none;
+}
+.rtwp-handle-side {
+  top: 16px;
+  bottom: 16px;
+  left: 0;
+  width: 6px;
+  cursor: col-resize;
+}
+.rtwp-handle-side::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: 3px;
+  height: 40px;
+  border-radius: 3px;
+  background: var(--color-border-primary, #3a3a3a);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 150ms ease-out;
+}
+.rtwp-handle-side:hover::after,
+.rtwp-dock[data-dragging] .rtwp-handle-side::after {
+  opacity: 1;
+}
+.rtwp-handle-bottom {
+  right: 16px;
+  bottom: 0;
+  left: 16px;
+  height: 8px;
+  cursor: row-resize;
+}
+.rtwp-grip {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  width: 14px;
+  height: 6px;
+  background-image: radial-gradient(circle, var(--color-text-tertiary, #787878) 0.9px, transparent 1.2px);
+  background-size: 4px 3px;
+  opacity: 0.7;
+  transform: translateX(-50%);
+}
+.rtwp-handle-bottom:hover .rtwp-grip {
+  opacity: 1;
+}
+/* the free bottom left corner: 16 px, wins over the edge handles (they stop
+   16 px short of it) */
+.rtwp-handle-corner {
+  bottom: 0;
+  left: 0;
+  z-index: 4;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+}
+.rtwp-corner-grip {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  width: 8px;
+  height: 8px;
+  background-image: radial-gradient(circle at 1px 7px, var(--color-text-tertiary, #787878) 0.9px, transparent 1.2px),
+    radial-gradient(circle at 5px 7px, var(--color-text-tertiary, #787878) 0.9px, transparent 1.2px),
+    radial-gradient(circle at 1px 3px, var(--color-text-tertiary, #787878) 0.9px, transparent 1.2px);
+  opacity: 0.7;
+}
+.rtwp-handle-corner:hover .rtwp-corner-grip,
+.rtwp-dock[data-dragging] .rtwp-corner-grip {
+  opacity: 1;
+}
+.rtwp-handle-corner:focus-visible {
+  border-radius: 0 0 0 16px;
+  outline: 2px solid var(--color-border-focus, var(--color-focus, #67cffd));
+  outline-offset: -2px;
+}
+.rtwp-handle:focus-visible::after,
+.rtwp-handle-bottom:focus-visible .rtwp-grip {
+  opacity: 1;
+  outline: 2px solid var(--color-border-focus, var(--color-focus, #67cffd));
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ bar */
+.rtwp-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+}
+.rtwp-ib {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  cursor: pointer;
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out;
+}
+.rtwp-ib svg {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-ib:hover:not(:disabled) {
+  color: var(--color-text-primary, #f5f5f5);
+  background: var(--color-surface-container-high, #232323);
+}
+.rtwp-ib:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.rtwp-ib[aria-pressed="true"],
+.rtwp-ib[aria-expanded="true"],
+.rtwp-ib[data-armed] {
+  color: var(--color-accent, #c9a2ff);
+  background: var(--color-accent-subtle, rgba(155, 59, 246, 0.18));
+}
+/* armed before a page is open: still visibly armed, still disabled */
+.rtwp-ib[data-armed]:disabled {
+  opacity: 0.64;
+}
+.rtwp-ib:focus-visible,
+.rtwp-import:focus-visible,
+.rtwp-seg-btn:focus-visible,
+.rtwp-armgo:focus-visible,
+.rtwp-ghost:focus-visible,
+.rtwp-chip:focus-visible,
+.rtwp-link:focus-visible,
+.rtwp-modecard:focus-visible,
+.rtwp-recent-row:focus-visible,
+.rtwp-menu-item:focus-visible,
+.rtwp-toast-action:focus-visible {
+  outline: 2px solid var(--color-border-focus, var(--color-focus, #67cffd));
+  outline-offset: 1px;
+}
+.rtwp-field {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 96px;
+  height: 32px;
+  margin: 0 4px;
+  box-sizing: border-box;
+  padding: 0 4px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  transition: border-color 150ms ease-out;
+}
+.rtwp-field:hover {
+  border-color: var(--color-border-primary, #3a3a3a);
+}
+.rtwp-field:focus-within {
+  border-color: var(--color-border-focus, var(--color-focus, #67cffd));
+}
+.rtwp-site {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-tertiary, #787878);
+}
+.rtwp-site svg,
+.rtwp-favicon {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-favicon {
+  border-radius: 4px;
+  object-fit: contain;
+}
+.rtwp-site [hidden] {
+  display: none;
+}
+.rtwp-site-mode {
+  display: none;
+  color: var(--color-accent, #c9a2ff);
+}
+.rtwp-site-mode svg {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-site[data-arm] .rtwp-site-ico,
+.rtwp-site[data-arm] .rtwp-favicon {
+  display: none;
+}
+.rtwp-site[data-arm] .rtwp-site-mode {
+  display: inline-flex;
+}
+.rtwp-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-overflow: ellipsis;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtwp-url::placeholder {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtwp-mode {
+  width: 24px;
+  height: 24px;
+}
+.rtwp-mode svg {
+  width: 14px;
+  height: 14px;
+}
+.rtwp-progress {
+  position: absolute;
+  right: 12px;
+  bottom: -1px;
+  left: 12px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+.rtwp-dock[data-loading] .rtwp-progress {
+  opacity: 1;
+}
+.rtwp-progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  border-radius: 2px;
+  background: var(--color-accent, #c9a2ff);
+  animation: rtwp-progress 1100ms ease-in-out infinite;
+}
+@keyframes rtwp-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.rtwp-import {
+  flex-shrink: 0;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-text-primary, #f5f5f5);
+  color: var(--color-surface-container, #191919);
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+.rtwp-import:hover:not(:disabled) {
+  opacity: 0.88;
+}
+.rtwp-import:disabled {
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-tertiary, #787878);
+  cursor: default;
+}
+/* armed: the pressed look (the pill holds the one-click action), with an
+   accent hairline so it never reads as disabled */
+.rtwp-import[data-armed] {
+  background: var(--color-accent-subtle, rgba(155, 59, 246, 0.18));
+  box-shadow: inset 0 0 0 1px var(--color-accent, #c9a2ff);
+  color: var(--color-accent, #c9a2ff);
+}
+.rtwp-import[data-armed]:disabled {
+  opacity: 0.64;
+}
+.rtwp-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--color-border-secondary, #232323);
+}
+/* narrow cards: camera / expand, forward, back, then reload move into "…" */
+@container rtwp (max-width: 520px) {
+  .rtwp-bar [data-rtwp-slot="camera"],
+  .rtwp-bar [data-rtwp-slot="sep"],
+  .rtwp-bar [data-rtwp-slot="expand"] {
+    display: none;
+  }
+}
+@container rtwp (max-width: 440px) {
+  .rtwp-bar [data-rtwp-slot="fwd"] {
+    display: none;
+  }
+  .rtwp-field {
+    margin: 0;
+  }
+}
+@container rtwp (max-width: 360px) {
+  .rtwp-bar [data-rtwp-slot="back"] {
+    display: none;
+  }
+  .rtwp-field {
+    min-width: 64px;
+  }
+  .rtwp-import {
+    padding: 0 8px;
+  }
+}
+@container rtwp (max-width: 320px) {
+  .rtwp-bar [data-rtwp-slot="reload"] {
+    display: none;
+  }
+  .rtwp-field {
+    min-width: 48px;
+  }
+}
+
+/* ----------------------------------------------------------------- body */
+.rtwp-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.rtwp-view {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.rtwp-dock[data-empty] .rtwp-view {
+  visibility: hidden;
+}
+/* The page is its own composited layer: its rounded clip anti-aliases apart
+   from anything painted behind it, so nothing is painted behind it (the old
+   white backing showed as a light rim on the 4 corners). The hairline stays
+   outside the clip. */
+.rtwp-device {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--color-border-secondary, #232323);
+}
+.rtwp-dock:not([data-has-page]) .rtwp-device {
+  visibility: hidden;
+}
+.rtwp-guest {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: var(--rtwp-gw, 1280px);
+  height: var(--rtwp-gh, 800px);
+  margin: 0;
+  border: 0;
+  transform: scale(var(--rtwp-s, 1));
+  transform-origin: 0 0;
+}
+.rtwp-dock[data-dragging] .rtwp-guest {
+  pointer-events: none;
+}
+.rtwp-shield {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.rtwp-dock[data-dragging] .rtwp-shield {
+  display: block;
+}
+/* The armed mode's pill, bottom center of the page: mode switch | the
+   one-click action or the picker hint | off. 40 px high (3 px inset). */
+.rtwp-armbar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
+  padding: 3px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 8px);
+  transition:
+    opacity 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 140ms;
+}
+.rtwp-armbar[data-shown] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
+}
+.rtwp-dock[data-dragging] .rtwp-armbar {
+  pointer-events: none;
+}
+/* mode switch: a radio group, the accent thumb slides under the checked one */
+.rtwp-seg {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-right: 4px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--color-surface-container, #191919);
+}
+.rtwp-seg-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent, #c9a2ff);
+  border-radius: 7px;
+  background: var(--color-accent-subtle, rgba(155, 59, 246, 0.18));
+  transform: translateX(calc(var(--rtwp-seg-i, 0) * 30px));
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rtwp-seg-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-tertiary, #787878);
+  cursor: pointer;
+  transition: color 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-seg-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.rtwp-seg-btn:hover {
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtwp-seg-btn[aria-checked="true"] {
+  color: var(--color-accent, #c9a2ff);
+}
+.rtwp-armmain {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+.rtwp-armhint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 4px 0 8px;
+  transition: opacity 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-armbar[data-waiting] .rtwp-armhint {
+  opacity: 0.5;
+}
+.rtwp-armhint-long,
+.rtwp-armhint-short {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtwp-armhint-short {
+  display: none;
+}
+.rtwp-armhint kbd {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary, #787878);
+  font: inherit;
+}
+.rtwp-armgo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--color-accent, #c9a2ff);
+  color: var(--color-surface-container, #191919);
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-armgo svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.rtwp-armgo:hover:not(:disabled) {
+  opacity: 0.88;
+}
+.rtwp-armgo:disabled {
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-tertiary, #787878);
+  cursor: default;
+}
+.rtwp-armoff {
+  border-radius: 9px;
+}
+/* element / one-shot pick: the hint; full page / screenshot: the action */
+.rtwp-armbar:not([data-variant="element"]):not([data-variant="pick"]) .rtwp-armhint,
+.rtwp-armbar:not([data-variant="full"]):not([data-variant="screenshot"]) .rtwp-armgo,
+.rtwp-armbar[data-variant="pick"] .rtwp-seg {
+  display: none;
+}
+@container rtwp (max-width: 440px) {
+  .rtwp-armhint-long {
+    display: none;
+  }
+  .rtwp-armhint-short {
+    display: inline;
+  }
+}
+.rtwp-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--color-surface-container, #191919);
+  text-align: center;
+}
+.rtwp-error[hidden] {
+  display: none;
+}
+.rtwp-error-ico {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  color: var(--color-text-tertiary, #787878);
+}
+.rtwp-error-title {
+  font: 500 14px/20px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-error-desc {
+  max-width: 280px;
+  color: var(--color-text-tertiary, #787878);
+  font: 400 13px/18px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------- empty card (pen's layout) */
+.rtwp-empty {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: 32px;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 56px 16px 8px;
+  overscroll-behavior: contain;
+}
+.rtwp-dock[data-empty] .rtwp-empty {
+  display: flex;
+}
+.rtwp-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.rtwp-hero-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--color-text-secondary, #bababa);
+  color: var(--color-surface-container, #191919);
+}
+.rtwp-hero-ico svg {
+  width: 24px;
+  height: 24px;
+}
+.rtwp-hero-title {
+  font: 600 17px/24px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-hero-body {
+  max-width: 400px;
+  color: var(--color-text-secondary, #bababa);
+  font: 400 14px/20px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  margin: 8px 0 0;
+  box-sizing: border-box;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--color-border-primary, #3a3a3a);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+.rtwp-ghost svg {
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-tertiary, #787878);
+}
+.rtwp-ghost:hover {
+  background: var(--color-surface-container-high, #232323);
+}
+.rtwp-error .rtwp-ghost {
+  padding-right: 12px;
+}
+.rtwp-modepick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rtwp-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.rtwp-modecard {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 8px 12px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+.rtwp-modecard:hover {
+  background: var(--color-surface-container-high, #232323);
+}
+/* checked: an accent tile fades in over the card (opacity only) */
+.rtwp-modecard::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent, #c9a2ff);
+  border-radius: inherit;
+  background: var(--color-accent-subtle, rgba(155, 59, 246, 0.18));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-modecard[aria-checked="true"]::before {
+  opacity: 1;
+}
+.rtwp-modecard[aria-checked="true"] .rtwp-modecard-ico {
+  color: var(--color-accent, #c9a2ff);
+}
+/* the radio: a hairline ring; checked, an accent ring and a dot that pops in */
+.rtwp-modecard-radio {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--color-border-primary, #3a3a3a);
+  transition: box-shadow 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-modecard:hover .rtwp-modecard-radio {
+  box-shadow: inset 0 0 0 1.5px var(--color-text-tertiary, #787878);
+}
+.rtwp-modecard-radio::before,
+.rtwp-modecard-radio::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  transition:
+    opacity 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rtwp-modecard-radio::before {
+  inset: 0;
+  box-shadow: inset 0 0 0 1.5px var(--color-accent, #c9a2ff);
+}
+.rtwp-modecard-radio::after {
+  inset: 4px;
+  background: var(--color-accent, #c9a2ff);
+  transform: scale(0.5);
+}
+.rtwp-modecard[aria-checked="true"] .rtwp-modecard-radio::before {
+  opacity: 1;
+}
+.rtwp-modecard[aria-checked="true"] .rtwp-modecard-radio::after {
+  opacity: 1;
+  transform: scale(1);
+  animation: rtwp-radio-pop 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes rtwp-radio-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* what happens next, under the radios (space kept: nothing moves) */
+.rtwp-modenext {
+  min-height: 16px;
+  margin: 0;
+  color: var(--color-text-tertiary, #787878);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-align: center;
+}
+.rtwp-modecard-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-secondary, #bababa);
+}
+.rtwp-modecard-ico svg {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-modecard-title {
+  color: var(--color-text-primary, #f5f5f5);
+  font: 600 13px/18px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-modecard-body {
+  color: var(--color-text-secondary, #bababa);
+  font: 400 13px/18px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+@container rtwp (max-width: 440px) {
+  .rtwp-modes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .rtwp-modecard {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 16px;
+    column-gap: 12px;
+    align-items: start;
+    padding: 8px 12px 8px 8px;
+    text-align: left;
+  }
+  .rtwp-modecard-ico {
+    grid-row: span 2;
+    margin: 0;
+  }
+  .rtwp-modecard-title,
+  .rtwp-modecard-body {
+    grid-column: 2;
+  }
+  .rtwp-modecard-radio {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .rtwp-modenext {
+    padding-left: 52px;
+    text-align: left;
+  }
+}
+.rtwp-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rtwp-recent-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  color: var(--color-text-secondary, #bababa);
+}
+.rtwp-recent-head svg {
+  width: 16px;
+  height: 16px;
+}
+.rtwp-recent-title {
+  flex: 1 1 auto;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-link {
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-secondary, #bababa);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+}
+.rtwp-link:hover {
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtwp-link[hidden],
+.rtwp-recent-list[hidden],
+.rtwp-recent-empty[hidden] {
+  display: none;
+}
+.rtwp-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rtwp-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease-out;
+}
+.rtwp-recent-row:hover {
+  border-color: var(--color-border-primary, #3a3a3a);
+}
+.rtwp-recent-ico,
+.rtwp-recent-go {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-tertiary, #787878);
+}
+.rtwp-recent-go {
+  margin-left: auto;
+}
+.rtwp-recent-main {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtwp-recent-sub {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-tertiary, #787878);
+  font: 400 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtwp-recent-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rtwp-chip {
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-secondary, #bababa);
+  font: 500 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+  transition:
+    color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+.rtwp-chip:hover {
+  border-color: var(--color-border-primary, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtwp-privacy {
+  margin: -8px 0 0;
+  padding: 0 16px 24px;
+  color: var(--color-text-tertiary, #787878);
+  font: 400 11px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-align: center;
+}
+
+/* -------------------------------------------- tooltip, menu, toast (body) */
+.rtwp-tip {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 240px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 8px;
+  background: var(--color-surface-container-high, #232323);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  pointer-events: none;
+}
+.rtwp-tip[hidden] {
+  display: none;
+}
+.rtwp-tip-kbd {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary, #787878);
+  font: inherit;
+}
+.rtwp-menu {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-align: left;
+  cursor: pointer;
+}
+.rtwp-menu-item svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary, #bababa);
+}
+.rtwp-menu-item:hover:not(:disabled),
+.rtwp-menu-item:focus-visible {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtwp-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.rtwp-menu-group {
+  display: flex;
+  flex-direction: column;
+}
+.rtwp-menu-label {
+  padding: 4px 8px;
+  color: var(--color-text-tertiary, #787878);
+  font: 500 11px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+.rtwp-menu-item svg.rtwp-menu-check {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--color-accent, #c9a2ff);
+  opacity: 0;
+}
+.rtwp-menu-item[aria-checked="true"] svg.rtwp-menu-check {
+  opacity: 1;
+}
+.rtwp-menu-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--color-menu-divider, var(--color-border-primary, #3a3a3a));
+}
+.rtwp-toast {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(420px, calc(100vw - 32px));
+  min-height: 40px;
+  padding: 4px 4px 4px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 12px;
+  background: var(--color-surface-container-high, #232323);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  transform: translateX(-50%);
+  animation: rtwp-toast-in 150ms ease-out;
+}
+.rtwp-toast:not(:has(.rtwp-toast-action)) {
+  padding-right: 12px;
+}
+.rtwp-toast-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtwp-toast-action {
+  flex-shrink: 0;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-accent, #c9a2ff);
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+}
+.rtwp-toast-action:hover {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+@keyframes rtwp-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ----------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .rtwp-dock {
+    transition: opacity 120ms linear;
+  }
+  .rtwp-dock[data-state="closed"] {
+    transform: none;
+  }
+  .rtwp-progress-bar {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
+  .rtwp-toast {
+    animation: none;
+  }
+  .rtwp-armbar,
+  .rtwp-armbar[data-shown] {
+    transform: translateX(-50%);
+  }
+  .rtwp-armbar {
+    transition:
+      opacity 120ms linear,
+      visibility 0s linear 120ms;
+  }
+  .rtwp-armbar[data-shown] {
+    transition:
+      opacity 120ms linear,
+      visibility 0s;
+  }
+  .rtwp-seg-thumb {
+    transition: none;
+  }
+  .rtwp-modecard-radio::after,
+  .rtwp-modecard[aria-checked="true"] .rtwp-modecard-radio::after {
+    transform: none;
+    animation: none;
+  }
+  .rtwp-modecard-radio::before,
+  .rtwp-modecard-radio::after {
+    transition: opacity 120ms linear;
+  }
+}

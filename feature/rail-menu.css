@@ -1,0 +1,208 @@
+/*
+ * RE-TEMPO · rail-menu — one account menu: the Settings gear leaves the UI
+ * (title bar and rail) and "Settings…", "Help ›" and "Report a bug" join the
+ * avatar's native User menu (injected by rail-menu.js). The rail's bug and
+ * help buttons are hidden too. Everything is gated by html.rtrm-on (set by
+ * rail-menu.js): without the script the native buttons stay visible.
+ * Injected items copy the native item's class (Base UI menu item: px-2.5
+ * py-2, text-body, font-medium, rounded-sm, highlighted
+ * bg-surface-menu-hover); only the trailing slots and the separator are
+ * styled here, with the app's tokens, so dark/light come for free.
+ * Anchoring of native popups: html.rtrm-help-anchor / rtrm-user-anchor (the
+ * trigger becomes an invisible fixed box over the anchor) and rtrm-anchoring
+ * (a display:none rail is laid out hidden while such a popup is open).
+ */
+
+/* --------------------------------------- hide the gear, bug and help buttons */
+/* The nodes stay in the DOM: the menu items and other mods click them. */
+html.rtrm-on [data-testid="workspace-navbar"] [data-testid="bug-report-button"],
+html.rtrm-on [data-testid="workspace-navbar"] [data-testid="help-menu-button"],
+html.rtrm-on [data-testid="workspace-navbar"] button[aria-label="Settings"],
+html.rtrm-on .rtps-titlebar-tools [data-act="settings"] {
+  display: none !important;
+}
+
+/* Their columns (the rail's aboveSettings div, and the settings div) generate
+   no box once they hold nothing else, so the rail's gap-4 does not leave an
+   empty slot. A column that also holds the usage rings or the memory tracker
+   is left as is. */
+html.rtrm-on
+  [data-testid="workspace-navbar"]
+  div:has(> [data-testid="help-menu-button"]):not(
+    :has(> :not([data-testid="bug-report-button"], [data-testid="help-menu-button"]))
+  ),
+html.rtrm-on
+  [data-testid="workspace-navbar"]
+  div:has(> button[aria-label="Settings"]):not(:has(> :not(button[aria-label="Settings"], button[aria-label="Help"]))) {
+  display: contents !important;
+}
+
+/* While a native rail menu opened by rail-menu.js is up (the User menu for an
+   anchor outside the rail, or Help from the account menu), its trigger is an
+   invisible fixed box over the anchor, so the Base UI popup anchors there.
+   Opacity 0 and no pointer events, but still visible to focus (Base UI hands
+   focus back to the trigger on close). */
+html.rtrm-on.rtrm-help-anchor [data-testid="workspace-navbar"] [data-testid="help-menu-button"],
+html.rtrm-on.rtrm-user-anchor [data-testid="workspace-navbar"] [aria-label="User menu"] {
+  display: inline-flex !important;
+  position: fixed !important;
+  left: var(--rtrm-anchor-left, 0px) !important;
+  top: var(--rtrm-anchor-top, 0px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: var(--rtrm-anchor-width, 16px) !important;
+  height: var(--rtrm-anchor-height, 16px) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  transform: none !important;
+  translate: none !important;
+  scale: none !important;
+  transition: none !important;
+  animation: none !important;
+  opacity: 0 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+}
+
+/* The avatar leaves the rail's flow while it is that fixed box: with the rail
+   visible, a box of its size (measured by the JS) keeps its slot. */
+html.rtrm-on.rtrm-user-anchor:not(.rtrm-anchoring)
+  [data-testid="workspace-navbar"]
+  :has(> [aria-label="User menu"])::after {
+  content: "" !important;
+  display: block !important;
+  position: static !important;
+  flex: none !important;
+  width: var(--rtrm-anchor-slot-width, 0px) !important;
+  height: var(--rtrm-anchor-slot-height, 0px) !important;
+}
+
+/* A display:none rail (project-sidebar: html.rtps-rail-hidden) renders no
+   descendants, so an anchored trigger would have no box. While a native
+   popup is anchored outside the rail, the rail is laid out as a hidden 0x0
+   fixed box: out of the page flow, untransformed (it is not the containing
+   block of the fixed trigger) and without its settle animation. html:root
+   outranks html.rtps-on.rtps-rail-hidden whatever the stylesheet order. */
+html:root.rtrm-on.rtrm-anchoring [data-testid="workspace-navbar"] {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 auto auto 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  translate: none !important;
+  scale: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  contain: none !important;
+  will-change: auto !important;
+}
+
+/* ------------------------------------------------- account menu highlight */
+/* Our items are not in Base UI's keyboard list, so while the popup carries
+   them rail-menu.js keeps the highlight (data-rtrm-current) for every item.
+   Base UI leaves data-highlighted on its last active item: muted here. */
+html.rtrm-on [data-rtrm-hl] [role="menuitem"][data-highlighted]:not([data-rtrm-current]) {
+  background-color: transparent;
+}
+html.rtrm-on [data-rtrm-hl] [role="menuitem"][data-rtrm-current] {
+  background-color: var(--color-surface-menu-hover);
+}
+
+/* ---------------------------------------------------------- injected items */
+.rtrm-inj {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  user-select: none;
+}
+.rtrm-label {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fallback when the popup has no native item to copy the class from. */
+.rtrm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-body, 13px);
+  line-height: var(--leading-body, 16px);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+  transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+}
+[data-theme="light"] .rtrm-item {
+  color: var(--color-text-primary);
+}
+
+/* trailing shortcut, like the app's menu shortcut slot + "raised" kbd chips */
+.rtrm-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: var(--text-label, 11px);
+  line-height: var(--leading-label, 14px);
+  letter-spacing: var(--tracking-widest, 0.1em);
+  color: var(--color-text-tertiary);
+}
+.rtrm-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 20px;
+  padding: 1px 6px; /* 16px tall: the row keeps the native item height */
+  border: 1px solid var(--color-border-secondary);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  box-shadow: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro, 9px);
+  line-height: var(--leading-micro, 11px);
+  font-weight: 500;
+  letter-spacing: normal;
+  color: var(--color-text-secondary);
+}
+.rtrm-plus {
+  font-size: var(--text-micro, 9px);
+  color: var(--color-text-tertiary);
+}
+
+.rtrm-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--color-text-tertiary);
+}
+
+/* the app's menu separator (Qv: my-1 -mx-1.5 h-px bg-menu-divider) */
+.rtrm-sep {
+  height: 1px;
+  margin: 4px -6px;
+  background: var(--color-menu-divider);
+}

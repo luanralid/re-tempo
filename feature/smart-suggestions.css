@@ -1,0 +1,310 @@
+/*
+ * RE-TEMPO · smart-suggestions (styles, prefix rtss-)
+ * The cards reuse the native PromptCard classes (copied at runtime), so this
+ * file only hides the native row, styles the "More…" chip and its list, and
+ * adds the cross-fade of a card whose content changed. App tokens only.
+ */
+
+/* the native row stays mounted (React owns it) but hidden; the second rule
+   covers the frames between React rendering a new empty state and the mod
+   marking it (a mod failure sets data-rtss-on="fallback": native comes back) */
+html.rtss-on [data-rtss-native],
+html.rtss-on [data-testid="chat-empty-state"]:not([data-rtss-on="fallback"]) > .flex-nowrap.items-stretch:not([data-rtss-row]) {
+  display: none !important;
+}
+
+[data-rtss-card][hidden] {
+  display: none !important;
+}
+[data-rtss-card] [data-rtss-label] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+[data-rtss-card]:focus-visible,
+.rtss-more:focus-visible {
+  outline: 2px solid var(--color-text-lavender, currentColor);
+  outline-offset: 2px;
+}
+
+/* "More…": a discreet chip under the cards, right-aligned */
+.rtss-more-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 42rem; /* the cards row's max-w-2xl */
+  margin-top: 8px;
+}
+.rtss-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  padding: 0 6px 0 9px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-family: inherit;
+  font-size: var(--text-label, 11px);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.rtss-more:hover,
+.rtss-more[aria-expanded="true"] {
+  background: var(--color-surface-container);
+  color: var(--color-text-secondary);
+}
+.rtss-more .rtss-more-chev {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.15s;
+}
+.rtss-more[aria-expanded="true"] .rtss-more-chev {
+  transform: rotate(180deg);
+}
+
+/* the full list */
+.rtss-pop {
+  position: fixed;
+  z-index: 1000;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(460px, calc(100vh - 24px));
+  overflow-y: auto;
+  padding: 4px;
+  border: 0.5px solid var(--color-border-primary);
+  border-radius: 10px;
+  background: var(--color-surface-container);
+  box-shadow: var(--elevation-popover);
+  color: var(--color-text-primary);
+  font-family: var(--app-font-sans, inherit);
+}
+.rtss-pop-head {
+  padding: 6px 8px 4px;
+  font-size: var(--text-label, 11px);
+  line-height: 14px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtss-pop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rtss-pop-item:hover,
+.rtss-pop-item:focus-visible {
+  outline: none;
+  background: var(--color-surface-container-high);
+}
+.rtss-pop-icon {
+  display: flex;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--color-text-secondary);
+}
+.rtss-pop-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.rtss-pop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.rtss-pop-title {
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: var(--text-body, 13px);
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rtss-pop-meta {
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-label, 11px);
+  line-height: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* motion: only a card whose content changed cross-fades; the list opens with
+   a short fade. Nothing moves with prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-rtss-card].rtss-swap [data-rtss-icon],
+  [data-rtss-card].rtss-swap [data-rtss-label] {
+    animation: rtss-swap 240ms ease-out;
+  }
+  .rtss-pop {
+    animation: rtss-pop 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+@keyframes rtss-swap {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes rtss-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* narrow containers (the canvas Agent card, a narrow chat pane): the empty
+   state stacks in a column and the suggestions become a compact vertical list.
+   What counts is the container's width (the empty state's parent, marked
+   data-rtss-host by the mod), not the window's. */
+[data-rtss-host] {
+  container: rtss-host / inline-size;
+}
+@container rtss-host (max-width: 460px) {
+  [data-testid="chat-empty-state"][data-rtss-on] {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  /* illustration + title on one line, subtitle under them */
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child {
+    width: 100%;
+    min-width: 0;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child > div {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 4px;
+    width: 100%;
+    min-width: 0;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child > div > img {
+    grid-row: 1;
+    grid-column: 1;
+    width: 44px;
+    height: 44px;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child > div > div {
+    display: contents;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child h1 {
+    grid-row: 1;
+    grid-column: 2;
+    white-space: nowrap;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] > :first-child p {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    max-width: none;
+    text-align: center;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] [data-rtss-row] {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    max-width: none;
+    margin-top: 16px;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] [data-rtss-card] {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] [data-rtss-icon] {
+    flex: none;
+    width: 20px;
+    height: 20px;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] [data-rtss-label] {
+    flex: 1 1 auto;
+    min-width: 0;
+    -webkit-line-clamp: 2;
+  }
+  [data-testid="chat-empty-state"][data-rtss-on] .rtss-more-row {
+    justify-content: center;
+    max-width: none;
+    margin-top: 10px;
+  }
+}
+
+/* stagger in (40 ms steps, out easing); reduced motion: opacity only */
+@media (prefers-reduced-motion: no-preference) {
+  @container rtss-host (max-width: 460px) {
+    [data-rtss-row] > [data-rtss-card],
+    .rtss-more-row {
+      animation: rtss-stagger 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    [data-rtss-row] > [data-rtss-card]:nth-child(2) { animation-delay: 40ms; }
+    [data-rtss-row] > [data-rtss-card]:nth-child(3) { animation-delay: 80ms; }
+    [data-rtss-row] > [data-rtss-card]:nth-child(4) { animation-delay: 120ms; }
+    [data-rtss-row] > [data-rtss-card]:nth-child(n + 5) { animation-delay: 160ms; }
+    .rtss-more-row { animation-delay: 200ms; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @container rtss-host (max-width: 460px) {
+    [data-rtss-row] > [data-rtss-card],
+    .rtss-more-row {
+      animation: rtss-fade 120ms linear both;
+    }
+  }
+}
+@keyframes rtss-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes rtss-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

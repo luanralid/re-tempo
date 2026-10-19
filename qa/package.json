@@ -1,0 +1,21 @@
+{
+  "name": "re-tempo-qa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Automated, repeatable, multi-instance test harness for RE-TEMPO (via CDP).",
+  "scripts": {
+    "smoke": "node run.mjs --suite 00-smoke --instances 1",
+    "smoke:parallel": "node run.mjs --suite 00-smoke --instances 2",
+    "login": "node login.mjs --profiles 6",
+    "login:dry": "node login.mjs --dry-run --only qa-1",
+    "smoke:logged-in": "node run.mjs --suite 01-smoke-logged-in --profiles qa-1,qa-2,qa-3",
+    "clean": "node clean.mjs --all"
+  },
+  "dependencies": {
+    "playwright-core": "1.56.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

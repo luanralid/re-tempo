@@ -1,0 +1,668 @@
+/*
+ * RE-TEMPO · canvas-browser — browser frames on the design canvas.
+ * The frames live inside the canvas world layer (world units, scaled with the
+ * canvas). Anything that must keep its screen size (name header, selection
+ * outline, handles, size label, hint) uses the app's --canvas-unzoom
+ * (1 / zoom), exactly as the storyboards do. Colors: the app's tokens, with
+ * the dark theme values as fallbacks. Prefix: rtbf-.
+ */
+
+.rtbf-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.rtbf-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  pointer-events: auto;
+  font-family: var(--font-sans, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ------------------------------------------------ name header (screen size) */
+.rtbf-head {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  width: calc(100% / var(--canvas-unzoom, 1));
+  transform-origin: 0 0;
+  transform: scale(var(--canvas-unzoom, 1)) translateY(-100%);
+  pointer-events: auto;
+  cursor: default;
+}
+.rtbf-head-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 24px;
+  padding: 0 0 8px;
+  color: var(--color-text-secondary, #bababa);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.rtbf-frame[data-selected] .rtbf-head-row,
+.rtbf-frame:hover .rtbf-head-row {
+  color: var(--blueberry-500, #67cffd);
+}
+.rtbf-head-globe,
+.rtbf-favicon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+.rtbf-head-row [hidden] {
+  display: none !important;
+}
+.rtbf-head-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rtbf-head-input {
+  display: none;
+  flex: 1 1 auto;
+  min-width: 60px;
+  max-width: 320px;
+  height: 16px;
+  margin: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--blueberry-500, #67cffd);
+  border-radius: 4px;
+  outline: none;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtbf-frame[data-editing] .rtbf-head-title {
+  display: none;
+}
+.rtbf-frame[data-editing] .rtbf-head-input {
+  display: block;
+}
+
+/* ------------------------------------------------------ window (world units) */
+.rtbf-win {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest, #080808);
+  box-shadow: 0 0 0 1px var(--color-border-secondary, #232323), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Pen-style bar: 8px grid, 12px side padding, 8px gaps. */
+.rtbf-bar {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+  background: var(--color-surface-container, #191919);
+  cursor: default;
+}
+.rtbf-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icons-secondary, #bababa);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.rtbf-btn:hover:not(:disabled) {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+  color: var(--color-icons-primary, #f5f5f5);
+}
+.rtbf-btn:active:not(:disabled) {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtbf-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.rtbf-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtbf-ic {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+.rtbf-addr {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.rtbf-url {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 10px;
+  outline: none;
+  background: var(--color-surface-container-low, #0e0e0e);
+  color: var(--color-text-primary, #f5f5f5);
+  font: 400 12px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-overflow: ellipsis;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtbf-url::placeholder {
+  color: var(--color-text-tertiary, #787878);
+}
+.rtbf-url:hover {
+  border-color: var(--color-border-primary, #3a3a3a);
+}
+.rtbf-url:focus-visible {
+  border-color: var(--color-border-focus, #67cffd);
+  box-shadow: 0 0 0 2px var(--color-border-focus, #67cffd);
+}
+.rtbf-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.rtbf-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -30%;
+  width: 30%;
+  background: var(--blueberry-500, #67cffd);
+  animation: rtbf-progress 1.1s ease-in-out infinite;
+}
+.rtbf-frame[data-loading] .rtbf-progress {
+  opacity: 1;
+}
+
+.rtbf-error {
+  flex: none;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-secondary, #232323);
+  background: var(--color-surface-container-low, #0e0e0e);
+  color: var(--color-text-secondary, #bababa);
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rtbf-error[hidden] {
+  display: none;
+}
+.rtbf-error-desc {
+  font-weight: 500;
+  color: var(--color-text-primary, #f5f5f5);
+}
+.rtbf-error-url {
+  word-break: break-all;
+}
+
+/* -------------------------------------------------------------- page area */
+.rtbf-view {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--color-surface-container-lowest, #080808);
+}
+.rtbf-frame[data-has-page] .rtbf-view {
+  background: #fff;
+}
+.rtbf-guest {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+html[data-rtbf-dragging] .rtbf-guest,
+html[data-rtbf-armed] .rtbf-guest {
+  pointer-events: none;
+}
+
+.rtbf-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-container-lowest, #080808);
+}
+.rtbf-frame[data-has-page] .rtbf-empty {
+  display: none;
+}
+.rtbf-empty-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 384px;
+  padding: 0 24px;
+  text-align: center;
+}
+.rtbf-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-secondary, #bababa);
+}
+.rtbf-ic-lg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.5;
+}
+.rtbf-empty-title {
+  color: var(--color-text-primary, #f5f5f5);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.rtbf-empty-sub {
+  margin-top: 8px;
+  color: var(--color-text-secondary, #bababa);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.rtbf-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-container-lowest, #080808);
+  color: var(--color-text-tertiary, #787878);
+  font-size: 12px;
+  pointer-events: none;
+}
+.rtbf-frame[data-has-page]:not([data-loaded]) .rtbf-loading {
+  display: flex;
+}
+.rtbf-loading-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rtbf-spin {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+  animation: rtbf-spin 0.8s linear infinite;
+}
+
+/* Over the page while the frame is not being interacted with: presses move
+ * and select the frame, wheel pans/zooms the canvas. */
+.rtbf-shield {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.rtbf-frame[data-has-page]:not([data-active]) .rtbf-shield {
+  display: block;
+}
+
+.rtbf-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--canvas-unzoom, 1) * 16px);
+  transform: translateX(-50%);
+  padding: calc(var(--canvas-unzoom, 1) * 8px) calc(var(--canvas-unzoom, 1) * 12px);
+  border-radius: calc(var(--canvas-unzoom, 1) * 24px);
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: calc(var(--canvas-unzoom, 1) * 1px) solid var(--color-border-secondary, #232323);
+  font-size: calc(var(--canvas-unzoom, 1) * 12px);
+  font-weight: 500;
+  line-height: 1.34;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+.rtbf-frame[data-selected][data-has-page]:not([data-active]):not([data-dragging]) .rtbf-view:hover .rtbf-hint {
+  opacity: 1;
+}
+
+/* ------------------------------------- selection (the storyboards' outline) */
+.rtbf-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 2px) solid rgba(0, 145, 255, 0.95);
+  pointer-events: none;
+}
+.rtbf-frame[data-selected] .rtbf-outline {
+  display: block;
+}
+.rtbf-frame:not([data-selected]):hover .rtbf-outline {
+  display: block;
+  border-width: calc(var(--canvas-unzoom, 1) * 1px);
+  border-color: rgba(0, 145, 255, 0.65);
+}
+html[data-rtbf-dragging] .rtbf-frame:not([data-selected]):hover .rtbf-outline,
+html[data-rtbf-armed] .rtbf-frame:not([data-selected]):hover .rtbf-outline {
+  display: none;
+}
+.rtbf-frame:not([data-selected]) .rtbf-edge,
+.rtbf-frame:not([data-selected]) .rtbf-corner {
+  display: none;
+}
+.rtbf-edge {
+  position: absolute;
+  pointer-events: auto;
+}
+.rtbf-edge-n,
+.rtbf-edge-s {
+  left: 0;
+  width: 100%;
+  height: calc(var(--canvas-unzoom, 1) * 4px);
+  transform: translateY(-50%);
+  cursor: ns-resize;
+}
+.rtbf-edge-n {
+  top: 0;
+}
+.rtbf-edge-s {
+  top: 100%;
+}
+.rtbf-edge-w,
+.rtbf-edge-e {
+  top: 0;
+  width: calc(var(--canvas-unzoom, 1) * 4px);
+  height: 100%;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+}
+.rtbf-edge-w {
+  left: 0;
+}
+.rtbf-edge-e {
+  left: 100%;
+}
+.rtbf-corner {
+  position: absolute;
+  width: calc(var(--canvas-unzoom, 1) * 14px);
+  height: calc(var(--canvas-unzoom, 1) * 14px);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.rtbf-corner-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.rtbf-corner-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.rtbf-corner-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.rtbf-corner-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.rtbf-corner-sq,
+.rtbf-draw-sq {
+  position: absolute;
+  width: calc(var(--canvas-unzoom, 1) * 10px);
+  height: calc(var(--canvas-unzoom, 1) * 10px);
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 1px) solid rgba(0, 145, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+.rtbf-corner-sq {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.rtbf-draw-sq {
+  transform: translate(-50%, -50%);
+}
+
+/* The app's resize label: blue monospace pill under the frame. */
+.rtbf-size {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 30;
+  display: none;
+  margin-top: calc(var(--canvas-unzoom, 1) * 8px);
+  padding: calc(var(--canvas-unzoom, 1) * 4px) calc(var(--canvas-unzoom, 1) * 8px);
+  transform: translateX(-50%);
+  border-radius: calc(var(--canvas-unzoom, 1) * 8px);
+  background: rgba(0, 145, 255, 0.95);
+  color: #fff;
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: calc(var(--canvas-unzoom, 1) * 11px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rtbf-frame[data-sizing] .rtbf-size,
+.rtbf-draw-preview .rtbf-size {
+  display: block;
+}
+
+/* ---------------------------------------------------------- browser tool */
+.rtbf-draw-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2600;
+  cursor: crosshair;
+  touch-action: none;
+}
+.rtbf-draw-preview {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: calc(var(--canvas-unzoom, 1) * 2px) solid rgba(0, 145, 255, 0.95);
+  background: rgba(0, 145, 255, 0.04);
+  pointer-events: none;
+}
+
+.rtbf-tool {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icons-primary, #f5f5f5);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.rtbf-tool:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtbf-tool:active {
+  background: var(--color-surface-container-highest, #3a3a3a);
+}
+.rtbf-tool[aria-pressed="true"] {
+  background: var(--color-accent-subtle, #2a2a2a);
+  color: var(--color-accent, #e0e0e0);
+}
+.rtbf-tool:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: -2px;
+}
+.rtbf-tool .rtbf-ic {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+.rtbf-tool-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: var(--color-border-secondary, #232323);
+}
+/* While the Browser tool is armed, the native tool stops looking active. */
+html[data-rtbf-armed] [role="toolbar"][aria-label="Design tools"] button[aria-pressed="true"]:not(.rtbf-tool) {
+  background: transparent !important;
+  color: var(--color-icons-primary, #f5f5f5) !important;
+}
+
+/* The app's tooltip: rounded 6, border-secondary, surface-container-high. */
+.rtbf-tooltip {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-secondary, #232323);
+  border-radius: 8px;
+  background: var(--color-surface-container-high, #232323);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font: 400 var(--text-label, 12px) / 16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.rtbf-tooltip[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.rtbf-kbd {
+  color: var(--color-text-tertiary, #787878);
+  font: inherit;
+}
+
+/* Undo toast: the canvas "Copied as PNG" pill, above the toolbar. */
+.rtbf-toast {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 24px;
+  background: var(--color-surface-container, #191919);
+  color: var(--color-text-primary, #f5f5f5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: 1px solid var(--color-border-secondary, #232323);
+  outline-offset: -1px;
+  font: 500 13px/16px var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.rtbf-toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.rtbf-toast-action {
+  height: 24px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-surface-container-highest, #3a3a3a);
+  color: var(--color-text-primary, #f5f5f5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rtbf-toast-action:hover {
+  background: var(--color-surface-menu-hover, var(--color-surface-container-highest, #3a3a3a));
+}
+.rtbf-toast-action:focus-visible {
+  outline: 2px solid var(--color-border-focus, #67cffd);
+  outline-offset: 2px;
+}
+
+@keyframes rtbf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rtbf-progress {
+  0% {
+    left: -30%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtbf-spin,
+  .rtbf-progress::before {
+    animation: none;
+  }
+  .rtbf-progress::before {
+    left: 0;
+    width: 100%;
+    opacity: 0.6;
+  }
+  .rtbf-toast,
+  .rtbf-tooltip,
+  .rtbf-hint {
+    transition: none;
+  }
+}

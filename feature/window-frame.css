@@ -1,0 +1,6 @@
+/* RE-TEMPO · window-frame — see window-frame.js. Scoped to html.rtwf-on. */
+/* Reverted to the native frame (user, 2026-10-19): no inset at the right or
+   bottom, no right / bottom stroke, square corners. The only curve is the
+   top-left one while the sidebar is open, which project-sidebar.css owns
+   (square when html.rtps-collapsed). The inset, strokes and three extra radii
+   that lived here gave the panel a gap and four rounded corners. */
